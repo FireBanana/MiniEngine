@@ -38,6 +38,7 @@ private:
 		// mat4 projection
 		// mat4 view 
 		// vec3 lightPos
+		// mat4 lightvp
 
 		m_MatrixUniformBuffer.Bind();
 		m_MatrixUniformBuffer.AllocateData(512);

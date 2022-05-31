@@ -102,7 +102,7 @@ void Shader::CheckShader(unsigned int shader)
 void Shader::CheckProgram(unsigned int id)
 {
 	int  success;
-	char infoLog[512];
+	char infoLog[1024];
 	glGetProgramiv(id, GL_LINK_STATUS, &success);
 
 	if (!success)

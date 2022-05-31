@@ -16,7 +16,7 @@ Object::Object(Shader s, std::vector<float> vertices, int triangleCount, std::ve
 void Object::Draw(Camera camera)
 {
 	m_VertexArray.Bind();
-	m_Shader.Use();
+	//m_Shader.Use();
 	m_Shader.SetUniform_m("model", m_ModelMatrix);
 
 	glDrawArrays(GL_TRIANGLES, 0, m_TriangleCount);

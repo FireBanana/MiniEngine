@@ -12,7 +12,7 @@ Initializer::Initializer()
         std::cout << "Not inited";
 
     /* Create a windowed mode window and its OpenGL context */
-    m_Window = glfwCreateWindow(640, 480, "OpenGL Boilerplate", NULL, NULL);
+    m_Window = glfwCreateWindow(800, 600, "OpenGL Boilerplate", NULL, NULL);
     if (!m_Window)
     {
         glfwTerminate();

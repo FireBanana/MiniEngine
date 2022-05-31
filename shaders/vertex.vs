@@ -9,16 +9,21 @@ layout (std140) uniform Matrices
     mat4 view;
     mat4 projection;
     vec3 lightPos;
+    mat4 lightvp;
 };
 
 out vec3 f_norm;
 out vec3 f_pos;
+out vec2 f_texcoord;
+out vec4 f_posLightSpace;
 
 uniform mat4 model;
 
 void main()
 {
     f_norm = mat3(transpose(inverse(model))) * norm; 
+    f_texcoord = texcoord;
     gl_Position = projection * view * model * vec4(pos, 1.0);
     f_pos = vec3(model * vec4(pos, 1.0));
+    f_posLightSpace = lightvp * vec4(f_pos, 1.0);
 }
