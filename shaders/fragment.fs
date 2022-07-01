@@ -49,6 +49,4 @@ void main()
         shadow = 0.0;
 
     col = vec4(mag + ((1-shadow) * 0.4));
-    //float c = texture(shadowMap, f_texcoord).z;
-    //col = texture(shadowMap, f_texcoord);
 }
