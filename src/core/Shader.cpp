@@ -78,6 +78,14 @@ void Shader::SetUniform_m(std::string name, glm::mat4& value)
 	glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
 }
 
+void Shader::SetUniform_m(std::string name, glm::mat4& value, Shader& shader)
+{
+	shader.Use();
+
+	unsigned int location = glGetUniformLocation(m_Id, name.c_str());
+	glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
+}
+
 void Shader::SetUniform_i(std::string name, int value)
 {
 	Use();

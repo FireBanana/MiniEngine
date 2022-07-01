@@ -14,6 +14,7 @@ public:
 	void AddObject(Object& o);
 	void AddLight(Light& l);
 	void Render(Camera cam);
+	void Render(Camera cam, Shader& shader);
 
 private:
 

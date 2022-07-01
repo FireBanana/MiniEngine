@@ -62,5 +62,16 @@ namespace Constants
 			-1.5f,  0.0f,  1.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,
 			 1.5f,  0.0f, -1.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f
 		};
+
+		static const std::vector<float> ScreenVertices =
+		{
+			// positions
+			0.0f,  0.0f, 0.0f,
+			0.0f,  1.0f, 0.0f,
+			1.0f,  1.0f, 0.0f,
+			1.0f,  1.0f, 0.0f,
+			1.0f,  0.0f, 0.0f,
+			0.0f,  0.0f, 0.0f,
+		};
 	}
 }

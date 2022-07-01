@@ -2,10 +2,10 @@
 
 layout (std140) uniform Matrices
 {
-    mat4 view;
-    mat4 projection;
-    vec3 lightPos;
-    mat4 lightvp;
+		mat4 projection;
+		mat4 view;
+		mat4 lightvp;
+		vec3 lightPos;
 };
 
 uniform vec3 camPos;
@@ -41,10 +41,14 @@ void main()
     vec3 projCoords = f_posLightSpace.xyz / f_posLightSpace.w;
     projCoords = projCoords * 0.5 + 0.5;
     float closestDepth = texture(shadowMap, projCoords.xy).r;
-    float currentDepth = projCoords.z;
-    float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
-    
-    //float s = step(1., texture(shadowMap, f_texcoord));
+    float currentDepth = projCoords.z; 
+    float bias = max(0.001 * (1.0 - dot(f_norm, lightDir)), 0.0001); 
+    float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
 
-    col = vec4(pow(texture(shadowMap, f_texcoord).r, 9));
+    if(projCoords.z > 1.0)
+        shadow = 0.0;
+
+    col = vec4(mag + ((1-shadow) * 0.4));
+    //float c = texture(shadowMap, f_texcoord).z;
+    //col = texture(shadowMap, f_texcoord);
 }

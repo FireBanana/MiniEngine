@@ -19,6 +19,7 @@ public:
 
 	virtual void Translate(float x, float y, float z) override;
 	virtual void Rotate(float x, float y, float z) override;
+	virtual void Scale(float x, float y, float z) override;
 
 };
 

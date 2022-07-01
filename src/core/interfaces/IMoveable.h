@@ -8,6 +8,7 @@ public:
 
 	virtual void Translate(float x, float y, float z) = 0;
 	virtual void Rotate(float x, float y, float z) = 0;
+	virtual void Scale(float x, float y, float z) = 0;
 
 protected:
 

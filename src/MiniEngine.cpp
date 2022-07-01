@@ -18,32 +18,22 @@ int main(void)
 	Camera cam;
 	Time time;
 
-	glm::vec3 lightPos{ 5.0f, 5.0f, 0.0f };
-
-	Shader standardShader(
-		DIR "/shaders/vertex.vs",
-		DIR "/shaders/fragment.fs");
-
-	Shader shadowShader(
-		DIR "/shaders/shadow.vs",
-		DIR "/shaders/shadow.fs");
-
-	UniformGLData::Get().RegisterShader(standardShader, "Matrices");
-	UniformGLData::Get().UpdateBufferData(sizeof(cam.m_ViewMatrix), glm::value_ptr(cam.m_ViewMatrix));
-	UniformGLData::Get().UpdateBufferData(sizeof(cam.m_ProjectionMatrix), glm::value_ptr(cam.m_ProjectionMatrix));
-	UniformGLData::Get().UpdateBufferData(sizeof(lightPos), glm::value_ptr(lightPos));
+	Shader standardShader(DIR "/shaders/vertex.vs", DIR "/shaders/fragment.fs");
+	Shader shadowShader(DIR "/shaders/shadow.vs", DIR "/shaders/shadow.fs");
 
 	Object cube(standardShader, Constants::Primitives::CubeVertices, 36, { 3, 3, 2 });
 	Object plane(standardShader, Constants::Primitives::PlaneVertices, 6, { 3, 3, 2 });
 
 	plane.Translate(0.0f, -1.0f, 0.0f);
-	// TODO : Add scaling (shader will need to update)
+	plane.Scale(20.0f, 1.0f, 20.0f);
 
-	Light directionalLight{ glm::vec3(0.0f, 0.0f, 0.0f), LIGHT_TYPE::Direction };
+	Light directionalLight{ glm::vec3(5.0f, 5.0f, 5.0f), LIGHT_TYPE::Direction };
 
 	standardShader.SetUniform_f3("camPos", cam.m_CameraPosition.x, cam.m_CameraPosition.y, cam.m_CameraPosition.z);
 
 #pragma region SHADOW_MAPPING
+	cube.Translate(0, 0, 0);
+
 	unsigned int shadowMap, shadowBuffer;
 
 	glGenFramebuffers(1, &shadowBuffer);
@@ -54,8 +44,10 @@ int main(void)
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, shadowBuffer);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap, 0);
@@ -65,12 +57,22 @@ int main(void)
 
 	standardShader.SetUniform_i("shadowMap", 0);
 
-	auto lightModel = glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 5.0f, 0.0f));
-	auto lightView = glm::lookAt(glm::vec3(5.0f, 5.0f, 0.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	auto lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 17.5f);
-	auto lightSpaceMatrix = lightProjection * lightView;
+	glm::mat4 lightModel = glm::translate(glm::mat4(1.0f), directionalLight.m_Position);
+	glm::mat4 lightView = glm::lookAt(directionalLight.m_Position, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 lightProjection = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, 0.1f, 100.0f);
+	glm::mat4 lightSpaceMatrix = lightProjection * lightView;
 
-	UniformGLData::Get().UpdateBufferData(sizeof(lightSpaceMatrix), glm::value_ptr(lightSpaceMatrix));
+	UniformGLData::Get().RegisterShader(standardShader, "Matrices");
+
+	UniformGLData::Get().
+		UpdateBufferData(
+			offsetof(UniformGLData::BufferStructure, UniformGLData::BufferStructure::lightPos),
+			sizeof(directionalLight.m_Position), glm::value_ptr(directionalLight.m_Position)
+		);
+	
+	UniformGLData::Get().UpdateBufferData(offsetof(UniformGLData::BufferStructure, UniformGLData::BufferStructure::projection), sizeof(cam.m_ProjectionMatrix), glm::value_ptr(cam.m_ProjectionMatrix));
+	UniformGLData::Get().UpdateBufferData(offsetof(UniformGLData::BufferStructure, UniformGLData::BufferStructure::view), sizeof(cam.m_ViewMatrix), glm::value_ptr(cam.m_ViewMatrix));
+	UniformGLData::Get().UpdateBufferData(offsetof(UniformGLData::BufferStructure, UniformGLData::BufferStructure::lightvp), sizeof(lightSpaceMatrix), glm::value_ptr(lightSpaceMatrix));
 
 #pragma endregion
 
@@ -87,7 +89,7 @@ int main(void)
 #pragma region SHADOW_MAPPING
 		shadowShader.Use();
 		glBindFramebuffer(GL_FRAMEBUFFER, shadowBuffer);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_DEPTH_BUFFER_BIT);		
 
 		glUniformMatrix4fv(
 			glGetUniformLocation(shadowShader.GetShaderId(), "viewprojection"),
@@ -99,18 +101,17 @@ int main(void)
 			1, GL_FALSE,
 			glm::value_ptr(lightModel));
 
-		renderer.Render(cam);
+		renderer.Render(cam, shadowShader);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 #pragma endregion
 
 		standardShader.Use();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		renderer.Render(cam);
+		renderer.Render(cam, standardShader);
 
-		cube.Rotate(0, 0.77f * time.GetDeltaTime(), 0);
+		cube.Rotate(0, 0.87f * time.GetDeltaTime(), 0);
 
 		glfwSwapBuffers(ini.m_Window);
 		glfwPollEvents();
