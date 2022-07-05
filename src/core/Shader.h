@@ -16,6 +16,7 @@ public:
 	void SetUniform_f(std::string name, float value);
 	void SetUniform_f3(std::string name, float x, float y, float z);
 	void SetUniform_m(std::string name, glm::mat4& value);
+	void SetUniform_m(std::string name, glm::mat4& value, Shader& shader);
 	void SetUniform_i(std::string name, int value);
 
 private:

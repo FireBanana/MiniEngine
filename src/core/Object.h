@@ -15,8 +15,10 @@ public:
 	Object(Shader s, std::vector<float> vertices, int triangleCount, std::vector<int>&& attribSizes);
 
 	void Draw(Camera camera) override;
+	void Draw(Camera camera, Shader& shader); //Add to drawable
 	virtual void Translate(float x, float y, float z) override;
 	virtual void Rotate(float x, float y, float z) override;
+	virtual void Scale(float x, float y, float z) override;
 
 private:
 

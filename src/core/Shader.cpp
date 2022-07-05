@@ -78,6 +78,14 @@ void Shader::SetUniform_m(std::string name, glm::mat4& value)
 	glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
 }
 
+void Shader::SetUniform_m(std::string name, glm::mat4& value, Shader& shader)
+{
+	shader.Use();
+
+	unsigned int location = glGetUniformLocation(m_Id, name.c_str());
+	glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
+}
+
 void Shader::SetUniform_i(std::string name, int value)
 {
 	Use();
@@ -102,7 +110,7 @@ void Shader::CheckShader(unsigned int shader)
 void Shader::CheckProgram(unsigned int id)
 {
 	int  success;
-	char infoLog[512];
+	char infoLog[1024];
 	glGetProgramiv(id, GL_LINK_STATUS, &success);
 
 	if (!success)

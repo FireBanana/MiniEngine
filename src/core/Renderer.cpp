@@ -20,3 +20,9 @@ void Renderer::Render(Camera cam)
 	for (auto& obj : m_ObjectList)
 		obj->Draw(cam);
 }
+
+void Renderer::Render(Camera cam, Shader& shader)
+{
+	for (auto& obj : m_ObjectList)
+		obj->Draw(cam, shader);
+}
