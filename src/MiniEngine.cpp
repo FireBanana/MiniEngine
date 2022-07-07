@@ -65,7 +65,6 @@ int main(void)
 	renderer.AddObject(cube);
 	renderer.AddLight(directionalLight);
 
-	//Move to uniform?
 	standardShader.SetUniform_f3("camPos", cam.m_CameraPosition.x, cam.m_CameraPosition.y, cam.m_CameraPosition.z);
 	standardShader.SetUniform_i("shadowMap", 0);
 
