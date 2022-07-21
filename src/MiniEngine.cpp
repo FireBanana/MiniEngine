@@ -10,7 +10,7 @@
 #include "core/UniformGLData.h"
 #include "core/Time.h"
 #include "core/utils/Constants.h"
-#include "core/ShadowSettings.h"
+#include "core/shadows/ShadowSettings.h"
 
 int main(void)
 {
@@ -29,10 +29,10 @@ int main(void)
 
 	Light directionalLight{ glm::vec3(5.0f, 5.0f, 5.0f) };
 
-	directionalLight.m_ModelMatrix = glm::translate(glm::mat4(1.0f), directionalLight.m_Position);
-	glm::mat4 lightView = glm::lookAt(directionalLight.m_Position, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	directionalLight.ModelMatrix = glm::translate(glm::mat4(1.0f), directionalLight.Position);
+	glm::mat4 lightView = glm::lookAt(directionalLight.Position, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 lightProjection = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, 0.1f, 100.0f);
-	directionalLight.m_VPMatrix = lightProjection * lightView;
+	directionalLight.VPMatrix = lightProjection * lightView;
 
 	ShadowSettings shadowSettings(directionalLight);
 
@@ -41,7 +41,7 @@ int main(void)
 	UniformGLData::Get()
 		.UpdateBufferData(
 			offsetof(UniformGLData::BufferStructure, UniformGLData::BufferStructure::lightPos),
-			sizeof(directionalLight.m_Position), glm::value_ptr(directionalLight.m_Position)
+			sizeof(directionalLight.Position), glm::value_ptr(directionalLight.Position)
 		);	
 	UniformGLData::Get()
 		.UpdateBufferData(
@@ -56,7 +56,7 @@ int main(void)
 	UniformGLData::Get()
 		.UpdateBufferData(
 			offsetof(UniformGLData::BufferStructure, UniformGLData::BufferStructure::lightvp),
-			sizeof(directionalLight.m_VPMatrix), glm::value_ptr(directionalLight.m_VPMatrix)
+			sizeof(directionalLight.VPMatrix), glm::value_ptr(directionalLight.VPMatrix)
 		);
 
 	glEnable(GL_DEPTH_TEST);

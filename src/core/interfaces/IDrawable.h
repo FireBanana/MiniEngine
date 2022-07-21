@@ -1,7 +1,7 @@
 #pragma once
 #include "../Camera.h"
 
-class IDrawable abstract
+class IDrawable
 {
 public:
 

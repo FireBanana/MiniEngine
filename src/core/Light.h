@@ -3,7 +3,7 @@
 
 struct Light
 {
-	glm::vec3  m_Position;
-	glm::mat4  m_ModelMatrix;
-	glm::mat4  m_VPMatrix;
+	glm::vec3  Position;
+	glm::mat4  ModelMatrix;
+	glm::mat4  VPMatrix;
 };

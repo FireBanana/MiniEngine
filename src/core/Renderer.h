@@ -9,16 +9,16 @@ class Renderer
 {
 public:
 
-	Renderer();
+	Renderer() = default;
 
 	void AddObject(Object& o);
 	void AddLight(Light& l);
-	void Render(Camera cam);
-	void Render(Camera cam, Shader& shader);
+	void Render(const Camera& cam) const;
+	void Render(const Camera& cam, Shader& shader) const;
 
 private:
 
-	std::vector<Object*> m_ObjectList;
-	std::vector<Light*> m_LightList;
+	std::vector<std::reference_wrapper<Object>> m_ObjectList;
+	std::vector<std::reference_wrapper<Light>> m_LightList;
 };
 

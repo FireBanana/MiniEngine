@@ -2,7 +2,7 @@
 
 #include <glm.hpp>
 
-class IMoveable abstract
+class IMoveable
 {
 public:
 
@@ -12,6 +12,7 @@ public:
 
 protected:
 
+	//Should not be in interface
 	glm::mat4 m_ModelMatrix;
 
 };

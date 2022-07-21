@@ -13,8 +13,8 @@ include_directories(libs/glad/include)
 include_directories(libs/glm/glm)
 include_directories(libs/glfw/include)
 
-file( GLOB LIB_SOURCES src/*.cpp src/core/*.cpp src/core/interfaces/*.cpp src/core/utils/*.cpp)
-file( GLOB LIB_HEADERS src/*.h src/core/*.h src/core/interfaces/*.h src/core/utils/*.h)
+file( GLOB_RECURSE LIB_SOURCES src/*.cpp )
+file( GLOB_RECURSE LIB_HEADERS src/*.h )
 
 add_executable( MiniEngine ${LIB_SOURCES} ${LIB_HEADERS} )
 target_sources( MiniEngine PRIVATE ${CMAKE_SOURCE_DIR}/libs/glad/src/glad.c)
