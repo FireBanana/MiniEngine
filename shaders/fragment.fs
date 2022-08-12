@@ -10,6 +10,7 @@ layout (std140) uniform Matrices
 
 uniform vec3 camPos;
 uniform sampler2D shadowMap;
+uniform sampler2D textureMap;
 
 in vec3 f_norm;
 in vec3 f_pos;
@@ -48,5 +49,6 @@ void main()
     if(projCoords.z > 1.0)
         shadow = 0.0;
 
-    col = vec4(mag + ((1-shadow) * 0.4));
+    vec4 shadow4 = vec4(mag + ((1-shadow) * 0.4));
+    col = texture(textureMap, f_texcoord) * shadow4;
 }

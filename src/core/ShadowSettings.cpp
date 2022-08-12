@@ -10,6 +10,7 @@ ShadowSettings::ShadowSettings(Light light)
 	glGenFramebuffers(1, &m_ShadowBuffer);
 
 	glGenTextures(1, &m_ShadowMapId);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_ShadowMapId);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 800, 600, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
@@ -47,4 +48,9 @@ void ShadowSettings::ShadowPass(Renderer* renderer, Camera* camera)
 	renderer->Render(*camera, m_ShadowShader);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void ShadowSettings::BindTexture() const
+{
+	glBindTexture(GL_TEXTURE_2D, m_ShadowMapId);
 }

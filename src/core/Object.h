@@ -20,6 +20,9 @@ public:
 	virtual void Rotate(float x, float y, float z) override;
 	virtual void Scale(float x, float y, float z) override;
 
+	void AddTexture(const char* path);
+	void BindTexture() const;
+
 private:
 
 	Shader			   m_Shader;
@@ -27,5 +30,7 @@ private:
 	int				   m_TriangleCount;
 	Buffer<float>	   m_VertexBuffer;
 	Buffer<float>	   m_VertexArray;
+
+	unsigned int	   m_Texture;
 };
 

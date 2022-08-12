@@ -9,6 +9,7 @@ add_compile_definitions(DIR="${CMAKE_SOURCE_DIR}")
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+include_directories(libs)
 include_directories(libs/glad/include)
 include_directories(libs/glm/glm)
 include_directories(libs/glfw/include)
