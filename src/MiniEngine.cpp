@@ -11,7 +11,7 @@
 #include "core/Time.h"
 #include "core/utils/Constants.h"
 #include "core/ShadowSettings.h"
-
+ 
 int main(void)
 {
 	Initializer	   ini;
@@ -102,10 +102,10 @@ int main(void)
 	//Move to uniform?
 	standardShader.SetUniform_f3("camPos", cam.m_CameraPosition.x, cam.m_CameraPosition.y, cam.m_CameraPosition.z);	
 
-	cube.AddTexture(R"(C:\Users\Arthur\Desktop\WoodFloor051_1K-JPG\WoodFloor051_1K_Color.jpg)", GL_TEXTURE1);
+	cube.AddTexture(R"(..\assets\color.jpg)", GL_TEXTURE1);
 	standardShader.SetUniform_i("textureMap", 1);
 
-	cube.AddTexture(R"(C:\Users\Arthur\Desktop\normal.jpg)", GL_TEXTURE2);
+	cube.AddTexture(R"(..\assets\normal.jpg)", GL_TEXTURE2);
 	standardShader.SetUniform_i("normalMap", 2);
 
 	while (!glfwWindowShouldClose(ini.m_Window))
@@ -120,7 +120,7 @@ int main(void)
 
 		renderer.Render(cam, standardShader);
 
-		cube.Rotate(0.87f * time.GetDeltaTime(), 0.2f * time.GetDeltaTime(), 0);
+		cube.Rotate(0.87f * time.GetDeltaTime(), 0.0f, 0);
 
 		glfwSwapBuffers(ini.m_Window);
 		glfwPollEvents();

@@ -37,16 +37,6 @@ void main()
 {
     vec3 lightDir = normalize(lightPos - f_pos);
 
-    vec3 projCoords = f_posLightSpace.xyz / f_posLightSpace.w;
-    projCoords = projCoords * 0.5 + 0.5;
-    float closestDepth = texture(shadowMap, projCoords.xy).r;
-    float currentDepth = projCoords.z; 
-    float bias = max(0.001 * (1.0 - dot(f_norm, lightDir)), 0.0001); 
-    float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
-
-    if(projCoords.z > 1.0)
-        shadow = 0.0;
-
     vec3 normal = texture(normalMap, f_texcoord*0.3 ).rgb;
     normal = normalize(normal * 2.0 - 1.0);
 
@@ -57,12 +47,24 @@ void main()
     mat3 TBN = mat3(tangent, bitangent, f_norm);
     vec3 newNormal = TBN * normal;
     newNormal = normalize(newNormal);
-    // col = vec4(newNormal, 1.);
-    // return;
+    //col = vec4(newNormal, 1.);
+    //return;
     //===========================
 
-    float mag = max(dot(lightDir, shadow > 0. ? f_norm : newNormal), 0.);
+    //shadow calculation
+    vec3 projCoords = f_posLightSpace.xyz / f_posLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5;
+    float closestDepth = texture(shadowMap, projCoords.xy).r;
+    float currentDepth = projCoords.z; 
+    float bias = max(0.001 * (1.0 - dot(f_norm, lightDir)), 0.0001); 
+    float shadow = currentDepth + bias > closestDepth  ? 1.0 : 0.0;
+    //==============================
+
+    // if(projCoords.z > 1.0)
+    //     shadow = 0.0;
+
+    float mag = max(dot(lightDir, newNormal), 0.);
 
     vec4 shadow4 = vec4(mag + ((1-shadow) * 0.4));
-    col = texture(textureMap, f_texcoord) * shadow4;
+    col = texture(textureMap, f_texcoord * 0.3) * shadow4;
 }
