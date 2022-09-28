@@ -31,6 +31,7 @@ ShadowSettings::ShadowSettings(Light light)
 void ShadowSettings::ShadowPass(Renderer* renderer, Camera* camera)
 {
 	m_ShadowShader.Use();
+	BindTexture();
 
 	glBindFramebuffer(GL_FRAMEBUFFER, m_ShadowBuffer);
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -52,5 +53,6 @@ void ShadowSettings::ShadowPass(Renderer* renderer, Camera* camera)
 
 void ShadowSettings::BindTexture() const
 {
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_ShadowMapId);
 }

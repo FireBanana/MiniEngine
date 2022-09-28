@@ -1,7 +1,7 @@
 #include "Camera.h"
 
 Camera::Camera()
-	: m_CameraPosition({10.0f, 5.0f, -8.0f})
+	: m_CameraPosition({0.0f, 2.0f, -3.0f})
 {
 	m_ProjectionMatrix = glm::perspective(glm::radians(45.0f), (float)800 / (float)600, 0.1f, 100.0f);
 	m_ViewMatrix = glm::lookAt(m_CameraPosition, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));

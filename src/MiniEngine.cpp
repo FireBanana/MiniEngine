@@ -21,13 +21,46 @@ int main(void)
 
 	Shader standardShader(DIR "/shaders/vertex.vs", DIR "/shaders/fragment.fs");
 
-	Object cube(standardShader, Constants::Primitives::CubeVertices, 36, { 3, 3, 2 });
-	Object plane(standardShader, Constants::Primitives::PlaneVertices, 6, { 3, 3, 2 });
+	#pragma region CALCULATE_TANGENTS_FOR_CUBE
 
-	plane.Translate(0.0f, -1.0f, 0.0f);
-	plane.Scale(20.0f, 1.0f, 20.0f);
+	for(int i = 0 ; i < Constants::Primitives::CubeVertices.size(); i += 3)
+	{
+		auto& vArray = Constants::Primitives::CubeVertices;
+		auto& v0 = vArray[i  ];
+		auto& v1 = vArray[i+1];
+		auto& v2 = vArray[i+2];
 
-	Light directionalLight{ glm::vec3(5.0f, 1.0f, 5.0f) };
+		auto edge1 = v1.position - v0.position;
+		auto edge2 = v2.position - v0.position;
+
+		auto deltaU1 = v1.texCoords.x - v0.texCoords.x;
+		auto deltaV1 = v1.texCoords.y - v0.texCoords.y;
+		auto deltaU2 = v2.texCoords.x - v0.texCoords.x;
+		auto deltaV2 = v2.texCoords.y - v0.texCoords.y;
+
+		auto f = 1.0f / ( deltaU1 * deltaV2 - deltaU2 * deltaV1 );
+
+		auto tangent = glm::vec3
+		{
+			f * (deltaV2 * edge1.x - deltaV1 * edge2.x),
+			f * (deltaV2 * edge1.y - deltaV1 * edge2.y),
+			f * (deltaV2 * edge1.z - deltaV1 * edge2.z)
+		};
+
+		v0.tangent = normalize(tangent);
+		v1.tangent = normalize(tangent);
+		v2.tangent = normalize(tangent);
+	}
+
+	#pragma endregion
+
+	Object cube(standardShader, Constants::Primitives::CubeVertices, 36, { 3, 3, 2, 3 });
+	//Object plane(standardShader, Constants::Primitives::PlaneVertices, 6, { 3, 3, 2 });
+
+	//plane.Translate(0.0f, -1.0f, 0.0f);
+	//plane.Scale(20.0f, 1.0f, 20.0f);
+
+	Light directionalLight{ glm::vec3(5.0f, 5.0f, 5.0f) };
 
 	directionalLight.m_ModelMatrix = glm::translate(glm::mat4(1.0f), directionalLight.m_Position);
 	glm::mat4 lightView = glm::lookAt(directionalLight.m_Position, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -35,6 +68,7 @@ int main(void)
 	directionalLight.m_VPMatrix = lightProjection * lightView;
 
 	ShadowSettings shadowSettings(directionalLight);
+	standardShader.SetUniform_i("shadowMap", 0);
 
 	UniformGLData::Get().RegisterShader(standardShader, "Matrices");
 
@@ -61,18 +95,18 @@ int main(void)
 
 	glEnable(GL_DEPTH_TEST);
 
-	renderer.AddObject(plane);
+	//renderer.AddObject(plane);
 	renderer.AddObject(cube);
 	renderer.AddLight(directionalLight);
 
 	//Move to uniform?
-	standardShader.SetUniform_f3("camPos", cam.m_CameraPosition.x, cam.m_CameraPosition.y, cam.m_CameraPosition.z);
+	standardShader.SetUniform_f3("camPos", cam.m_CameraPosition.x, cam.m_CameraPosition.y, cam.m_CameraPosition.z);	
 
-	standardShader.SetUniform_i("shadowMap", 0);	
-
-	cube.AddTexture("");
-
+	cube.AddTexture(R"(C:\Users\Arthur\Desktop\WoodFloor051_1K-JPG\WoodFloor051_1K_Color.jpg)", GL_TEXTURE1);
 	standardShader.SetUniform_i("textureMap", 1);
+
+	cube.AddTexture(R"(C:\Users\Arthur\Desktop\normal.jpg)", GL_TEXTURE2);
+	standardShader.SetUniform_i("normalMap", 2);
 
 	while (!glfwWindowShouldClose(ini.m_Window))
 	{
@@ -86,7 +120,7 @@ int main(void)
 
 		renderer.Render(cam, standardShader);
 
-		cube.Rotate(0, 0.87f * time.GetDeltaTime(), 0);
+		cube.Rotate(0.87f * time.GetDeltaTime(), 0.2f * time.GetDeltaTime(), 0);
 
 		glfwSwapBuffers(ini.m_Window);
 		glfwPollEvents();

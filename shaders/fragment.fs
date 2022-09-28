@@ -9,13 +9,16 @@ layout (std140) uniform Matrices
 };
 
 uniform vec3 camPos;
+
 uniform sampler2D shadowMap;
 uniform sampler2D textureMap;
+uniform sampler2D normalMap;
 
 in vec3 f_norm;
 in vec3 f_pos;
 in vec2 f_texcoord;
 in vec4 f_posLightSpace;
+in vec3 f_tangent;
 
 out vec4 col;
 
@@ -33,21 +36,32 @@ float check_shadows()
 void main()
 {
     vec3 lightDir = normalize(lightPos - f_pos);
-    float mag = max(dot(lightDir, f_norm), 0.);
 
-    // =========
-    
-    //col = vec4(check_shadows());
-    
     vec3 projCoords = f_posLightSpace.xyz / f_posLightSpace.w;
     projCoords = projCoords * 0.5 + 0.5;
     float closestDepth = texture(shadowMap, projCoords.xy).r;
     float currentDepth = projCoords.z; 
     float bias = max(0.001 * (1.0 - dot(f_norm, lightDir)), 0.0001); 
-    float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
+    float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
 
     if(projCoords.z > 1.0)
         shadow = 0.0;
+
+    vec3 normal = texture(normalMap, f_texcoord*0.3 ).rgb;
+    normal = normalize(normal * 2.0 - 1.0);
+
+    // Tangent calculations
+    vec3 tangent = normalize(f_tangent);
+    tangent = normalize(tangent - dot(tangent, f_norm) * f_norm);
+    vec3 bitangent = cross(tangent, f_norm);
+    mat3 TBN = mat3(tangent, bitangent, f_norm);
+    vec3 newNormal = TBN * normal;
+    newNormal = normalize(newNormal);
+    // col = vec4(newNormal, 1.);
+    // return;
+    //===========================
+
+    float mag = max(dot(lightDir, shadow > 0. ? f_norm : newNormal), 0.);
 
     vec4 shadow4 = vec4(mag + ((1-shadow) * 0.4));
     col = texture(textureMap, f_texcoord) * shadow4;

@@ -4,6 +4,8 @@
 #include <vector>
 #include <numeric>
 
+#include "utils/Constants.h"
+
 template<typename T>
 class Buffer
 {
@@ -11,19 +13,19 @@ public:
 
 	Buffer(unsigned int bufferType);
 
-	void Bind();
+	void Bind() const;
 	void PushData(std::vector<T>& data, std::vector<int>&& attribSizes);
-	void AllocateData(size_t sz);
+	void AllocateData(size_t sz) const;
 
 	inline unsigned int GetId() { return m_Id; }
 
 private:
 
-	void SetAttribPointer(std::vector<T>& data, int size, int stride);
+	void SetAttribPointer(int size, int stride);
 
 	int m_CurrentIndex;
 
-	unsigned int m_Id;	
+	unsigned int m_Id;
 	unsigned int m_BufferType;
 	unsigned int m_Offset;
 
@@ -46,8 +48,8 @@ Buffer<T>::Buffer(unsigned int bufferType)
 }
 
 template<typename T>
-void Buffer<T>::Bind()
-{	
+void Buffer<T>::Bind() const
+{
 	if (m_BufferType == 0)
 		glBindVertexArray(m_Id);
 	else
@@ -55,7 +57,7 @@ void Buffer<T>::Bind()
 }
 
 template<typename T>
-void Buffer<T>::AllocateData(size_t sz)
+void Buffer<T>::AllocateData(size_t sz) const
 {
 	glBufferData(m_BufferType, sz, nullptr, GL_STATIC_DRAW);
 }
@@ -69,18 +71,19 @@ void Buffer<T>::PushData(std::vector<T>& data, std::vector<int>&& attribSizes)
 
 	glBufferData(m_BufferType, sizeof(T) * data.size(), &data[0], GL_STATIC_DRAW);
 
-	int stride = std::accumulate(attribSizes.begin(), attribSizes.end(), 0);
+	const int stride = std::accumulate(attribSizes.begin(), attribSizes.end(), 0);
 
 	for (auto size : attribSizes)
 	{
-		SetAttribPointer(data, size, stride);		
+		SetAttribPointer(size, stride);
 		m_Offset += size;
 	}
 }
 
 template<typename T>
-void Buffer<T>::SetAttribPointer(std::vector<T>& data, int size, int stride)
-{	
+void Buffer<T>::SetAttribPointer(int size, int stride)
+{
 	glVertexAttribPointer(++m_CurrentIndex, size, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)(m_Offset * sizeof(float)));
 	glEnableVertexAttribArray(m_CurrentIndex);
+
 }
