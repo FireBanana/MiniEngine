@@ -12,6 +12,7 @@ public:
 	ShadowSettings(Light light);
 
 	void ShadowPass(Renderer* renderer, Camera* camera);
+	void BindTexture() const;
 
 private:
 

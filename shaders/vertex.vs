@@ -3,6 +3,7 @@
 layout (location = 0) in vec3 pos;
 layout (location = 1) in vec3 norm;
 layout (location = 2) in vec2 texcoord;
+layout (location = 3) in vec3 tangent;
 
 layout (std140) uniform Matrices
 {
@@ -16,6 +17,7 @@ out vec3 f_norm;
 out vec3 f_pos;
 out vec2 f_texcoord;
 out vec4 f_posLightSpace;
+out vec3 f_tangent;
 
 uniform mat4 model;
 
@@ -25,5 +27,6 @@ void main()
     f_texcoord = texcoord;
     f_pos = vec3(model * vec4(pos, 1.0));
     f_posLightSpace = lightvp * vec4(f_pos, 1.0);
+    f_tangent = mat3(projection*view*model) * tangent;
     gl_Position = projection * view * model * vec4(pos, 1.0);
 }
