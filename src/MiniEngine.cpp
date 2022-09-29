@@ -22,43 +22,78 @@ int main(void)
 	Shader standardShader(DIR "/shaders/vertex.vs", DIR "/shaders/fragment.fs");
 
 	#pragma region CALCULATE_TANGENTS_FOR_CUBE
-
-	for(int i = 0 ; i < Constants::Primitives::CubeVertices.size(); i += 3)
 	{
-		auto& vArray = Constants::Primitives::CubeVertices;
-		auto& v0 = vArray[i  ];
-		auto& v1 = vArray[i+1];
-		auto& v2 = vArray[i+2];
-
-		auto edge1 = v1.position - v0.position;
-		auto edge2 = v2.position - v0.position;
-
-		auto deltaU1 = v1.texCoords.x - v0.texCoords.x;
-		auto deltaV1 = v1.texCoords.y - v0.texCoords.y;
-		auto deltaU2 = v2.texCoords.x - v0.texCoords.x;
-		auto deltaV2 = v2.texCoords.y - v0.texCoords.y;
-
-		auto f = 1.0f / ( deltaU1 * deltaV2 - deltaU2 * deltaV1 );
-
-		auto tangent = glm::vec3
+		for (int i = 0; i < Constants::Primitives::CubeVertices.size(); i += 3)
 		{
-			f * (deltaV2 * edge1.x - deltaV1 * edge2.x),
-			f * (deltaV2 * edge1.y - deltaV1 * edge2.y),
-			f * (deltaV2 * edge1.z - deltaV1 * edge2.z)
-		};
+			auto& vArray = Constants::Primitives::CubeVertices;
+			auto& v0 = vArray[i];
+			auto& v1 = vArray[i + 1];
+			auto& v2 = vArray[i + 2];
 
-		v0.tangent = normalize(tangent);
-		v1.tangent = normalize(tangent);
-		v2.tangent = normalize(tangent);
+			auto edge1 = v1.position - v0.position;
+			auto edge2 = v2.position - v0.position;
+
+			auto deltaU1 = v1.texCoords.x - v0.texCoords.x;
+			auto deltaV1 = v1.texCoords.y - v0.texCoords.y;
+			auto deltaU2 = v2.texCoords.x - v0.texCoords.x;
+			auto deltaV2 = v2.texCoords.y - v0.texCoords.y;
+
+			auto f = 1.0f / (deltaU1 * deltaV2 - deltaU2 * deltaV1);
+
+			auto tangent = glm::vec3
+			{
+				f * (deltaV2 * edge1.x - deltaV1 * edge2.x),
+				f * (deltaV2 * edge1.y - deltaV1 * edge2.y),
+				f * (deltaV2 * edge1.z - deltaV1 * edge2.z)
+			};
+
+			v0.tangent = normalize(tangent);
+			v1.tangent = normalize(tangent);
+			v2.tangent = normalize(tangent);
+		}
+	}
+	#pragma endregion
+	
+	#pragma region CALCULATE_TANGENTS_FOR_PLANE
+
+	{
+		for (int i = 0; i < Constants::Primitives::PlaneVertices.size(); i += 3)
+		{
+			auto& vArray = Constants::Primitives::PlaneVertices;
+			auto& v0 = vArray[i];
+			auto& v1 = vArray[i + 1];
+			auto& v2 = vArray[i + 2];
+
+			auto edge1 = v1.position - v0.position;
+			auto edge2 = v2.position - v0.position;
+
+			auto deltaU1 = v1.texCoords.x - v0.texCoords.x;
+			auto deltaV1 = v1.texCoords.y - v0.texCoords.y;
+			auto deltaU2 = v2.texCoords.x - v0.texCoords.x;
+			auto deltaV2 = v2.texCoords.y - v0.texCoords.y;
+
+			auto f = 1.0f / (deltaU1 * deltaV2 - deltaU2 * deltaV1);
+
+			auto tangent = glm::vec3
+			{
+				f * (deltaV2 * edge1.x - deltaV1 * edge2.x),
+				f * (deltaV2 * edge1.y - deltaV1 * edge2.y),
+				f * (deltaV2 * edge1.z - deltaV1 * edge2.z)
+			};
+
+			v0.tangent = normalize(tangent);
+			v1.tangent = normalize(tangent);
+			v2.tangent = normalize(tangent);
+		}
 	}
 
 	#pragma endregion
 
-	Object cube(standardShader, Constants::Primitives::CubeVertices, 36, { 3, 3, 2, 3 });
-	//Object plane(standardShader, Constants::Primitives::PlaneVertices, 6, { 3, 3, 2 });
+	Object cube(standardShader, Constants::Primitives::CubeVertices, 36, { 3, 3, 2, 3 }); //TODO add auto attrib deduction
+	Object plane(standardShader, Constants::Primitives::PlaneVertices, 6, { 3, 3, 2, 3 });
 
-	//plane.Translate(0.0f, -1.0f, 0.0f);
-	//plane.Scale(20.0f, 1.0f, 20.0f);
+	plane.Translate(0.0f, -1.0f, 0.0f);
+	plane.Scale(2.0f, 1.0f, 2.0f);
 
 	Light directionalLight{ glm::vec3(5.0f, 5.0f, 5.0f) };
 
@@ -95,7 +130,7 @@ int main(void)
 
 	glEnable(GL_DEPTH_TEST);
 
-	//renderer.AddObject(plane);
+	renderer.AddObject(plane);
 	renderer.AddObject(cube);
 	renderer.AddLight(directionalLight);
 
@@ -121,6 +156,7 @@ int main(void)
 		renderer.Render(cam, standardShader);
 
 		cube.Rotate(0.87f * time.GetDeltaTime(), 0.0f, 0);
+		plane.Rotate(0.0f, 0.87f * time.GetDeltaTime(), 0.0f);
 
 		glfwSwapBuffers(ini.m_Window);
 		glfwPollEvents();

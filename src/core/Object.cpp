@@ -30,7 +30,6 @@ void Object::Draw(Camera camera, Shader& shader)
 	m_VertexArray.Bind();
 	m_Shader.SetUniform_m("model", m_ModelMatrix, shader);
 
-	// TODO Fix
 	glDrawArrays(GL_TRIANGLES, 0, m_TriangleCount);
 }
 
