@@ -1,5 +1,7 @@
 #include "Initializer.h"
 #include <iostream>
+#include "utils/Constants.h"
+
 
 Initializer::Initializer()
 {
@@ -29,4 +31,6 @@ Initializer::Initializer()
 
     glViewport(0, 0, 800, 600);
     glClearColor(0.1f, 0.3f, 0.7f, 1.0f);
+
+    Constants::Primitives::Initialize();
 }

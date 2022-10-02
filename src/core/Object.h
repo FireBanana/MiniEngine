@@ -13,7 +13,7 @@ class Object : public IMoveable, public IDrawable
 {
 public:
 
-	Object(Shader s, std::vector<Constants::Vertex> vertices, int triangleCount, std::vector<int>&& attribSizes);
+	Object(Shader s, std::vector<Constants::Vertex>& vertices, int triangleCount, std::vector<int>&& attribSizes);
 
 	void Draw(Camera camera) override;
 	void Draw(Camera camera, Shader& shader); //Add to drawable

@@ -39,12 +39,12 @@ void ShadowSettings::ShadowPass(Renderer* renderer, Camera* camera)
 	glUniformMatrix4fv(
 		glGetUniformLocation(m_ShadowShader.GetShaderId(), "viewprojection"),
 		1, GL_FALSE,
-		glm::value_ptr(m_Light.m_VPMatrix));
+		glm::value_ptr(m_Light.GetVPMatrix()));
 
 	glUniformMatrix4fv(
 		glGetUniformLocation(m_ShadowShader.GetShaderId(), "model"),
 		1, GL_FALSE,
-		glm::value_ptr(m_Light.m_ModelMatrix));
+		glm::value_ptr(m_Light.GetModelMatrix()));
 
 	renderer->Render(*camera, m_ShadowShader);
 

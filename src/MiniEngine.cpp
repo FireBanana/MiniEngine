@@ -9,32 +9,25 @@
 #include "core/Renderer.h"
 #include "core/UniformGLData.h"
 #include "core/Time.h"
-#include "core/utils/Constants.h"
 #include "core/ShadowSettings.h"
+#include "core/utils/Constants.h"
  
 int main(void)
 {
+	Light directionalLight{glm::vec3(5.0f, 5.0f, 5.0f)};
+
 	Initializer	   ini;
 	Renderer	   renderer;
 	Camera		   cam;
 	Time		   time;
-
+	
 	Shader standardShader(DIR "/shaders/vertex.vs", DIR "/shaders/fragment.fs");
-
-	Constants::Primitives::Initialize();
 
 	Object cube(standardShader, Constants::Primitives::CubeVertices, 36, { 3, 3, 2, 3 }); //TODO add auto attrib deduction
 	Object plane(standardShader, Constants::Primitives::PlaneVertices, 6, { 3, 3, 2, 3 });
 
 	plane.Translate(0.0f, -1.0f, 0.0f);
 	plane.Scale(2.0f, 1.0f, 2.0f);
-
-	Light directionalLight{ glm::vec3(5.0f, 5.0f, 5.0f) };
-
-	directionalLight.m_ModelMatrix = glm::translate(glm::mat4(1.0f), directionalLight.m_Position);
-	glm::mat4 lightView = glm::lookAt(directionalLight.m_Position, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 lightProjection = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, 0.1f, 100.0f);
-	directionalLight.m_VPMatrix = lightProjection * lightView;
 
 	ShadowSettings shadowSettings(directionalLight);
 	standardShader.SetUniform_i("shadowMap", 0);
@@ -44,7 +37,7 @@ int main(void)
 	UniformGLData::Get()
 		.UpdateBufferData(
 			offsetof(UniformGLData::BufferStructure, UniformGLData::BufferStructure::lightPos),
-			sizeof(directionalLight.m_Position), glm::value_ptr(directionalLight.m_Position)
+			sizeof(directionalLight.GetVPMatrix()), glm::value_ptr(directionalLight.GetPosition())
 		);
 	UniformGLData::Get()
 		.UpdateBufferData(
@@ -59,7 +52,7 @@ int main(void)
 	UniformGLData::Get()
 		.UpdateBufferData(
 			offsetof(UniformGLData::BufferStructure, UniformGLData::BufferStructure::lightvp),
-			sizeof(directionalLight.m_VPMatrix), glm::value_ptr(directionalLight.m_VPMatrix)
+			sizeof(directionalLight.GetVPMatrix()), glm::value_ptr(directionalLight.GetVPMatrix())
 		);
 
 	glEnable(GL_DEPTH_TEST);

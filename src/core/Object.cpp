@@ -6,7 +6,7 @@
 #include <gtc/type_ptr.hpp>
 
 
-Object::Object(Shader s, std::vector<Constants::Vertex> vertices, int triangleCount, std::vector<int>&& attribSizes)
+Object::Object(Shader s, std::vector<Constants::Vertex>& vertices, int triangleCount, std::vector<int>&& attribSizes)
 	: m_Shader(s), m_Vertices(vertices), m_TriangleCount(triangleCount), m_VertexBuffer(GL_ARRAY_BUFFER),
 	m_VertexArray(0)
 {	
