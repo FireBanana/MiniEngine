@@ -7,3 +7,4 @@ To-Do List:
 - [ ] Deal with raw pointers -> smart pointers
 - [ ] Improve constness of program
 - [x] Add libraries as submodules
+- [ ] Update and remove forward declarations

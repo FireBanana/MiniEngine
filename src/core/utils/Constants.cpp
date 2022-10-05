@@ -60,7 +60,8 @@ void Primitives::Initialize()
 {
 #pragma region CALCULATE_TANGENTS_FOR_CUBE
   {
-    for (int i = 0; i < CubeVertices.size(); i += 3) {
+    for (int i = 0; i < CubeVertices.size(); i += 3) 
+    {
       auto &vArray = CubeVertices;
       auto &v0 = const_cast<Vertex &>(vArray[i]);
       auto &v1 = const_cast<Vertex &>(vArray[i + 1]);
@@ -89,7 +90,8 @@ void Primitives::Initialize()
 
 #pragma region CALCULATE_TANGENTS_FOR_PLANE
   {
-    for (int i = 0; i < PlaneVertices.size(); i += 3) {
+    for (int i = 0; i < PlaneVertices.size(); i += 3) 
+    {
       auto &vArray = PlaneVertices;
       auto &v0 = const_cast<Vertex &>(vArray[i]);
       auto &v1 = const_cast<Vertex &>(vArray[i + 1]);

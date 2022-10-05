@@ -1,11 +1,12 @@
-#include "ShadowSettings.h"
+#include "ShadowMapper.h"
+#include "Renderer.h"
 
 #include <glad/glad.h>
 #include <glm.hpp>
 #include <gtc/type_ptr.hpp>
 
-ShadowSettings::ShadowSettings(Light light) 
-	: m_ShadowShader(DIR "/shaders/shadow.vs", DIR "/shaders/shadow.fs"), m_Light(light)
+ShadowMapper::ShadowMapper() 
+	: m_ShadowShader(DIR "/shaders/shadow.vs", DIR "/shaders/shadow.fs")
 {
 	glGenFramebuffers(1, &m_ShadowBuffer);
 
@@ -28,8 +29,7 @@ ShadowSettings::ShadowSettings(Light light)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void ShadowSettings::ShadowPass(Renderer* renderer, Camera* camera)
-{
+void ShadowMapper::ShadowPass(Renderer *renderer, Camera *camera, Light *light) {
 	m_ShadowShader.Use();
 	BindTexture();
 
@@ -39,19 +39,18 @@ void ShadowSettings::ShadowPass(Renderer* renderer, Camera* camera)
 	glUniformMatrix4fv(
 		glGetUniformLocation(m_ShadowShader.GetShaderId(), "viewprojection"),
 		1, GL_FALSE,
-		glm::value_ptr(m_Light.GetVPMatrix()));
+		glm::value_ptr(light->GetVPMatrix()));
 
 	glUniformMatrix4fv(
 		glGetUniformLocation(m_ShadowShader.GetShaderId(), "model"),
-		1, GL_FALSE,
-		glm::value_ptr(m_Light.GetModelMatrix()));
+		1, GL_FALSE, glm::value_ptr(light->GetModelMatrix()));
 
 	renderer->Render(*camera, m_ShadowShader);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void ShadowSettings::BindTexture() const
+void ShadowMapper::BindTexture() const
 {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_ShadowMapId);

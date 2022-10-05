@@ -27,6 +27,6 @@ void main()
     f_texcoord = texcoord;
     f_pos = vec3(model * vec4(pos, 1.0));
     f_posLightSpace = lightvp * vec4(f_pos, 1.0);
-    f_tangent = mat3(projection*view*model) * tangent;
+    f_tangent = mat3(transpose(inverse(model))) * tangent;
     gl_Position = projection * view * model * vec4(pos, 1.0);
 }

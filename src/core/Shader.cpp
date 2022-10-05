@@ -1,4 +1,5 @@
 #include "Shader.h"
+#include "Types.h"
 
 #include<sstream>
 #include <fstream>
@@ -52,6 +53,8 @@ Shader::Shader(const char* vPath, const char* fPath)
 	glDeleteShader(fragment);
 
 	glUseProgram(m_Id);
+
+	SetDefaultMapLocations();
 }
 
 void Shader::SetUniform_f(std::string name, float value)
@@ -92,6 +95,15 @@ void Shader::SetUniform_i(std::string name, int value)
 
 	unsigned int location = glGetUniformLocation(m_Id, name.c_str());
 	glUniform1i(location, value);
+}
+
+void Shader::SetDefaultMapLocations()
+{
+	//This will run on all shaders, so all shaders will have these maps
+	SetUniform_i("shadowMap", 0);
+	SetUniform_i("textureMap", 1);
+	SetUniform_i("normalMap", 2);
+	SetUniform_i("roughnessMap", 3);
 }
 
 void Shader::CheckShader(unsigned int shader)

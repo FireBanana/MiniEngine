@@ -37,7 +37,7 @@ void main()
 {
     vec3 lightDir = normalize(lightPos - f_pos);
 
-    vec3 normal = texture(normalMap, f_texcoord*0.3 ).rgb;
+    vec3 normal = texture(normalMap, f_texcoord * 1.3 ).rgb;
     normal = normalize(normal * 2.0 - 1.0);
 
     // Tangent calculations
@@ -66,5 +66,5 @@ void main()
     float mag = max(dot(lightDir, newNormal), 0.);
 
     vec4 shadow4 = vec4(mag + ((1-shadow) * 0.4));
-    col = texture(textureMap, f_texcoord * 0.3) * shadow4;
+    col = texture(textureMap, f_texcoord * 1.3) * shadow4;
 }

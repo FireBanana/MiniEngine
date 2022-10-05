@@ -9,12 +9,13 @@
 #include "core/Renderer.h"
 #include "core/UniformGLData.h"
 #include "core/Time.h"
-#include "core/ShadowSettings.h"
+#include "core/ShadowMapper.h"
 #include "core/utils/Constants.h"
+#include "core/Types.h"
  
 int main(void)
 {
-	Light directionalLight{glm::vec3(5.0f, 5.0f, 5.0f)};
+	Light directionalLight{glm::vec3(1.0f, 1.0f, 1.0f)};
 
 	Initializer	   ini;
 	Renderer	   renderer;
@@ -29,33 +30,33 @@ int main(void)
 	plane.Translate(0.0f, -1.0f, 0.0f);
 	plane.Scale(2.0f, 1.0f, 2.0f);
 
-	ShadowSettings shadowSettings(directionalLight);
-	standardShader.SetUniform_i("shadowMap", 0);
-
-	UniformGLData::Get().RegisterShader(standardShader, "Matrices");
-
-	UniformGLData::Get()
-		.UpdateBufferData(
-			offsetof(UniformGLData::BufferStructure, UniformGLData::BufferStructure::lightPos),
-			sizeof(directionalLight.GetVPMatrix()), glm::value_ptr(directionalLight.GetPosition())
-		);
-	UniformGLData::Get()
-		.UpdateBufferData(
-			offsetof(UniformGLData::BufferStructure, UniformGLData::BufferStructure::projection),
-			sizeof(cam.m_ProjectionMatrix), glm::value_ptr(cam.m_ProjectionMatrix)
-		);
-	UniformGLData::Get()
-		.UpdateBufferData(
-			offsetof(UniformGLData::BufferStructure, UniformGLData::BufferStructure::view),
-			sizeof(cam.m_ViewMatrix), glm::value_ptr(cam.m_ViewMatrix)
-		);
-	UniformGLData::Get()
-		.UpdateBufferData(
-			offsetof(UniformGLData::BufferStructure, UniformGLData::BufferStructure::lightvp),
-			sizeof(directionalLight.GetVPMatrix()), glm::value_ptr(directionalLight.GetVPMatrix())
-		);
-
-	glEnable(GL_DEPTH_TEST);
+	UniformGLData uniformDataObject{ standardShader, "Matrices", 
+		{
+			{ 
+				offsetof(UniformGLData::BufferStructure, UniformGLData::BufferStructure::lightPos),
+				sizeof(directionalLight.GetVPMatrix()),
+				glm::value_ptr(directionalLight.GetPosition())
+			},
+			
+			{ 
+				offsetof(UniformGLData::BufferStructure, UniformGLData::BufferStructure::projection),
+				sizeof(cam.m_ProjectionMatrix),
+				glm::value_ptr(cam.m_ProjectionMatrix)
+			},
+			
+			{ 
+				offsetof(UniformGLData::BufferStructure, UniformGLData::BufferStructure::view),
+				sizeof(cam.m_ViewMatrix),
+				glm::value_ptr(cam.m_ViewMatrix)
+			},
+			
+			{ 
+				offsetof(UniformGLData::BufferStructure, UniformGLData::BufferStructure::lightvp),
+				sizeof(directionalLight.GetVPMatrix()),
+				glm::value_ptr(directionalLight.GetVPMatrix())
+			}
+		} 
+	};
 
 	renderer.AddObject(plane);
 	renderer.AddObject(cube);
@@ -64,17 +65,14 @@ int main(void)
 	//Move to uniform?
 	standardShader.SetUniform_f3("camPos", cam.m_CameraPosition.x, cam.m_CameraPosition.y, cam.m_CameraPosition.z);	
 
-	cube.AddTexture(R"(..\assets\color.jpg)", GL_TEXTURE1);
-	standardShader.SetUniform_i("textureMap", 1);
-
-	cube.AddTexture(R"(..\assets\normal.jpg)", GL_TEXTURE2);
-	standardShader.SetUniform_i("normalMap", 2);
+	cube.AddTexture(R"(..\assets\color.jpg)", ShaderTextureType::DIFFUSE_MAP);
+	cube.AddTexture(R"(..\assets\normal.jpg)", ShaderTextureType::NORMAL_MAP);
 
 	while (!glfwWindowShouldClose(ini.m_Window))
 	{
 		time.Update(glfwGetTime());
 
-		shadowSettings.ShadowPass(&renderer, &cam);
+		renderer.ShadowPass(&renderer, &cam, &directionalLight);
 
 		standardShader.Use();
 

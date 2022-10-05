@@ -14,16 +14,31 @@ public:
 		glm::vec3 lightPos;
 	};
 
-	static UniformGLData& Get()
+	struct UniformBufferTemplate
 	{
-		static UniformGLData u;
-		return u;
-	}
+		unsigned int offset;
+		float		 size;
+		void*		 data;
+	};
 
-	void RegisterShader(Shader& shader, std::string name)
+	UniformGLData(Shader& shader, const char* uniformName, std::initializer_list<UniformBufferTemplate> data)
+		: m_MatrixUniformBuffer(GL_UNIFORM_BUFFER)
 	{
 		m_MatrixUniformBuffer.Bind();
-		unsigned int id = glGetUniformBlockIndex(shader.GetShaderId(), name.c_str());
+		m_MatrixUniformBuffer.AllocateData(512);
+		
+		RegisterShader(shader, uniformName);
+	
+		for (auto ptr : data)
+		{
+			UpdateBufferData(ptr.offset, ptr.size, ptr.data);
+		}
+	}
+
+	void RegisterShader(Shader& shader, const char* name)
+	{
+		m_MatrixUniformBuffer.Bind();
+		unsigned int id = glGetUniformBlockIndex(shader.GetShaderId(), name);
 		glUniformBlockBinding(shader.GetShaderId(), id, 1);
 		glBindBufferRange(GL_UNIFORM_BUFFER, 1, m_MatrixUniformBuffer.GetId(), 0, 512);		
 	}
@@ -37,10 +52,4 @@ public:
 private: 
 
 	Buffer<float> m_MatrixUniformBuffer;
-
-	UniformGLData() : m_MatrixUniformBuffer(GL_UNIFORM_BUFFER)
-	{
-		m_MatrixUniformBuffer.Bind();
-		m_MatrixUniformBuffer.AllocateData(512);
-	}
 };

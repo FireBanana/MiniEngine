@@ -2,16 +2,17 @@
 
 #include "Shader.h"
 #include "Light.h"
-#include "Renderer.h"
 #include "Camera.h"
 
-class ShadowSettings
+class Renderer; //TODO: remove forward declarations
+
+class ShadowMapper
 {
 public:
 
-	ShadowSettings(Light light);
+	ShadowMapper();
 
-	void ShadowPass(Renderer* renderer, Camera* camera);
+	void ShadowPass(Renderer* renderer, Camera* camera, Light* light);
 	void BindTexture() const;
 
 private:
@@ -20,7 +21,5 @@ private:
 	unsigned int m_ShadowBuffer;
 
 	Shader m_ShadowShader;
-	Light m_Light;
-
 };
 
