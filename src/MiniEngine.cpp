@@ -15,7 +15,7 @@
  
 int main(void)
 {
-	Light directionalLight{glm::vec3(1.0f, 1.0f, 1.0f)};
+	Light directionalLight{glm::vec3(3.0f, 1.0f, 3.0f)};
 
 	Initializer	   ini;
 	Renderer	   renderer;
@@ -80,8 +80,8 @@ int main(void)
 
 		renderer.Render(cam, standardShader);
 
-		cube.Rotate(0.87f * time.GetDeltaTime(), 0.0f, 0);
-		plane.Rotate(0.0f, 0.87f * time.GetDeltaTime(), 0.0f);
+		cube.Rotate(0.27f * time.GetDeltaTime(), 0.0f, 0);
+		plane.Rotate(0.0f, 0.17f * time.GetDeltaTime(), 0.0f);
 
 		glfwSwapBuffers(ini.m_Window);
 		glfwPollEvents();

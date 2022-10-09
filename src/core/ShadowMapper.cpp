@@ -5,6 +5,8 @@
 #include <glm.hpp>
 #include <gtc/type_ptr.hpp>
 
+constexpr unsigned int SHADOW_RESOLUTION = 4096;
+
 ShadowMapper::ShadowMapper() 
 	: m_ShadowShader(DIR "/shaders/shadow.vs", DIR "/shaders/shadow.fs")
 {
@@ -13,7 +15,7 @@ ShadowMapper::ShadowMapper()
 	glGenTextures(1, &m_ShadowMapId);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_ShadowMapId);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 800, 600, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_RESOLUTION, SHADOW_RESOLUTION, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -34,6 +36,7 @@ void ShadowMapper::ShadowPass(Renderer *renderer, Camera *camera, Light *light) 
 	BindTexture();
 
 	glBindFramebuffer(GL_FRAMEBUFFER, m_ShadowBuffer);
+	glViewport(0, 0, SHADOW_RESOLUTION, SHADOW_RESOLUTION);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	glUniformMatrix4fv(
@@ -48,6 +51,7 @@ void ShadowMapper::ShadowPass(Renderer *renderer, Camera *camera, Light *light) 
 	renderer->Render(*camera, m_ShadowShader);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, 800, 600);
 }
 
 void ShadowMapper::BindTexture() const

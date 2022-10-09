@@ -81,9 +81,9 @@ void Primitives::Initialize()
                                f * (deltaV2 * edge1.y - deltaV1 * edge2.y),
                                f * (deltaV2 * edge1.z - deltaV1 * edge2.z)};
 
-      v0.tangent = normalize(tangent);
-      v1.tangent = normalize(tangent);
-      v2.tangent = normalize(tangent);
+      v0.tangent += normalize(tangent);
+      v1.tangent += normalize(tangent);
+      v2.tangent += normalize(tangent);
     }
   }
 #pragma endregion
@@ -111,9 +111,9 @@ void Primitives::Initialize()
                                f * (deltaV2 * edge1.y - deltaV1 * edge2.y),
                                f * (deltaV2 * edge1.z - deltaV1 * edge2.z)};
 
-      v0.tangent = normalize(tangent);
-      v1.tangent = normalize(tangent);
-      v2.tangent = normalize(tangent);
+      v0.tangent += normalize(tangent);
+      v1.tangent += normalize(tangent);
+      v2.tangent += normalize(tangent);
     }
   }
 #pragma endregion
