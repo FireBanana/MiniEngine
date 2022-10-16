@@ -15,7 +15,7 @@
  
 int main(void)
 {
-	Light directionalLight{glm::vec3(3.0f, 1.0f, 3.0f)};
+	Light directionalLight{glm::vec3(0.0f, -1.0f, 0.0f)};
 
 	Initializer	   ini;
 	Renderer	   renderer;
@@ -85,6 +85,7 @@ int main(void)
 
 		glfwSwapBuffers(ini.m_Window);
 		glfwPollEvents();
+
 	}
 
 	glfwTerminate();

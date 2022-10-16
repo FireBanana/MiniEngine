@@ -67,5 +67,4 @@ void main()
 
     vec4 shadow4 = vec4(mag + ((1-shadow) * 0.4));
     col = texture(textureMap, f_texcoord * 0.7) * shadow4;
-    col = vec4(mag,mag,mag, 1.0);
 }
