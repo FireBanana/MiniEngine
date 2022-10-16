@@ -5,6 +5,7 @@
 #include "interfaces/IDrawable.h"
 #include "interfaces/IMoveable.h"
 #include "utils/Constants.h"
+#include "Types.h"
 
 #include <vector>
 #include <glm.hpp>
@@ -13,7 +14,7 @@ class Object : public IMoveable, public IDrawable
 {
 public:
 
-	Object(Shader s, std::vector<Constants::Vertex> vertices, int triangleCount, std::vector<int>&& attribSizes);
+	Object(Shader s, std::vector<Constants::Vertex>& vertices, int triangleCount, std::vector<int>&& attribSizes);
 
 	void Draw(Camera camera) override;
 	void Draw(Camera camera, Shader& shader); //Add to drawable
@@ -21,7 +22,7 @@ public:
 	virtual void Rotate(float x, float y, float z) override;
 	virtual void Scale(float x, float y, float z) override;
 
-	void AddTexture(const char* path, int textureUnit);
+	void AddTexture(const char* path, ShaderTextureType textureType);
 
 private:
 

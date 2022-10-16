@@ -6,7 +6,7 @@
 #include <gtc/type_ptr.hpp>
 
 
-Object::Object(Shader s, std::vector<Constants::Vertex> vertices, int triangleCount, std::vector<int>&& attribSizes)
+Object::Object(Shader s, std::vector<Constants::Vertex>& vertices, int triangleCount, std::vector<int>&& attribSizes)
 	: m_Shader(s), m_Vertices(vertices), m_TriangleCount(triangleCount), m_VertexBuffer(GL_ARRAY_BUFFER),
 	m_VertexArray(0)
 {	
@@ -50,7 +50,7 @@ void Object::Scale(float x, float y, float z)
 	m_ModelMatrix = glm::scale(m_ModelMatrix, glm::vec3(x,y,z));
 }
 
-void Object::AddTexture(const char* path, int textureUnit)
+void Object::AddTexture(const char* path, ShaderTextureType textureType)
 {
 	int width, height, channels;
 
@@ -59,7 +59,7 @@ void Object::AddTexture(const char* path, int textureUnit)
 
 	if (img == nullptr) std::cout << "Error loading image";
 
-	glActiveTexture(textureUnit);
+	glActiveTexture((int)textureType);
 	glGenTextures(1, &m_Texture);
 	glBindTexture(GL_TEXTURE_2D, m_Texture);
 

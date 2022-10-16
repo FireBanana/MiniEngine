@@ -1,6 +1,6 @@
 #include "Renderer.h"
 
-Renderer::Renderer()
+Renderer::Renderer() 
 {
 
 }
@@ -25,4 +25,9 @@ void Renderer::Render(Camera cam, Shader& shader)
 {
 	for (auto& obj : m_ObjectList)
 		obj->Draw(cam, shader);
+}
+
+void Renderer::ShadowPass(Renderer *renderer, Camera *camera, Light *light) 
+{
+	m_ShadowMapper.ShadowPass(renderer, camera, light);
 }

@@ -19,6 +19,8 @@ public:
 	void SetUniform_m(std::string name, glm::mat4& value, Shader& shader);
 	void SetUniform_i(std::string name, int value);
 
+	void SetDefaultMapLocations();
+
 private:
 
 	unsigned int m_Id;

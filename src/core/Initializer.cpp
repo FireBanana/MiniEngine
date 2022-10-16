@@ -1,5 +1,7 @@
 #include "Initializer.h"
 #include <iostream>
+#include "utils/Constants.h"
+
 
 Initializer::Initializer()
 {
@@ -13,7 +15,7 @@ Initializer::Initializer()
         std::cout << "Not inited";
 
     /* Create a windowed mode window and its OpenGL context */
-    m_Window = glfwCreateWindow(800, 600, "OpenGL Boilerplate", NULL, NULL);
+    m_Window = glfwCreateWindow(800, 600, "MiniEngine", NULL, NULL);
     if (!m_Window)
     {
         glfwTerminate();
@@ -29,4 +31,8 @@ Initializer::Initializer()
 
     glViewport(0, 0, 800, 600);
     glClearColor(0.1f, 0.3f, 0.7f, 1.0f);
+
+    glEnable(GL_DEPTH_TEST);
+
+    Constants::Primitives::Initialize();
 }
