@@ -1,4 +1,5 @@
 #include "OpenGLDriver.h"
+#include "../core/utils/FileHelper.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -62,13 +63,25 @@ void OpenGLDriver::setupGlWindowParams(const EngineInitParams& params)
 
 void OpenGLDriver::setupFrameBuffer()
 {
-    GLuint color, depth;
+    GLuint color, depth, position, normal, roughness;
     glCreateFramebuffers(1, &mMainFrameBuffer);
     glCreateRenderbuffers(1, &color);
     glCreateRenderbuffers(1, &depth);
+    glCreateRenderbuffers(1, &position);
+    glCreateRenderbuffers(1, &normal);
+    glCreateRenderbuffers(1, &roughness);
 
     glNamedRenderbufferStorage(color, GL_RGBA16F, mWidth, mHeight);
     glNamedFramebufferRenderbuffer(mMainFrameBuffer, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, color);
+
+    glNamedRenderbufferStorage(position, GL_RGBA16F, mWidth, mHeight);
+    glNamedFramebufferRenderbuffer(mMainFrameBuffer, GL_COLOR_ATTACHMENT1, GL_RENDERBUFFER, position);
+
+    glNamedRenderbufferStorage(normal, GL_RGBA16F, mWidth, mHeight);
+    glNamedFramebufferRenderbuffer(mMainFrameBuffer, GL_COLOR_ATTACHMENT2, GL_RENDERBUFFER, normal);
+
+    glNamedRenderbufferStorage(roughness, GL_RGBA16F, mWidth, mHeight);
+    glNamedFramebufferRenderbuffer(mMainFrameBuffer, GL_COLOR_ATTACHMENT3, GL_RENDERBUFFER, roughness);
 
     glNamedRenderbufferStorage(depth, GL_DEPTH24_STENCIL8, mWidth, mHeight);
     glNamedFramebufferRenderbuffer(mMainFrameBuffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth);
@@ -90,25 +103,26 @@ void OpenGLDriver::setupDebugInfo()
 void OpenGLDriver::draw()
 {
     // Mesh
+
 }
 
 void OpenGLDriver::finalBlit()
 {
-    constexpr GLenum attach[] = { GL_COLOR_ATTACHMENT0, GL_DEPTH_STENCIL_ATTACHMENT };
-
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, mMainFrameBuffer);
 
     glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, mWidth, mHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-    glInvalidateFramebuffer(GL_FRAMEBUFFER, 2, attach);
 }
 
 void OpenGLDriver::beginRenderpass()
 {
+    GLuint attachments[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+
     glEnable(GL_SCISSOR_TEST);
     glScissor(0, 0, mWidth, mHeight);
 
     glBindFramebuffer(GL_FRAMEBUFFER, mMainFrameBuffer);
+    glNamedFramebufferDrawBuffers(mMainFrameBuffer, 4, attachments);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
@@ -116,8 +130,54 @@ void OpenGLDriver::beginRenderpass()
 void OpenGLDriver::endRenderpass()
 {
     glDisable(GL_SCISSOR_TEST);
-
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+GLuint OpenGLDriver::loadShader(const char* path, ShaderType type)
+{
+    auto shaderFile = FileHelper::loadFile(path);
+    auto shaderStr = shaderFile.c_str();
+    auto shaderId = glCreateShader((GLenum)type);
+
+    glShaderSource(shaderId, 1, &shaderStr, nullptr);
+    glCompileShader(shaderId);
+
+    int isCompiled;
+    glGetShaderiv(shaderId, GL_COMPILE_STATUS, &isCompiled);
+
+    if (!isCompiled)
+    {
+        char log[512];
+        glGetShaderInfoLog(shaderId, 512, nullptr, log);
+        std::cout << "Shader compilation error: " << log;
+    }
+
+    return shaderId;
+}
+
+void OpenGLDriver::useShaderProgram(unsigned int program)
+{
+    glUseProgram(program);
+}
+
+unsigned int OpenGLDriver::createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader)
+{
+    auto program = glCreateProgram();
+    glAttachShader(program, vertexShader);
+    glAttachShader(program, fragmentShader);
+    glLinkProgram(program);
+
+    int isCompiled;
+    glGetProgramiv(program, GL_LINK_STATUS, &isCompiled);
+
+    if (!isCompiled)
+    {
+        char log[512];
+        glGetProgramInfoLog(program, 512, nullptr, log);
+        std::cout << "Shader linking error: " << log;
+    }
+
+    return program;
 }
 
 

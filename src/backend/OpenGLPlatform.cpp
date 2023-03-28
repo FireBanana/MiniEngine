@@ -8,6 +8,9 @@ OpenGLPlatform::OpenGLPlatform(const EngineInitParams& params)
 {
     createWindow(params.screenWidth, params.screenHeight);
     createDriver(params);
+
+    mShaderRegistry = { mDriver.get() };
+    mShaderRegistry.loadDeferredShader();
 }
 
 void OpenGLPlatform::createWindow(uint16_t width, uint16_t height)
@@ -45,6 +48,7 @@ void OpenGLPlatform::execute()
     while (!glfwWindowShouldClose(mWindow)) //run separate thread
     {
         mDriver->beginRenderpass();
+        mDriver->draw();
         mDriver->endRenderpass();
         
         mDriver->finalBlit();
@@ -54,13 +58,11 @@ void OpenGLPlatform::execute()
     }
 }
 
-OpenGLDriver* OpenGLPlatform::createDriver(const EngineInitParams& params)
+void OpenGLPlatform::createDriver(const EngineInitParams& params)
 {
     mDriver = std::make_unique<OpenGLDriver>();
 
     mDriver->setupDebugInfo();
     mDriver->setupGlWindowParams(params);
     mDriver->setupFrameBuffer();
-
-    return mDriver.get();
 }

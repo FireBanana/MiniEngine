@@ -1,6 +1,4 @@
 #pragma once
-//#include "../core/VertexBuffer.h"
-//#include "../core/IndexBuffer.h"
 #include "../core/types/EngineTypes.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -8,6 +6,12 @@
 class OpenGLDriver
 {
 public:
+
+	enum class ShaderType : GLenum
+	{
+		VERTEX  = GL_VERTEX_SHADER,
+		FRAGMENT = GL_FRAGMENT_SHADER
+	};
 
 	void setupGlWindowParams(const EngineInitParams& params);
 	void setupFrameBuffer();
@@ -18,6 +22,11 @@ public:
 
 	void beginRenderpass();
 	void endRenderpass();
+
+	unsigned int loadShader(const char* path, ShaderType type);
+	unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader);
+
+	void useShaderProgram(unsigned int program);
 
 private:
 

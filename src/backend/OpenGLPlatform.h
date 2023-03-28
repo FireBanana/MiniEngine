@@ -5,6 +5,7 @@
 #include "OpenGLDriver.h"
 #include "../core/Engine.h"
 #include"../core/utils/Color.h"
+#include"../core/ShaderRegistry.h"
 
 class OpenGLPlatform
 {
@@ -17,9 +18,10 @@ public:
 
 private:
 
-	GLFWwindow* mWindow;
 	std::unique_ptr<OpenGLDriver> mDriver;
+	GLFWwindow*					  mWindow;
+	ShaderRegistry				  mShaderRegistry;
 
 	void createWindow(uint16_t width, uint16_t height);
-	OpenGLDriver* createDriver(const EngineInitParams& params);
+	void createDriver(const EngineInitParams& params);
 };
