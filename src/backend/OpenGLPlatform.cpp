@@ -8,9 +8,6 @@ OpenGLPlatform::OpenGLPlatform(const EngineInitParams& params)
 {
     createWindow(params.screenWidth, params.screenHeight);
     createDriver(params);
-
-    mShaderRegistry = { mDriver.get() };
-    mShaderRegistry.loadDeferredShader();
 }
 
 void OpenGLPlatform::createWindow(uint16_t width, uint16_t height)

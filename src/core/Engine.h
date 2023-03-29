@@ -20,7 +20,10 @@ public:
 
 	void execute();
 
+	inline const ShaderRegistry& getShaderRegistry() const { return mShaderRegistry; }
+
 private:
 
 	std::unique_ptr<OpenGLPlatform> mGlPlatform;	
+	ShaderRegistry				    mShaderRegistry;
 };

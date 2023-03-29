@@ -23,10 +23,10 @@ public:
 	void beginRenderpass();
 	void endRenderpass();
 
-	unsigned int loadShader(const char* path, ShaderType type);
-	unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader);
+	unsigned int loadShader(const char* path, ShaderType type) const;
+	unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader) const;
 
-	void useShaderProgram(unsigned int program);
+	void useShaderProgram(unsigned int program) const;
 
 private:
 

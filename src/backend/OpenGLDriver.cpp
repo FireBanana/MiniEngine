@@ -133,7 +133,7 @@ void OpenGLDriver::endRenderpass()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-GLuint OpenGLDriver::loadShader(const char* path, ShaderType type)
+GLuint OpenGLDriver::loadShader(const char* path, ShaderType type) const
 {
     auto shaderFile = FileHelper::loadFile(path);
     auto shaderStr = shaderFile.c_str();
@@ -155,12 +155,12 @@ GLuint OpenGLDriver::loadShader(const char* path, ShaderType type)
     return shaderId;
 }
 
-void OpenGLDriver::useShaderProgram(unsigned int program)
+void OpenGLDriver::useShaderProgram(unsigned int program) const
 {
     glUseProgram(program);
 }
 
-unsigned int OpenGLDriver::createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader)
+unsigned int OpenGLDriver::createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader) const
 {
     auto program = glCreateProgram();
     glAttachShader(program, vertexShader);

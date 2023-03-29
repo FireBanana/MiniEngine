@@ -7,7 +7,7 @@ class Shader
 public:
 
 	Shader() {}
-	Shader(unsigned int program, OpenGLDriver* driver);
+	Shader(unsigned int program, const OpenGLDriver* driver);
 
 	void enable();
 	void disable();
@@ -15,5 +15,5 @@ public:
 private:
 
 	unsigned int mShaderId;
-	OpenGLDriver* mDriver;
+	const OpenGLDriver* mDriver;
 };

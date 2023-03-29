@@ -15,12 +15,13 @@ public:
 
 	void makeCurrent();
 	void execute();
+	
+	inline const OpenGLDriver* const getDriver() const { return mDriver.get(); }
 
 private:
 
 	std::unique_ptr<OpenGLDriver> mDriver;
 	GLFWwindow*					  mWindow;
-	ShaderRegistry				  mShaderRegistry;
 
 	void createWindow(uint16_t width, uint16_t height);
 	void createDriver(const EngineInitParams& params);

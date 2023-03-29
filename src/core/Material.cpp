@@ -3,4 +3,5 @@
 Material::Material(const Shader& shader) :
 	mShader(shader)
 {
+
 }

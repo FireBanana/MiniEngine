@@ -1,7 +1,7 @@
 #include "ShaderRegistry.h"
 #include "../backend/OpenGLDriver.h"
 
-ShaderRegistry::ShaderRegistry(OpenGLDriver* driver)
+ShaderRegistry::ShaderRegistry(const OpenGLDriver* driver)
 	: mDriver(driver)
 {
 }

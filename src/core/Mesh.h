@@ -12,15 +12,20 @@ public:
 	{
 	public:
 
-		Builder() = delete;
+		Builder(Mesh& m) : mMesh(m) {}
 		Builder(const Builder&) = delete;
 		Builder operator=(const Builder&) = delete;
 		Builder(const Builder&&) = delete;
 		Builder operator=(const Builder&&) = delete;
 
-		static void addVertices();
-		static void addIndices();
-		static void assignVertexArrayObject();
+		Builder& addVertices(std::initializer_list<float>&& vertices);
+		Builder& addIndices(std::initializer_list<float>&& vertices);
+
+		Mesh& build();
+
+	private:
+
+		Mesh& mMesh;
 	};
 
 private:
