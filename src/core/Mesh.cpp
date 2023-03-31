@@ -1,21 +1,16 @@
 #include "Mesh.h"
 
-Mesh::Mesh()
-{
-
-}
-
 Mesh::Builder& Mesh::Builder::addVertices(std::initializer_list<float>&& vertices)
 {
-	// TODO: insert return statement here
+	return *this;
 }
 
 Mesh::Builder& Mesh::Builder::addIndices(std::initializer_list<float>&& vertices)
 {
-	// TODO: insert return statement here
+	return *this;
 }
 
-Mesh& Mesh::Builder::build()
+Mesh* Mesh::Builder::build(Engine* engine, Entity* entity)
 {
-	return Mesh();
+	return mMesh;
 }

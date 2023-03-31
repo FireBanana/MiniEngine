@@ -4,8 +4,12 @@
 #include <GLFW/glfw3.h>
 #include "../backend/OpenGLPlatform.h"
 #include "utils/Color.h"
+#include "Entity.h"
 
+class Mesh;
+class Material;
 class OpenGLPlatform;
+
 
 class Engine
 {
@@ -20,10 +24,12 @@ public:
 
 	void execute();
 
-	inline const ShaderRegistry& getShaderRegistry() const { return mShaderRegistry; }
+	Entity* createEntity();
+
+	inline const ShaderRegistry* getShaderRegistry() const { return mShaderRegistry.get(); }
 
 private:
 
 	std::unique_ptr<OpenGLPlatform> mGlPlatform;	
-	ShaderRegistry				    mShaderRegistry;
+	std::unique_ptr<ShaderRegistry> mShaderRegistry;
 };

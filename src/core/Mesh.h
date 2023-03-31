@@ -2,17 +2,23 @@
 #include "Entity.h"
 #include <vector>
 
+class Engine;
+
 class Mesh
 {
 public:
 
-	Mesh();
+	Mesh() = delete;
+	Mesh(const Mesh&) = delete;
+	Mesh operator=(const Mesh&) = delete;
+	Mesh(const Mesh&&) = delete;
+	Mesh operator=(const Mesh&&) = delete;
 
 	class Builder
 	{
 	public:
 
-		Builder(Mesh& m) : mMesh(m) {}
+		Builder() { /* Create in mesh reginstry or something */ mMesh = {}; }
 		Builder(const Builder&) = delete;
 		Builder operator=(const Builder&) = delete;
 		Builder(const Builder&&) = delete;
@@ -21,11 +27,11 @@ public:
 		Builder& addVertices(std::initializer_list<float>&& vertices);
 		Builder& addIndices(std::initializer_list<float>&& vertices);
 
-		Mesh& build();
+		Mesh* build(Engine* engine, Entity* entity);
 
 	private:
 
-		Mesh& mMesh;
+		Mesh* mMesh;
 	};
 
 private:

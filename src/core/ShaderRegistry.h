@@ -10,16 +10,15 @@ class ShaderRegistry
 {
 public:
 
-	ShaderRegistry() {};
 	ShaderRegistry(const OpenGLDriver* driver);
 
 	void loadDeferredShader();
-	inline Shader getDeferredShader() const noexcept{ return mDefaultShader; }
+	inline const Shader* getDeferredShader() const noexcept{ return mDefaultShader; }
 
 private:
 
 	const OpenGLDriver* mDriver;
+	Shader* mDefaultShader;
 
-	Shader mDefaultShader;
-
+	void createShader(unsigned int program, const OpenGLDriver* driver);
 };

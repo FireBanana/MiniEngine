@@ -1,7 +1,11 @@
 #include "Material.h"
 
-Material::Material(const Shader& shader) :
-	mShader(shader)
+Material::Builder& Material::Builder::setShader(const Shader* shader)
 {
+	return *this;
+}
 
+Material* Material::Builder::build(Engine* engine, Entity* entity)
+{
+	return mMaterial;
 }

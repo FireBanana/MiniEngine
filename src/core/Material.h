@@ -2,12 +2,40 @@
 
 #include "Shader.h"
 
+class Engine;
+class Entity;
+class Shader;
+
 class Material
 {
 public:
 
-	Material(const Shader& shader);
-	inline const Shader& getShader() const noexcept { return mShader; }
+	Material() = delete;
+	Material(const Material&) = delete;
+	Material operator=(const Material&) = delete;
+	Material(const Material&&) = delete;
+	Material operator=(const Material&&) = delete;
+
+	inline const Shader* getShader() const noexcept { return mShader; }
+
+	class Builder
+	{
+	public:
+
+		Builder() { mMaterial = {}; }
+		Builder(const Builder&) = delete;
+		Builder operator=(const Builder&) = delete;
+		Builder(const Builder&&) = delete;
+		Builder operator=(const Builder&&) = delete;
+
+		Builder& setShader(const Shader* shader);
+
+		Material* build( Engine* engine, Entity* entity );
+
+	private:
+
+		Material* mMaterial;
+	};
 
 	void setCullMode();
 	void setTexture();
@@ -17,6 +45,6 @@ public:
 private:
 
 	//Entity* mEntity;
-	Shader mShader;
+	Shader* mShader;  // move data out of decl
 
 };

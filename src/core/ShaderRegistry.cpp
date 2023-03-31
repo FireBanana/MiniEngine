@@ -4,6 +4,7 @@
 ShaderRegistry::ShaderRegistry(const OpenGLDriver* driver)
 	: mDriver(driver)
 {
+	
 }
 
 void ShaderRegistry::loadDeferredShader()
@@ -12,6 +13,11 @@ void ShaderRegistry::loadDeferredShader()
 	auto fragmentShader = mDriver->loadShader(DEFERRED_FRAGMENT_PATH, OpenGLDriver::ShaderType::FRAGMENT);
 	auto shader = mDriver->createShaderProgram(vertexShader, fragmentShader);
 
-	mDefaultShader = { shader, mDriver };
+	createShader(shader, mDriver);
+}
+
+void ShaderRegistry::createShader(unsigned int program, const OpenGLDriver* driver)
+{
+	Shader s{ program, driver };
 }
 
