@@ -7,11 +7,12 @@ Engine::Engine(const EngineInitParams& params)
 	mShaderRegistry = std::make_unique<ShaderRegistry>(mGlPlatform->getDriver());
 
 	mShaderRegistry->loadDeferredShader();
+	mShaderRegistry->getDeferredShader()->enable();
 }
 
 void Engine::execute()
 {
-	mGlPlatform->execute();
+	mGlPlatform->execute(this);
 }
 
 Entity* Engine::createEntity()

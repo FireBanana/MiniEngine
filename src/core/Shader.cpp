@@ -6,12 +6,12 @@ Shader::Shader(unsigned int program, const OpenGLDriver* driver) :
 
 }
 
-void Shader::enable()
+void Shader::enable() const
 {
 	mDriver->useShaderProgram(mShaderId);
 }
 
-void Shader::disable()
+void Shader::disable() const
 {
 	mDriver->useShaderProgram(0);
 }

@@ -6,6 +6,8 @@
 #include"../core/utils/Color.h"
 #include"../core/ShaderRegistry.h"
 
+class Engine;
+
 class OpenGLPlatform
 {
 public:
@@ -13,7 +15,7 @@ public:
 	OpenGLPlatform(const EngineInitParams& params);
 
 	void makeCurrent();
-	void execute();
+	void execute(Engine* engine);
 	
 	inline const OpenGLDriver* const getDriver() const { return mDriver.get(); }
 

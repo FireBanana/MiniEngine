@@ -102,26 +102,46 @@ void OpenGLDriver::setupDebugInfo()
 
 void OpenGLDriver::draw()
 {
-    // Mesh
-    const float vert[] =
+    static bool once = false;
+
+    static unsigned int vao, vbo, ebo;
+
+    if (!once)
     {
-        -0.5f, -0.5f,
-        -0.5f, 0.5f,
-        0.5f, 0.5f,
-        0.5f, -0.5f
-    };
+        once = true;
 
-    unsigned int vao, vbo;
-    glCreateVertexArrays(1, &vao);
-    glCreateBuffers(1, &vbo);
+        constexpr float screen_coords[] =
+        {
+            -0.5f, -0.5f,
+            -0.5f, 0.5f,
+            0.5f, 0.5f,
+            0.5f, -0.5f
+        };
 
+        constexpr unsigned int screen_indices[] =
+        {
+            0, 1, 2,
+            0, 2, 3
+        };
+
+        glCreateVertexArrays(1, &vao);
+        glCreateBuffers(1, &vbo);
+        glCreateBuffers(1, &ebo);
+
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+
+        glNamedBufferData(vbo, sizeof(screen_coords), screen_coords, GL_STATIC_DRAW);
+        glNamedBufferData(ebo, sizeof(screen_indices), screen_indices, GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    }
     glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glNamedBufferData(vbo, sizeof(vert), vert, GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0); 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2, nullptr);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
 void OpenGLDriver::finalBlit()

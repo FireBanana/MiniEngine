@@ -1,8 +1,9 @@
 #include "ShaderRegistry.h"
 #include "../backend/OpenGLDriver.h"
+#include <algorithm>
 
 ShaderRegistry::ShaderRegistry(const OpenGLDriver* driver)
-	: mDriver(driver)
+	: mDriver(driver), mShaderTable()
 {
 	
 }
@@ -18,6 +19,6 @@ void ShaderRegistry::loadDeferredShader()
 
 void ShaderRegistry::createShader(unsigned int program, const OpenGLDriver* driver)
 {
-	Shader s{ program, driver };
+	mShaderTable.push_back(Shader{ program, driver });
 }
 

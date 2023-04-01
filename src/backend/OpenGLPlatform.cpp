@@ -40,7 +40,7 @@ void OpenGLPlatform::makeCurrent()
     glfwMakeContextCurrent(mWindow);
 }
 
-void OpenGLPlatform::execute()
+void OpenGLPlatform::execute(Engine* engine)
 {
     while (!glfwWindowShouldClose(mWindow)) //run separate thread
     {

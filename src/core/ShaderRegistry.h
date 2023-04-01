@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include "../backend/OpenGLDriver.h"
 #include "Shader.h"
 
@@ -13,12 +14,12 @@ public:
 	ShaderRegistry(const OpenGLDriver* driver);
 
 	void loadDeferredShader();
-	inline const Shader* getDeferredShader() const noexcept{ return mDefaultShader; }
+	inline const Shader* getDeferredShader() const noexcept { return &mShaderTable[0]; }
 
 private:
 
-	const OpenGLDriver* mDriver;
-	Shader* mDefaultShader;
+	std::vector<Shader> mShaderTable;
 
+	const OpenGLDriver* mDriver;
 	void createShader(unsigned int program, const OpenGLDriver* driver);
 };

@@ -11,11 +11,11 @@ public:
 	Shader() = delete;
 	Shader(const Shader&) = delete;
 	Shader operator=(const Shader&) = delete;
-	Shader(const Shader&&) = delete;
-	Shader operator=(const Shader&&) = delete;
+	Shader(Shader&&) = default;
+	Shader& operator=(Shader&&) = default;
 
-	void enable();
-	void disable();
+	void enable() const;
+	void disable() const;
 
 private:
 
