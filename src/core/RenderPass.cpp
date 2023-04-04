@@ -4,12 +4,12 @@ RenderPass::RenderPass()
 {
 }
 
-void RenderPass::setGeometry(const Mesh& mesh)
+void RenderPass::setGeometry(const Mesh* mesh)
 {
-	mMesh = &mesh;
+	mMesh = mesh;
 }
 
-void RenderPass::setMaterial(const Material& material)
+void RenderPass::setMaterial(const Material* material)
 {
-	mMaterial = &material;
+	mMaterial = material;
 }

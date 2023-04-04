@@ -9,8 +9,8 @@ public:
 
 	RenderPass();
 
-	void setGeometry(const Mesh& mesh);
-	void setMaterial(const Material& material);
+	void setGeometry(const Mesh* mesh);
+	void setMaterial(const Material* material);
 
 private:
 

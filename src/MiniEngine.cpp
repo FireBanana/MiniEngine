@@ -1,19 +1,23 @@
 #include "core/Engine.h"
 #include "core/Mesh.h"
 #include "core/Material.h"
+#include "core/RenderPass.h"
+#include "core/Scene.h"
 
 int main(void)
 {
 	EngineInitParams params;
 	params.screenWidth = 800;
-	params.screenHeight = 800;
+	params.screenHeight = 500;
 	params.clearColor = { 0.2f, 0.6f, 0.5f, 1.0f };
 
 	Engine engine{ params };
 
 	auto entity = engine.createEntity();
 
-	auto mesh = Mesh::Builder()
+	auto scene = Scene{};
+
+	Mesh::Builder()
 		.addVertices(
 			{ 
 				-0.5f, -0.5f,
@@ -32,5 +36,7 @@ int main(void)
 		.setShader(engine.getShaderRegistry()->getDeferredShader())
 		.build(&engine, entity);
 
-	engine.execute();
+	scene.addEntity(entity);
+
+	engine.execute(); //move to separate thread
 }

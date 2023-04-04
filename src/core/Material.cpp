@@ -7,5 +7,5 @@ Material::Builder& Material::Builder::setShader(const Shader* shader)
 
 Material* Material::Builder::build(Engine* engine, Entity* entity)
 {
-	return mMaterial;
+	return {};
 }

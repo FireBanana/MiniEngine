@@ -13,4 +13,12 @@ struct EngineInitParams
 	Color clearColor;
 };
 
+struct Vector3
+{
+public:
+
+	float x, y, z;
+
+};
+
 #endif

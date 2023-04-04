@@ -22,7 +22,7 @@ public:
 	{
 	public:
 
-		Builder() { mMaterial = {}; }
+		Builder() { }
 		Builder(const Builder&) = delete;
 		Builder operator=(const Builder&) = delete;
 		Builder(const Builder&&) = delete;
@@ -34,7 +34,6 @@ public:
 
 	private:
 
-		Material* mMaterial;
 	};
 
 	void setCullMode();

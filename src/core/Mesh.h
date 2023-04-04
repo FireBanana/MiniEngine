@@ -1,8 +1,8 @@
 #pragma once
-#include "Entity.h"
 #include <vector>
 
 class Engine;
+class Entity;
 
 class Mesh
 {
@@ -14,24 +14,38 @@ public:
 	Mesh(const Mesh&&) = delete;
 	Mesh operator=(const Mesh&&) = delete;
 
+	class BuilderResults
+	{
+	public:
+
+		BuilderResults(std::vector<float>& verts, std::vector<unsigned int> indices) : 
+			mVertices(std::move(verts)), mIndices(std::move(indices))
+		{}
+
+		std::vector<float> mVertices;
+		std::vector<unsigned int> mIndices;
+	};
+
 	class Builder
 	{
 	public:
 
-		Builder() { /* Create in mesh reginstry or something */ mMesh = {}; }
+		Builder() { }
 		Builder(const Builder&) = delete;
 		Builder operator=(const Builder&) = delete;
 		Builder(const Builder&&) = delete;
 		Builder operator=(const Builder&&) = delete;
 
 		Builder& addVertices(std::initializer_list<float>&& vertices);
-		Builder& addIndices(std::initializer_list<float>&& vertices);
+		Builder& addIndices(std::initializer_list<unsigned int>&& indices);
 
-		Mesh* build(Engine* engine, Entity* entity);
+		void build(Engine* engine, Entity* entity);
 
 	private:
 
-		Mesh* mMesh;
+		std::vector<float> mVertices;
+		std::vector<unsigned int> mIndices;
+
 	};
 
 private:
