@@ -1,7 +1,9 @@
 #pragma once
 
-#include "types/EngineTypes.h"
 #include <GLFW/glfw3.h>
+#include <unordered_map>
+#include "types/EngineTypes.h"
+#include "Entity.h"
 #include "../backend/OpenGLPlatform.h"
 #include "../components/MeshComponent.h"
 #include "utils/Color.h"
@@ -29,6 +31,7 @@ public:
 	void createMaterial(const Material::Builder* builder, Entity* entity);
 
 	inline const ShaderRegistry* getShaderRegistry() const { return mShaderRegistry.get(); }
+	inline const std::vector<MeshComponent>* getMeshComponentDatabase() const { return &mMeshComponentDatabase; }
 
 private:
 
@@ -36,5 +39,6 @@ private:
 	std::unique_ptr<ShaderRegistry> mShaderRegistry;
 
 	std::vector<Entity> mEntityDatabase;
-	std::vector<MeshComponent> mMeshDatabase;
+
+	std::vector<MeshComponent> mMeshComponentDatabase;
 };

@@ -8,6 +8,6 @@ class MeshComponent : public Component
 public:
 
 	std::vector<float>	  vertices;
-	std::vector<unsigned> indices;
+	std::vector<unsigned int> indices;
 
 };

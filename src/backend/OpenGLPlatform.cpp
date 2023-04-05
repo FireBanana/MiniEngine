@@ -45,7 +45,7 @@ void OpenGLPlatform::execute(Engine* engine)
     while (!glfwWindowShouldClose(mWindow)) //run separate thread
     {
         mDriver->beginRenderpass();
-        mDriver->draw();
+        mDriver->draw(engine);
         mDriver->endRenderpass();
         
         mDriver->finalBlit();

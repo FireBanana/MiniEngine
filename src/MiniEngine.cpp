@@ -20,7 +20,7 @@ int main(void)
 	Mesh::Builder()
 		.addVertices(
 			{ 
-				-0.5f, -0.5f,
+				-1.5f, -1.5f,
 				-0.5f, 0.5f,
 				0.5f, 0.5f,
 				0.5f, -0.5f
@@ -28,7 +28,7 @@ int main(void)
 		.addIndices(
 			{
 				0, 1, 2,
-				2, 3, 0
+				0, 2, 3
 			})
 		.build(&engine, entity);
 

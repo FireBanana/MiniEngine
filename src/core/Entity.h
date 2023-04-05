@@ -1,19 +1,16 @@
 #pragma once
 #include <cstdint>
+#include <bitset>
 
 class Entity
 {
 
 public:
 
-	Entity(uint32_t id) { mId = id; }
-	Entity(Entity const& rhs) = delete;
-	Entity(Entity&& rhs) = delete;
-
-	inline uint32_t getId() const noexcept { return mId; }
-	inline uint32_t setId(uint32_t id) noexcept { mId = id; }
+	Entity() {  }
+	Entity(Entity& rhs) = delete;
+	Entity(Entity&& rhs) = default;
 
 private:
-
-	uint32_t mId;
+	static uint32_t mId;
 };

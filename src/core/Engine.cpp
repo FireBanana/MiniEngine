@@ -18,10 +18,16 @@ void Engine::execute()
 
 Entity* Engine::createEntity()
 {
-	return nullptr;
+	mEntityDatabase.push_back(Entity{});
+	return &(mEntityDatabase.back());
 }
 
 void Engine::createMesh(const Mesh::BuilderResults& builderResults, Entity* entity)
 {
-	
+	MeshComponent m{};
+	m.entityHandle = entity;
+	m.vertices = builderResults.mVertices;
+	m.indices = builderResults.mIndices;
+
+	mMeshComponentDatabase.push_back(std::move(m));
 }

@@ -1,5 +1,6 @@
 #include "OpenGLDriver.h"
 #include "../core/utils/FileHelper.h"
+#include "../core/Engine.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -100,7 +101,7 @@ void OpenGLDriver::setupDebugInfo()
     glDebugMessageCallback(debugCallback, nullptr);
 }
 
-void OpenGLDriver::draw()
+void OpenGLDriver::draw(Engine* engine)
 {
     static bool once = false;
 
@@ -110,19 +111,7 @@ void OpenGLDriver::draw()
     {
         once = true;
 
-        constexpr float screen_coords[] =
-        {
-            -0.5f, -0.5f,
-            -0.5f, 0.5f,
-            0.5f, 0.5f,
-            0.5f, -0.5f
-        };
-
-        constexpr unsigned int screen_indices[] =
-        {
-            0, 1, 2,
-            0, 2, 3
-        };
+        auto db = engine->getMeshComponentDatabase();
 
         glCreateVertexArrays(1, &vao);
         glCreateBuffers(1, &vbo);
@@ -132,8 +121,8 @@ void OpenGLDriver::draw()
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
-        glNamedBufferData(vbo, sizeof(screen_coords), screen_coords, GL_STATIC_DRAW);
-        glNamedBufferData(ebo, sizeof(screen_indices), screen_indices, GL_STATIC_DRAW);
+        glNamedBufferData(vbo, sizeof(db->at(0).vertices), db->at(0).vertices.data(), GL_STATIC_DRAW);
+        glNamedBufferData(ebo, sizeof(db->at(0).indices), db->at(0).indices.data(), GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);

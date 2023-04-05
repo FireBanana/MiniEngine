@@ -4,6 +4,6 @@ class Component
 {
 public:
 
-	void* entityHandle;
+	Entity* entityHandle;
 
 };

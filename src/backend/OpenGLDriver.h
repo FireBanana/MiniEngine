@@ -3,6 +3,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+class Engine; //remove
+
 class OpenGLDriver
 {
 public:
@@ -17,7 +19,7 @@ public:
 	void setupFrameBuffer();
 	void setupDebugInfo();
 
-	void draw();
+	void draw(Engine* engine);
 	void finalBlit();
 
 	void beginRenderpass();
