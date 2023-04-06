@@ -121,8 +121,10 @@ void OpenGLDriver::draw(Engine* engine)
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
-        glNamedBufferData(vbo, sizeof(db->at(0).vertices), db->at(0).vertices.data(), GL_STATIC_DRAW);
-        glNamedBufferData(ebo, sizeof(db->at(0).indices), db->at(0).indices.data(), GL_STATIC_DRAW);
+        glNamedBufferData(
+            vbo, db->at(0).vertices.size() * sizeof(float), db->at(0).vertices.data(), GL_STATIC_DRAW);
+        glNamedBufferData(
+            ebo, db->at(0).indices.size() * sizeof(unsigned int), db->at(0).indices.data(), GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
