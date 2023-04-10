@@ -7,7 +7,8 @@ class MeshComponent : public Component
 {
 public:
 
-	std::vector<float>	  vertices;
+	std::vector<float>		  buffer;
 	std::vector<unsigned int> indices;
-
+	std::vector<unsigned int> attributes;
+	unsigned int			  stride;
 };

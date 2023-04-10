@@ -6,37 +6,34 @@
 
 int main(void)
 {
-	EngineInitParams params;
+	EngineInitParams params{};
 	params.screenWidth = 800;
 	params.screenHeight = 500;
 	params.clearColor = { 0.2f, 0.6f, 0.5f, 1.0f };
 
 	Engine engine{ params };
 
-	auto entity = engine.createEntity();
-
 	auto scene = Scene{};
+	auto entity = scene.createEntity();
 
 	Mesh::Builder()
-		.addVertices(
+		.addBufferData(
 			{ 
-				-1.5f, -1.5f,
-				-0.5f, 0.5f,
-				0.5f, 0.5f,
-				0.5f, -0.5f
+				-1.0f, -1.0f, 0.0f, 0.0f,
+				-1.0f, 1.0f,  0.0f, 1.0f,
+				1.0f, 1.0f,   1.0f, 1.0f,
+				1.0f, -1.0f,  1.0f, 0.0f
 			})
 		.addIndices(
 			{
 				0, 1, 2,
 				0, 2, 3
 			})
-		.build(&engine, entity);
+		.addBufferAttributes({2, 2})
+		.build(&scene, entity);
 
 	auto material = Material::Builder()
-		.setShader(engine.getShaderRegistry()->getDeferredShader())
 		.build(&engine, entity);
 
-	scene.addEntity(entity);
-
-	engine.execute(); //move to separate thread
+	engine.execute(&scene); //move to separate thread
 }

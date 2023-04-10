@@ -28,8 +28,6 @@ public:
 		Builder(const Builder&&) = delete;
 		Builder operator=(const Builder&&) = delete;
 
-		Builder& setShader(const Shader* shader);
-
 		Material* build( Engine* engine, Entity* entity );
 
 	private:

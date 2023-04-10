@@ -3,6 +3,7 @@
 
 class Engine;
 class Entity;
+class Scene;
 
 class Mesh
 {
@@ -14,18 +15,6 @@ public:
 	Mesh(const Mesh&&) = delete;
 	Mesh operator=(const Mesh&&) = delete;
 
-	class BuilderResults
-	{
-	public:
-
-		BuilderResults(std::vector<float>& verts, std::vector<unsigned int> indices) : 
-			mVertices(std::move(verts)), mIndices(std::move(indices))
-		{}
-
-		std::vector<float> mVertices;
-		std::vector<unsigned int> mIndices;
-	};
-
 	class Builder
 	{
 	public:
@@ -36,22 +25,23 @@ public:
 		Builder(const Builder&&) = delete;
 		Builder operator=(const Builder&&) = delete;
 
-		Builder& addVertices(std::initializer_list<float>&& vertices);
+		Builder& addBufferData(std::initializer_list<float>&& buffer);
+		Builder& addBufferAttributes(std::initializer_list<unsigned int>&& attributes);
 		Builder& addIndices(std::initializer_list<unsigned int>&& indices);
+		Builder& isLit(bool isLit);
 
-		void build(Engine* engine, Entity* entity);
+		void build(Scene* scene, Entity* entity);
+
+		inline const std::vector<float>& getBuffer() const { return mBuffer; }
+		inline const std::vector<unsigned int>& getIndices() const { return mIndices; }
+		inline const std::vector<unsigned int>& getAttributes() const { return mAttributes; }
 
 	private:
 
-		std::vector<float> mVertices;
+		std::vector<float> mBuffer;
 		std::vector<unsigned int> mIndices;
-
+		std::vector<unsigned int> mAttributes;
+		bool mIsLit;
 	};
 
-private:
-
-	Entity* mEntity;
-
-	std::vector<float> mVertices;
-	std::vector<int> mIndices;
 };

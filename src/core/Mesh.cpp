@@ -1,9 +1,16 @@
 #include "Mesh.h"
 #include "Engine.h"
+#include "Scene.h"
 
-Mesh::Builder& Mesh::Builder::addVertices(std::initializer_list<float>&& vertices)
+Mesh::Builder& Mesh::Builder::addBufferData(std::initializer_list<float>&& buffer)
 {
-	mVertices = std::move(vertices);
+	mBuffer = std::move(buffer);
+	return *this;
+}
+
+Mesh::Builder& Mesh::Builder::addBufferAttributes(std::initializer_list<unsigned int>&& attributes)
+{
+	mAttributes = std::move(attributes);
 	return *this;
 }
 
@@ -13,8 +20,13 @@ Mesh::Builder& Mesh::Builder::addIndices(std::initializer_list<unsigned int>&& i
 	return *this;
 }
 
-void Mesh::Builder::build(Engine* engine, Entity* entity)
+Mesh::Builder& Mesh::Builder::isLit(bool isLit)
 {
-	auto details = BuilderResults{ this->mVertices, this->mIndices };
-	engine->createMesh(details, entity);
+	mIsLit = isLit;
+	return *this;
+}
+
+void Mesh::Builder::build(Scene* scene, Entity* entity)
+{
+	scene->createMesh(this, entity);
 }

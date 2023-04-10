@@ -11,23 +11,9 @@ Engine::Engine(const EngineInitParams& params)
 	mShaderRegistry->getDeferredShader()->enable();
 }
 
-void Engine::execute()
+void Engine::execute(Scene* scene)
 {
-	mGlPlatform->execute(this);
+	mGlPlatform->execute(scene);
 }
 
-Entity* Engine::createEntity()
-{
-	mEntityDatabase.push_back(Entity{});
-	return &(mEntityDatabase.back());
-}
 
-void Engine::createMesh(const Mesh::BuilderResults& builderResults, Entity* entity)
-{
-	MeshComponent m{};
-	m.entityHandle = entity;
-	m.vertices = builderResults.mVertices;
-	m.indices = builderResults.mIndices;
-
-	mMeshComponentDatabase.push_back(std::move(m));
-}

@@ -7,10 +7,11 @@ class Entity
 
 public:
 
-	Entity() {  }
+	Entity() : mId(idIncrement++) {  }
 	Entity(Entity& rhs) = delete;
 	Entity(Entity&& rhs) = default;
 
 private:
-	static uint32_t mId;
+	static uint32_t idIncrement;
+	uint32_t mId;
 };

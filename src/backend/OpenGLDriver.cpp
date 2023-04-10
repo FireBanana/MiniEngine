@@ -1,6 +1,7 @@
 #include "OpenGLDriver.h"
 #include "../core/utils/FileHelper.h"
-#include "../core/Engine.h"
+#include "../core/Scene.h"
+#include "../components/MeshComponent.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -101,7 +102,7 @@ void OpenGLDriver::setupDebugInfo()
     glDebugMessageCallback(debugCallback, nullptr);
 }
 
-void OpenGLDriver::draw(Engine* engine)
+void OpenGLDriver::draw(Scene* scene)
 {
     static bool once = false;
 
@@ -111,7 +112,7 @@ void OpenGLDriver::draw(Engine* engine)
     {
         once = true;
 
-        auto db = engine->getMeshComponentDatabase();
+        auto db = scene->getMeshComponentDatabase();
 
         glCreateVertexArrays(1, &vao);
         glCreateBuffers(1, &vbo);
@@ -122,12 +123,19 @@ void OpenGLDriver::draw(Engine* engine)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
         glNamedBufferData(
-            vbo, db->at(0).vertices.size() * sizeof(float), db->at(0).vertices.data(), GL_STATIC_DRAW);
+            vbo, db->at(0).buffer.size() * sizeof(float), db->at(0).buffer.data(), GL_STATIC_DRAW);
         glNamedBufferData(
             ebo, db->at(0).indices.size() * sizeof(unsigned int), db->at(0).indices.data(), GL_STATIC_DRAW);
 
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+        int start = 0;
+
+        for (auto i = 0; i < db->at(0).attributes.size(); ++i)
+        {
+            glEnableVertexAttribArray(i);
+            glVertexAttribPointer(i, 2, GL_FLOAT, GL_FALSE, db->at(0).stride * sizeof(float), (void*)(start * sizeof(float)));
+
+            start += db->at(0).attributes[i];
+        }
     }
     glBindVertexArray(vao);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

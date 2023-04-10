@@ -1,5 +1,5 @@
 #include "OpenGLPlatform.h"
-#include "../core/Engine.h"
+#include "../core/Scene.h"
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 #include <iostream>
@@ -40,12 +40,12 @@ void OpenGLPlatform::makeCurrent()
     glfwMakeContextCurrent(mWindow);
 }
 
-void OpenGLPlatform::execute(Engine* engine)
+void OpenGLPlatform::execute(Scene* scene)
 {
     while (!glfwWindowShouldClose(mWindow)) //run separate thread
     {
         mDriver->beginRenderpass();
-        mDriver->draw(engine);
+        mDriver->draw(scene);
         mDriver->endRenderpass();
         
         mDriver->finalBlit();
