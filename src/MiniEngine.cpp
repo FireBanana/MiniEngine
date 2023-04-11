@@ -7,7 +7,7 @@
 int main(void)
 {
 	EngineInitParams params{};
-	params.screenWidth = 800;
+	params.screenWidth = 500;
 	params.screenHeight = 500;
 	params.clearColor = { 0.2f, 0.6f, 0.5f, 1.0f };
 
@@ -19,10 +19,10 @@ int main(void)
 	Mesh::Builder()
 		.addBufferData(
 			{ 
-				-1.0f, -1.0f, 0.0f, 0.0f,
-				-1.0f, 1.0f,  0.0f, 1.0f,
-				1.0f, 1.0f,   1.0f, 1.0f,
-				1.0f, -1.0f,  1.0f, 0.0f
+				-0.0f, -1.0f, 0.0f, 0.0f,
+				-1.0f, 0.0f,  0.0f, 1.0f,
+				0.0f, 1.0f,   1.0f, 1.0f,
+				1.0f, -0.0f,  1.0f, 0.0f
 			})
 		.addIndices(
 			{

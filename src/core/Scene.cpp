@@ -1,6 +1,7 @@
 #include "Scene.h"
 #include "../components/MeshComponent.h"
 #include "Entity.h"
+#include "Camera.h"
 
 Scene::Scene()
 {
@@ -31,4 +32,10 @@ void Scene::createMesh(const Mesh::Builder* builderResults, Entity* entity)
 	m.stride = stride;
 
 	mMeshComponentDatabase.push_back(std::move(m));
+}
+
+void Scene::createCamera(Entity* entity)
+{
+	Camera c{};
+	mCameraComponentDatabase.push_back(std::move(c));
 }
