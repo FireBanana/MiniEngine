@@ -1,7 +1,7 @@
 #include "Scene.h"
 #include "../components/MeshComponent.h"
+#include "../components/CameraComponent.h"
 #include "Entity.h"
-#include "Camera.h"
 
 Scene::Scene()
 {
@@ -34,8 +34,15 @@ void Scene::createMesh(const Mesh::Builder* builderResults, Entity* entity)
 	mMeshComponentDatabase.push_back(std::move(m));
 }
 
-void Scene::createCamera(Entity* entity)
+void Scene::createCamera(const Camera::Builder* builderResults, Entity* entity)
 {
-	Camera c{};
+	CameraComponent c{};
+	c.entityHandle = entity;
+	c.position = builderResults->getPosition();
+	c.aspectRatio = builderResults->getAspectRatio();
+	c.farPlane = builderResults->getFarPlane();
+	c.fov = builderResults->getFov();
+	c.nearPlane = builderResults->getNearPlane();
+
 	mCameraComponentDatabase.push_back(std::move(c));
 }
