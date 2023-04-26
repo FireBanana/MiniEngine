@@ -4,6 +4,7 @@
 class Engine;
 class Entity;
 class Scene;
+class MeshComponent;
 
 class Mesh
 {
@@ -30,7 +31,7 @@ public:
 		Builder& addIndices(std::initializer_list<unsigned int>&& indices);
 		Builder& isLit(bool isLit);
 
-		void build(Scene* scene, Entity* entity);
+		MeshComponent* build(Scene* scene, Entity* entity);
 
 		inline const std::vector<float>& getBuffer() const { return mBuffer; }
 		inline const std::vector<unsigned int>& getIndices() const { return mIndices; }

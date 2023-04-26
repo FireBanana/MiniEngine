@@ -2,10 +2,12 @@
 #include "../core/utils/FileHelper.h"
 #include "../core/Scene.h"
 #include "../components/MeshComponent.h"
+#include "../core/Shader.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <cassert>
 
 void debugCallback(GLenum source, GLenum type, GLuint id,
     GLenum severity, GLsizei length, GLchar const* message, void const* user_param)
@@ -102,45 +104,57 @@ void OpenGLDriver::setupDebugInfo()
     glDebugMessageCallback(debugCallback, nullptr);
 }
 
-void OpenGLDriver::draw(Scene* scene)
+void OpenGLDriver::setupMesh(MeshComponent* component)
 {
-    static bool once = false;
-
-    static unsigned int vao, vbo, ebo;
-
-    if (!once)
+    if (mVaoRegistry.find(component->vaoId) == mVaoRegistry.end())
     {
-        once = true;
-
-        auto db = scene->getMeshComponentDatabase();
-
+        unsigned int vao;
         glCreateVertexArrays(1, &vao);
-        glCreateBuffers(1, &vbo);
-        glCreateBuffers(1, &ebo);
-
         glBindVertexArray(vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-
-        glNamedBufferData(
-            vbo, db->at(0).buffer.size() * sizeof(float), db->at(0).buffer.data(), GL_STATIC_DRAW);
-        glNamedBufferData(
-            ebo, db->at(0).indices.size() * sizeof(unsigned int), db->at(0).indices.data(), GL_STATIC_DRAW);
 
         int start = 0;
 
-        for (auto i = 0; i < db->at(0).attributes.size(); ++i)
+        for (auto i = 0; i < component->attributes.size(); ++i)
         {
             glEnableVertexAttribArray(i);
-            glVertexAttribPointer(i, 2, GL_FLOAT, GL_FALSE, db->at(0).stride * sizeof(float), (void*)(start * sizeof(float)));
+            glVertexAttribPointer(i, 2, GL_FLOAT, GL_FALSE, component->stride * sizeof(float), (void*)(start * sizeof(float)));
 
-            start += db->at(0).attributes[i];
+            start += component->attributes[i];
         }
-    }
-    glBindVertexArray(vao);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        mVaoRegistry.insert({ component->vaoId, vao });
+    }
+    
+    glBindVertexArray(mVaoRegistry[component->vaoId]);
+
+    unsigned int vbo, ebo;
+
+    glCreateBuffers(1, &vbo);
+    glCreateBuffers(1, &ebo);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+
+    glNamedBufferData(
+        vbo, component->buffer.size() * sizeof(float), component->buffer.data(), GL_STATIC_DRAW);
+    glNamedBufferData(
+        ebo, component->indices.size() * sizeof(unsigned int), component->indices.data(), GL_STATIC_DRAW);
+
+    //enable and assign vao
+    //gen/set vertex, index buffer
+}
+
+void OpenGLDriver::draw(Scene* scene)
+{
+    auto db = scene->getMeshComponentDatabase();
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
+    for (auto& component : *db)
+    {
+        glBindVertexArray(mVaoRegistry[component.vaoId]);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    }
 }
 
 void OpenGLDriver::finalBlit()
@@ -195,6 +209,22 @@ GLuint OpenGLDriver::loadShader(const char* path, ShaderType type) const
 void OpenGLDriver::useShaderProgram(unsigned int program) const
 {
     glUseProgram(program);
+}
+
+void OpenGLDriver::registerUniformBlock(const char* blockName, const Shader* program) const
+{
+    auto blockIndex = glGetUniformBlockIndex(program->getShaderProgram(), blockName);
+    glUniformBlockBinding(program->getShaderProgram(), blockIndex, 0); //only 0 binding
+}
+
+void OpenGLDriver::createUniformBlock(Shader* program, size_t dataSize, void* data) const
+{
+    auto indexPtr = program->getUniformBlockBufferPoint();
+
+    glCreateBuffers(1, indexPtr);
+    glBindBuffer(GL_UNIFORM_BUFFER, *indexPtr);
+    glBufferData(GL_UNIFORM_BUFFER, dataSize, data, GL_STATIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, *indexPtr); // only 0 binding
 }
 
 unsigned int OpenGLDriver::createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader) const

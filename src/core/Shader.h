@@ -14,11 +14,15 @@ public:
 	Shader(Shader&&) = default;
 	Shader& operator=(Shader&&) = default;
 
-	void enable() const;
-	void disable() const;
+	inline const unsigned int getShaderProgram() const { return mShaderId; }
+
+	//move these to separate uniformbuffer?}
+	inline unsigned int* getUniformBlockBufferPoint() { return &mUniformBufferIndex; }
 
 private:
 
 	unsigned int mShaderId;
 	const OpenGLDriver* mDriver;
+
+	unsigned int mUniformBufferIndex;
 };

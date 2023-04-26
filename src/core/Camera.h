@@ -4,6 +4,7 @@
 
 class Scene;
 class Entity;
+class CameraComponent;
 
 class Camera
 {
@@ -29,7 +30,7 @@ public:
 		Builder& setAspectRatio(float ratio);
 		Builder& setNearFarPlane(float near, float far);
 
-		void build(Scene* scene, Entity* entity);
+		CameraComponent* build(Scene* scene, Entity* entity);
 
 		inline const Vector3 getPosition() const { return mPosition; }
 		inline const float getFov() const { return mFov; }

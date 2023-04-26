@@ -24,7 +24,7 @@ public:
 
 	void execute(Scene* scene);
 
-	inline const ShaderRegistry* getShaderRegistry() const { return mShaderRegistry.get(); }
+	inline ShaderRegistry* getShaderRegistry() { return mShaderRegistry.get(); }
 
 private:
 

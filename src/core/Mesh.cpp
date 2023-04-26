@@ -26,7 +26,7 @@ Mesh::Builder& Mesh::Builder::isLit(bool isLit)
 	return *this;
 }
 
-void Mesh::Builder::build(Scene* scene, Entity* entity)
+MeshComponent* Mesh::Builder::build(Scene* scene, Entity* entity)
 {
-	scene->createMesh(this, entity);
+	return scene->createMesh(this, entity);
 }

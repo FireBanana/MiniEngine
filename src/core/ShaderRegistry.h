@@ -14,12 +14,17 @@ public:
 	ShaderRegistry(const OpenGLDriver* driver);
 
 	void loadDeferredShader();
-	inline const Shader* getDeferredShader() const noexcept { return &mShaderTable[0]; }
+	inline Shader* getDeferredShader() noexcept { return &mShaderTable[0]; }
+
+	void setActiveUniformBuffer(const char* blockName, size_t dataSize, void* data);
+
+	void enable(Shader* shader);
 
 private:
 
 	std::vector<Shader> mShaderTable;
-
 	const OpenGLDriver* mDriver;
+	Shader* mActiveShader;
+	
 	void createShader(unsigned int program, const OpenGLDriver* driver);
 };

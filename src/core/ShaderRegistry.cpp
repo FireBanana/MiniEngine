@@ -2,6 +2,9 @@
 #include "../backend/OpenGLDriver.h"
 #include <algorithm>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 ShaderRegistry::ShaderRegistry(const OpenGLDriver* driver)
 	: mDriver(driver), mShaderTable()
 {
@@ -15,6 +18,18 @@ void ShaderRegistry::loadDeferredShader()
 	auto shader = mDriver->createShaderProgram(vertexShader, fragmentShader);
 
 	createShader(shader, mDriver);
+}
+
+void ShaderRegistry::setActiveUniformBuffer(const char* blockName, size_t dataSize, void* data)
+{
+	mDriver->createUniformBlock(mActiveShader, dataSize, data);
+	mDriver->registerUniformBlock(blockName, mActiveShader);
+}
+
+void ShaderRegistry::enable(Shader* shader)
+{
+	mDriver->useShaderProgram(shader->getShaderProgram());
+	mActiveShader = shader;
 }
 
 void ShaderRegistry::createShader(unsigned int program, const OpenGLDriver* driver)
