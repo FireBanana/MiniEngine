@@ -38,7 +38,7 @@ MeshComponent* Scene::createMesh(const Mesh::Builder* builderResults, Entity* en
 
 	m.stride = stride;
 
-	//register on dricer
+	mEngine->getOpenGlDriver()->setupMesh(&m);
 
 #endif // USING_OPENGL
 

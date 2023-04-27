@@ -112,16 +112,6 @@ void OpenGLDriver::setupMesh(MeshComponent* component)
         glCreateVertexArrays(1, &vao);
         glBindVertexArray(vao);
 
-        int start = 0;
-
-        for (auto i = 0; i < component->attributes.size(); ++i)
-        {
-            glEnableVertexAttribArray(i);
-            glVertexAttribPointer(i, 2, GL_FLOAT, GL_FALSE, component->stride * sizeof(float), (void*)(start * sizeof(float)));
-
-            start += component->attributes[i];
-        }
-
         mVaoRegistry.insert({ component->vaoId, vao });
     }
     
@@ -132,16 +122,28 @@ void OpenGLDriver::setupMesh(MeshComponent* component)
     glCreateBuffers(1, &vbo);
     glCreateBuffers(1, &ebo);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glVertexArrayVertexBuffer(mVaoRegistry[component->vaoId], 0, vbo, 0, component->stride * sizeof(float));
+    glVertexArrayElementBuffer(mVaoRegistry[component->vaoId], ebo);
+
+    int start = 0;
+
+    for (auto i = 0; i < component->attributes.size(); ++i)
+    {
+        glEnableVertexAttribArray(i);
+        
+        glVertexAttribFormat(i, component->attributes[i], GL_FLOAT, GL_FALSE, (start * sizeof(float)));
+        glVertexAttribBinding(i, 0);
+
+        start += component->attributes[i];
+    }
 
     glNamedBufferData(
         vbo, component->buffer.size() * sizeof(float), component->buffer.data(), GL_STATIC_DRAW);
     glNamedBufferData(
         ebo, component->indices.size() * sizeof(unsigned int), component->indices.data(), GL_STATIC_DRAW);
 
-    //enable and assign vao
-    //gen/set vertex, index buffer
+    component->vertexBufferId = vbo;
+    component->indexBufferId = ebo;
 }
 
 void OpenGLDriver::draw(Scene* scene)
@@ -153,16 +155,19 @@ void OpenGLDriver::draw(Scene* scene)
     for (auto& component : *db)
     {
         glBindVertexArray(mVaoRegistry[component.vaoId]);
+        glBindBuffer(GL_ARRAY_BUFFER, component.vertexBufferId);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, component.indexBufferId);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
 }
 
 void OpenGLDriver::finalBlit()
 {
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, mMainFrameBuffer);
-
-    glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, mWidth, mHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    glBlitNamedFramebuffer(
+        mMainFrameBuffer, 0,
+        0, 0, mWidth, mHeight,
+        0, 0, mWidth, mHeight,
+        GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
 
 void OpenGLDriver::beginRenderpass()

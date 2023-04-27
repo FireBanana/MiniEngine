@@ -17,7 +17,7 @@ public:
 	void makeCurrent();
 	void execute(Scene* scene);
 	
-	inline const OpenGLDriver* const getDriver() const { return mDriver.get(); }
+	inline OpenGLDriver* const getDriver() const { return mDriver.get(); }
 
 private:
 

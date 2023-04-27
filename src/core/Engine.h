@@ -24,7 +24,8 @@ public:
 
 	void execute(Scene* scene);
 
-	inline ShaderRegistry* getShaderRegistry() { return mShaderRegistry.get(); }
+	inline ShaderRegistry* getShaderRegistry() const { return mShaderRegistry.get(); }
+	inline OpenGLDriver* getOpenGlDriver() const { return mGlPlatform.get()->getDriver(); }
 
 private:
 

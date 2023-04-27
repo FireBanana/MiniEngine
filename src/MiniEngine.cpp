@@ -15,6 +15,7 @@ int main(void)
 	auto scene = Scene{ &engine };
 
 	auto meshEntity = scene.createEntity();
+	auto meshEntity2 = scene.createEntity();
 	auto cameraEntity = scene.createEntity();
 
 	Mesh::Builder()
@@ -32,6 +33,22 @@ int main(void)
 			})
 		.addBufferAttributes({ 3, 2 })
 		.build(&scene, meshEntity);
+
+	Mesh::Builder()
+		.addBufferData(
+			{
+				-0.0f, -1.0f, -2.0f, 0.0f, 0.0f,
+				-1.0f, 0.0f, -2.0f,  0.0f, 1.0f,
+				0.0f, 1.0f, -2.0f,   1.0f, 1.0f,
+				1.0f, -0.0f, -2.0f,  1.0f, 0.0f
+			})
+		.addIndices(
+			{
+				0, 1, 2,
+				0, 2, 3
+			})
+		.addBufferAttributes({ 3, 2 })
+		.build(&scene, meshEntity2);
 
 	auto camera = Camera::Builder()
 		.setPosition({ 0,3,-5 })

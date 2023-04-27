@@ -7,7 +7,7 @@ layout (std140, binding = 0) uniform MatrixBlock
 	vec2 offset;
 };
 
-layout (location = 0) in vec2 iPos;
+layout (location = 0) in vec3 iPos;
 layout (location = 1) in vec2 iUv;
 
 out vec2 fUv;
@@ -15,5 +15,5 @@ out vec2 fUv;
 void main()
 {
 	fUv = iUv;
-	gl_Position = projection * view * vec4(iPos, 0.0, 1.0);
+	gl_Position = projection * view * vec4(iPos, 1.0);
 }

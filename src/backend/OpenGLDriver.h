@@ -6,6 +6,7 @@
 
 class Scene; //remove
 class Shader;
+class MeshComponent;
 
 class OpenGLDriver
 {
@@ -15,12 +16,6 @@ public:
 	{
 		VERTEX  = GL_VERTEX_SHADER,
 		FRAGMENT = GL_FRAGMENT_SHADER
-	};
-
-	enum class VertexArrayType
-	{
-		WORLD_OBJECT,
-		UI
 	};
 
 	void setupGlWindowParams(const EngineInitParams& params);
