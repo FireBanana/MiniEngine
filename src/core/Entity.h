@@ -8,8 +8,10 @@ class Entity
 public:
 
 	Entity() : mId(idIncrement++) {  }
-	Entity(Entity& rhs) = delete;
+	Entity(const Entity& rhs) = delete;
+	Entity operator=(Entity&) = delete;
 	Entity(Entity&& rhs) = default;
+	Entity& operator=(Entity&&) = default;
 
 private:
 	static uint32_t idIncrement;

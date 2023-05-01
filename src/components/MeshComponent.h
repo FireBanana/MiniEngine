@@ -12,9 +12,7 @@ public:
 	std::vector<unsigned int> attributes;
 
 #ifdef USING_OPENGL
-	const unsigned int		  vaoId = 1;
-	unsigned int			  vertexBufferId;
-	unsigned int			  indexBufferId;
+	unsigned int			  vaoId;
 	unsigned int			  stride;
 #endif
 };

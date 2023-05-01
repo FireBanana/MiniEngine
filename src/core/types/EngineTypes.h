@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef MINIENGINE_TYPES
-#define MINIENGINE_TYPES
+#ifndef MINIENGINE_TYPES_H
+#define MINIENGINE_TYPES_H
 
 #include <cstdint>
 #include "../utils/Color.h"

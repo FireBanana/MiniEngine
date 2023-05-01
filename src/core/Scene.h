@@ -6,8 +6,11 @@
 #include "../components/MeshComponent.h"
 #include "../components/CameraComponent.h"
 #include "../components/TransformComponent.h"
+#include "Entity.h"
+#include "utils/Span.h"
+#include "utils/ComponentArray.h"
 
-class Entity;
+constexpr size_t MAX_COMPONENT_SIZE = 256;
 
 class Scene
 {
@@ -22,15 +25,15 @@ public:
 
 	void setCameraActive(const CameraComponent* camera);
 
-	inline const std::vector<MeshComponent>* getMeshComponentDatabase() const { return &mMeshComponentDatabase; }
-	inline const std::vector<CameraComponent>* getCameraComponentDatabase() const { return &mCameraComponentDatabase; }
+	inline const auto getMeshComponentDatabase() const { return mMeshComponentDatabase; }
+	inline const auto getCameraComponentDatabase() const { return mCameraComponentDatabase; }
 
 private:
 
 	Engine* mEngine;
 
-	std::vector<Entity>				mEntityDatabase;
-	std::vector<CameraComponent>	mCameraComponentDatabase;
-	std::vector<MeshComponent>		mMeshComponentDatabase;
-	std::vector<TransformComponent> mTransformComponentDatabase;
+	ComponentArray<Entity, MAX_COMPONENT_SIZE>			   mEntityDatabase;
+	ComponentArray<CameraComponent, MAX_COMPONENT_SIZE>	   mCameraComponentDatabase;
+	ComponentArray<MeshComponent, MAX_COMPONENT_SIZE>	   mMeshComponentDatabase;
+	ComponentArray<TransformComponent, MAX_COMPONENT_SIZE> mTransformComponentDatabase;
 };

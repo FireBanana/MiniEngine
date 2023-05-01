@@ -15,8 +15,8 @@ Scene::Scene(Engine* engine) :
 
 Entity* Scene::createEntity()
 {
-	mEntityDatabase.push_back(Entity{});
-	return &(mEntityDatabase.back());
+	mEntityDatabase.push(Entity{});
+	return &(mEntityDatabase.getLast());
 }
 
 MeshComponent* Scene::createMesh(const Mesh::Builder* builderResults, Entity* entity)
@@ -42,8 +42,8 @@ MeshComponent* Scene::createMesh(const Mesh::Builder* builderResults, Entity* en
 
 #endif // USING_OPENGL
 
-	mMeshComponentDatabase.push_back(std::move(m));
-	return &mMeshComponentDatabase.back();
+	mMeshComponentDatabase.push(std::move(m));
+	return &(mMeshComponentDatabase.getLast());
 }
 
 CameraComponent* Scene::createCamera(const Camera::Builder* builderResults, Entity* entity)
@@ -56,8 +56,8 @@ CameraComponent* Scene::createCamera(const Camera::Builder* builderResults, Enti
 	c.fov = builderResults->getFov();
 	c.nearPlane = builderResults->getNearPlane();
 
-	mCameraComponentDatabase.push_back(std::move(c));
-	return &mCameraComponentDatabase.back();
+	mCameraComponentDatabase.push(std::move(c));
+	return &(mCameraComponentDatabase.getLast());
 }
 
 void Scene::setCameraActive(const CameraComponent* camera)

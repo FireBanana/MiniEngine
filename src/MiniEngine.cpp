@@ -17,6 +17,7 @@ int main(void)
 	auto meshEntity = scene.createEntity();
 	auto meshEntity2 = scene.createEntity();
 	auto cameraEntity = scene.createEntity();
+	auto cameraEntity2 = scene.createEntity();
 
 	Mesh::Builder()
 		.addBufferData(
@@ -57,7 +58,14 @@ int main(void)
 		.setFOV(45)
 		.build(&scene, cameraEntity);
 
-	scene.setCameraActive(camera);
+	auto camera2 = Camera::Builder()
+		.setPosition({ 4,4,4 })
+		.setAspectRatio((float)params.screenWidth / (float)params.screenHeight)
+		.setNearFarPlane(0.1f, 1000.0f)
+		.setFOV(45)
+		.build(&scene, cameraEntity2);
+
+	scene.setCameraActive(camera2);
 
 	// std funtion to have input callbacks
 

@@ -43,6 +43,4 @@ private:
 	
 	uint16_t mWidth;
 	uint16_t mHeight;
-
-	std::unordered_map<unsigned int, GLuint> mVaoRegistry;
 };

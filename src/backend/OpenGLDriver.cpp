@@ -106,24 +106,21 @@ void OpenGLDriver::setupDebugInfo()
 
 void OpenGLDriver::setupMesh(MeshComponent* component)
 {
-    if (mVaoRegistry.find(component->vaoId) == mVaoRegistry.end())
-    {
-        unsigned int vao;
-        glCreateVertexArrays(1, &vao);
-        glBindVertexArray(vao);
+    unsigned int vao;
+    glCreateVertexArrays(1, &vao);
+    glBindVertexArray(vao);
 
-        mVaoRegistry.insert({ component->vaoId, vao });
-    }
+    component->vaoId = vao;
     
-    glBindVertexArray(mVaoRegistry[component->vaoId]);
+    glBindVertexArray(vao);
 
     unsigned int vbo, ebo;
 
     glCreateBuffers(1, &vbo);
     glCreateBuffers(1, &ebo);
 
-    glVertexArrayVertexBuffer(mVaoRegistry[component->vaoId], 0, vbo, 0, component->stride * sizeof(float));
-    glVertexArrayElementBuffer(mVaoRegistry[component->vaoId], ebo);
+    glVertexArrayVertexBuffer(vao, 0, vbo, 0, component->stride * sizeof(float));
+    glVertexArrayElementBuffer(vao, ebo);
 
     int start = 0;
 
@@ -141,9 +138,6 @@ void OpenGLDriver::setupMesh(MeshComponent* component)
         vbo, component->buffer.size() * sizeof(float), component->buffer.data(), GL_STATIC_DRAW);
     glNamedBufferData(
         ebo, component->indices.size() * sizeof(unsigned int), component->indices.data(), GL_STATIC_DRAW);
-
-    component->vertexBufferId = vbo;
-    component->indexBufferId = ebo;
 }
 
 void OpenGLDriver::draw(Scene* scene)
@@ -152,12 +146,10 @@ void OpenGLDriver::draw(Scene* scene)
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    for (auto& component : *db)
+    for (int i = 0; i < db.size(); ++i)
     {
-        glBindVertexArray(mVaoRegistry[component.vaoId]);
-        glBindBuffer(GL_ARRAY_BUFFER, component.vertexBufferId);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, component.indexBufferId);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(db[i].vaoId);
+        glDrawElements(GL_TRIANGLES, db[i].indices.size(), GL_UNSIGNED_INT, 0);
     }
 }
 
