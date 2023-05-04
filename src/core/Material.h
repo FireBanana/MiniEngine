@@ -5,6 +5,7 @@
 class Engine;
 class Entity;
 class Shader;
+class Texture;
 
 class Material
 {
@@ -16,8 +17,6 @@ public:
 	Material(const Material&&) = delete;
 	Material operator=(const Material&&) = delete;
 
-	inline const Shader* getShader() const noexcept { return mShader; }
-
 	class Builder
 	{
 	public:
@@ -28,20 +27,14 @@ public:
 		Builder(const Builder&&) = delete;
 		Builder operator=(const Builder&&) = delete;
 
+		Builder& setTexture(Texture* texture);
+		Builder& setFloat(float value);
+
 		Material* build( Engine* engine, Entity* entity );
 
 	private:
 
+		std::vector<Texture*> mTextureReference;
+
 	};
-
-	void setCullMode();
-	void setTexture();
-	void setColor();
-	void setFloat();
-
-private:
-
-	//Entity* mEntity;
-	Shader* mShader;  // move data out of decl
-
 };

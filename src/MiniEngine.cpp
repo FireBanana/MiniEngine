@@ -2,6 +2,7 @@
 #include "core/Mesh.h"
 #include "core/Material.h"
 #include "core/Scene.h"
+#include "core/Texture.h"
 
 int main(void)
 {
@@ -18,6 +19,8 @@ int main(void)
 	auto meshEntity2 = scene.createEntity();
 	auto cameraEntity = scene.createEntity();
 	auto cameraEntity2 = scene.createEntity();
+
+	Texture t{ "C:\\Users\\Arthur\\Desktop\\img.png" };
 
 	Mesh::Builder()
 		.addBufferData(
@@ -67,10 +70,9 @@ int main(void)
 
 	scene.setCameraActive(camera2);
 
-	// std funtion to have input callbacks
+	auto material = Material::Builder();
 
-	/*auto material = Material::Builder()
-		.build(&engine, entity);*/
+	// std funtion to have input callbacks
 
 	engine.execute(&scene); //move to separate thread
 }

@@ -37,6 +37,9 @@ public:
 	void registerUniformBlock(const char* blockName, const Shader* program) const;
 	void createUniformBlock(Shader* program, size_t dataSize, void* data) const;
 
+	unsigned int createTexture(int width, int height, void* data);
+	void bindTextureUnit(unsigned int texId, unsigned int bindUnit);
+
 private:
 
 	GLuint mMainFrameBuffer;

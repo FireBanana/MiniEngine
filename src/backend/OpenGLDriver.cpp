@@ -138,6 +138,8 @@ void OpenGLDriver::setupMesh(MeshComponent* component)
         vbo, component->buffer.size() * sizeof(float), component->buffer.data(), GL_STATIC_DRAW);
     glNamedBufferData(
         ebo, component->indices.size() * sizeof(unsigned int), component->indices.data(), GL_STATIC_DRAW);
+
+    glBindVertexArray(0);
 }
 
 void OpenGLDriver::draw(Scene* scene)
@@ -222,6 +224,20 @@ void OpenGLDriver::createUniformBlock(Shader* program, size_t dataSize, void* da
     glBindBuffer(GL_UNIFORM_BUFFER, *indexPtr);
     glBufferData(GL_UNIFORM_BUFFER, dataSize, data, GL_STATIC_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, *indexPtr); // only 0 binding
+}
+
+unsigned int OpenGLDriver::createTexture(int width, int height, void* data)
+{
+    GLuint tex;
+    glCreateTextures(GL_TEXTURE_2D, 1, &tex);
+    glTextureStorage2D(tex, 1, GL_RGBA32F, width, height);
+    glTextureSubImage2D(tex, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    return tex;
+}
+
+void OpenGLDriver::bindTextureUnit(unsigned int texId, unsigned int bindUnit)
+{
+    glBindTextureUnit(bindUnit, texId);
 }
 
 unsigned int OpenGLDriver::createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader) const
