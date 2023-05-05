@@ -12,3 +12,8 @@ Texture::Texture(const char* path)
 
 	stbi_image_free(img);
 }
+
+void Texture::free()
+{
+	// free img
+}

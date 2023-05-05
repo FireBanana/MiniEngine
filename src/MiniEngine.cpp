@@ -1,5 +1,5 @@
 #include "core/Engine.h"
-#include "core/Mesh.h"
+#include "core/Renderable.h"
 #include "core/Material.h"
 #include "core/Scene.h"
 #include "core/Texture.h"
@@ -20,9 +20,10 @@ int main(void)
 	auto cameraEntity = scene.createEntity();
 	auto cameraEntity2 = scene.createEntity();
 
-	Texture t{ "C:\\Users\\Arthur\\Desktop\\img.png" };
+	Texture texture{ "C:\\Users\\Arthur\\Desktop\\img.png" };
+	Material material{ texture, engine.getShaderRegistry()->getDeferredShader() };
 
-	Mesh::Builder()
+	Renderable::Builder()
 		.addBufferData(
 			{
 				-0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
@@ -38,7 +39,7 @@ int main(void)
 		.addBufferAttributes({ 3, 2 })
 		.build(&scene, meshEntity);
 
-	Mesh::Builder()
+	Renderable::Builder()
 		.addBufferData(
 			{
 				-0.0f, -1.0f, -2.0f, 0.0f, 0.0f,
@@ -69,8 +70,6 @@ int main(void)
 		.build(&scene, cameraEntity2);
 
 	scene.setCameraActive(camera2);
-
-	auto material = Material::Builder();
 
 	// std funtion to have input callbacks
 

@@ -1,6 +1,8 @@
 #include "Material.h"
+#include "Texture.h"
 
-Material* Material::Builder::build(Engine* engine, Entity* entity)
+Material::Material(Texture texture, Shader* shader) :
+	mShader(shader)
 {
-	return {};
+	mTextureReference.push(texture);
 }

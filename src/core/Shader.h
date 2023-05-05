@@ -8,9 +8,9 @@ public:
 
 	Shader(unsigned int program, const OpenGLDriver* driver);
 
-	Shader() = delete;
-	Shader(const Shader&) = delete;
-	Shader operator=(const Shader&) = delete;
+	Shader() {};
+	Shader(const Shader&) = default;
+	Shader& operator=(const Shader&) = default;
 	Shader(Shader&&) = default;
 	Shader& operator=(Shader&&) = default;
 

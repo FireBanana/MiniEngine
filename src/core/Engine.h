@@ -5,7 +5,7 @@
 #include "types/EngineTypes.h"
 #include "Entity.h"
 #include "../backend/OpenGLPlatform.h"
-#include "../components/MeshComponent.h"
+#include "../components/RenderableComponent.h"
 #include "utils/Color.h"
 #include "Material.h"
 

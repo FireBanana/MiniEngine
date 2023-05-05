@@ -1,7 +1,7 @@
 #include "OpenGLDriver.h"
 #include "../core/utils/FileHelper.h"
 #include "../core/Scene.h"
-#include "../components/MeshComponent.h"
+#include "../components/RenderableComponent.h"
 #include "../core/Shader.h"
 
 #include <glad/glad.h>
@@ -104,7 +104,7 @@ void OpenGLDriver::setupDebugInfo()
     glDebugMessageCallback(debugCallback, nullptr);
 }
 
-void OpenGLDriver::setupMesh(MeshComponent* component)
+void OpenGLDriver::setupMesh(RenderableComponent* component)
 {
     unsigned int vao;
     glCreateVertexArrays(1, &vao);
@@ -144,7 +144,7 @@ void OpenGLDriver::setupMesh(MeshComponent* component)
 
 void OpenGLDriver::draw(Scene* scene)
 {
-    auto db = scene->getMeshComponentDatabase();
+    auto db = scene->getRenderableComponentDatabase();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     

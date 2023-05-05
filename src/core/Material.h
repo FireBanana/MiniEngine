@@ -1,40 +1,25 @@
 #pragma once
 
 #include "Shader.h"
+#include "utils/ComponentArray.h"
+#include "Texture.h"
 
 class Engine;
 class Entity;
 class Shader;
-class Texture;
 
 class Material
 {
 public:
 
-	Material() = delete;
-	Material(const Material&) = delete;
-	Material operator=(const Material&) = delete;
-	Material(const Material&&) = delete;
-	Material operator=(const Material&&) = delete;
+	Material( Texture texture, Shader* shader );
 
-	class Builder
-	{
-	public:
+	inline ComponentArray<Texture, 32> getTextureReference() const { return mTextureReference; }
+	inline Shader* getShader() const { return mShader; }
 
-		Builder() { }
-		Builder(const Builder&) = delete;
-		Builder operator=(const Builder&) = delete;
-		Builder(const Builder&&) = delete;
-		Builder operator=(const Builder&&) = delete;
+private:
 
-		Builder& setTexture(Texture* texture);
-		Builder& setFloat(float value);
+	ComponentArray<Texture, 32> mTextureReference;
+	Shader* mShader;
 
-		Material* build( Engine* engine, Entity* entity );
-
-	private:
-
-		std::vector<Texture*> mTextureReference;
-
-	};
 };

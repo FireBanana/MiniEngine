@@ -1,9 +1,9 @@
 #pragma once
 
 #include <vector>
-#include "Mesh.h"
+#include "Renderable.h"
 #include "Camera.h"
-#include "../components/MeshComponent.h"
+#include "../components/RenderableComponent.h"
 #include "../components/CameraComponent.h"
 #include "../components/TransformComponent.h"
 #include "Entity.h"
@@ -20,20 +20,20 @@ public:
 
 	Entity* createEntity();
 
-	MeshComponent* createMesh(const Mesh::Builder* builderResults, Entity* entity);
+	RenderableComponent* createRenderable(const Renderable::Builder* builderResults, Entity* entity);
 	CameraComponent* createCamera(const Camera::Builder* builderResults, Entity* entity);
 
 	void setCameraActive(const CameraComponent* camera);
 
-	inline const auto getMeshComponentDatabase() const { return mMeshComponentDatabase; }
+	inline const auto getRenderableComponentDatabase() const { return mRenderableComponentDatabase; }
 	inline const auto getCameraComponentDatabase() const { return mCameraComponentDatabase; }
 
 private:
 
 	Engine* mEngine;
 
-	ComponentArray<Entity, MAX_COMPONENT_SIZE>			   mEntityDatabase;
-	ComponentArray<CameraComponent, MAX_COMPONENT_SIZE>	   mCameraComponentDatabase;
-	ComponentArray<MeshComponent, MAX_COMPONENT_SIZE>	   mMeshComponentDatabase;
-	ComponentArray<TransformComponent, MAX_COMPONENT_SIZE> mTransformComponentDatabase;
+	ComponentArray<Entity, MAX_COMPONENT_SIZE>			    mEntityDatabase;
+	ComponentArray<CameraComponent, MAX_COMPONENT_SIZE>	    mCameraComponentDatabase;
+	ComponentArray<RenderableComponent, MAX_COMPONENT_SIZE> mRenderableComponentDatabase;
+	ComponentArray<TransformComponent, MAX_COMPONENT_SIZE>  mTransformComponentDatabase;
 };

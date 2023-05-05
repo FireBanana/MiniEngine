@@ -6,7 +6,7 @@
 
 class Scene; //remove
 class Shader;
-class MeshComponent;
+class RenderableComponent;
 
 class OpenGLDriver
 {
@@ -22,7 +22,7 @@ public:
 	void setupFrameBuffer();
 	void setupDebugInfo();
 
-	void setupMesh(MeshComponent* component);
+	void setupMesh(RenderableComponent* component);
 
 	void draw(Scene* scene);
 	void finalBlit();
@@ -31,7 +31,7 @@ public:
 	void endRenderpass();
 
 	unsigned int loadShader(const char* path, ShaderType type) const;
-	unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader) const;
+	unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader) const; //create deleter
 	void		 useShaderProgram(unsigned int program) const;
 
 	void registerUniformBlock(const char* blockName, const Shader* program) const;

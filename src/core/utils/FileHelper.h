@@ -21,6 +21,7 @@ public:
 		catch (...)
 		{
 			std::cout << "Error occured while reading file";
+			return "";
 		}
 	}
 

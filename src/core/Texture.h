@@ -5,8 +5,9 @@ class Texture
 {
 public:
 
+	Texture() {}
 	Texture(const char* path);
-	~Texture();
+	~Texture() { free(); }
 
 	inline const int getHeight() const { return mHeight; }
 	inline const int getWidth() const { return mWidth; }

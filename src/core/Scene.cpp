@@ -1,8 +1,9 @@
 #include "Scene.h"
-#include "../components/MeshComponent.h"
+#include "../components/RenderableComponent.h"
 #include "../components/CameraComponent.h"
 #include "Entity.h"
 #include "Engine.h"
+#include "Material.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -19,13 +20,15 @@ Entity* Scene::createEntity()
 	return &(mEntityDatabase.getLast());
 }
 
-MeshComponent* Scene::createMesh(const Mesh::Builder* builderResults, Entity* entity)
+RenderableComponent* Scene::createRenderable(const Renderable::Builder* builderResults, Entity* entity)
 {
-	MeshComponent m{};
+	RenderableComponent m{};
 	m.entityHandle = entity;
 	m.buffer = builderResults->getBuffer();
 	m.indices = builderResults->getIndices();
 	m.attributes = builderResults->getAttributes();
+	m.textures = builderResults->getMaterial()->getTextureReference();
+	m.shader = *(builderResults->getMaterial()->getShader());
 	
 #ifdef USING_OPENGL
 
@@ -42,8 +45,8 @@ MeshComponent* Scene::createMesh(const Mesh::Builder* builderResults, Entity* en
 
 #endif // USING_OPENGL
 
-	mMeshComponentDatabase.push(std::move(m));
-	return &(mMeshComponentDatabase.getLast());
+	mRenderableComponentDatabase.push(std::move(m));
+	return &(mRenderableComponentDatabase.getLast());
 }
 
 CameraComponent* Scene::createCamera(const Camera::Builder* builderResults, Entity* entity)

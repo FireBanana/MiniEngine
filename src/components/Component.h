@@ -1,9 +1,6 @@
 #pragma once
 
-class Component
+struct Component
 {
-public:
-
 	Entity* entityHandle;
-
 };

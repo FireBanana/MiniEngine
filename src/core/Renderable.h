@@ -4,17 +4,18 @@
 class Engine;
 class Entity;
 class Scene;
-class MeshComponent;
+class RenderableComponent;
+class Material;
 
-class Mesh
+class Renderable
 {
 public:
 
-	Mesh() = delete;
-	Mesh(const Mesh&) = delete;
-	Mesh operator=(const Mesh&) = delete;
-	Mesh(const Mesh&&) = delete;
-	Mesh operator=(const Mesh&&) = delete;
+	Renderable() = delete;
+	Renderable(const Renderable&) = delete;
+	Renderable operator=(const Renderable&) = delete;
+	Renderable(const Renderable&&) = delete;
+	Renderable operator=(const Renderable&&) = delete;
 
 	class Builder
 	{
@@ -29,19 +30,22 @@ public:
 		Builder& addBufferData(std::initializer_list<float>&& buffer);
 		Builder& addBufferAttributes(std::initializer_list<unsigned int>&& attributes);
 		Builder& addIndices(std::initializer_list<unsigned int>&& indices);
+		Builder& setMaterial(Material* material);
 		Builder& isLit(bool isLit);
 
-		MeshComponent* build(Scene* scene, Entity* entity);
+		RenderableComponent* build(Scene* scene, Entity* entity);
 
 		inline const std::vector<float>& getBuffer() const { return mBuffer; }
 		inline const std::vector<unsigned int>& getIndices() const { return mIndices; }
 		inline const std::vector<unsigned int>& getAttributes() const { return mAttributes; }
+		inline const Material* getMaterial() const { return mMaterial; }
 
 	private:
 
 		std::vector<float> mBuffer;
 		std::vector<unsigned int> mIndices;
 		std::vector<unsigned int> mAttributes;
+		Material* mMaterial;
 		bool mIsLit;
 	};
 
