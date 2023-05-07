@@ -20,7 +20,7 @@ Renderable::Builder& Renderable::Builder::addIndices(std::initializer_list<unsig
 	return *this;
 }
 
-Renderable::Builder& Renderable::Builder::setMaterial(Material* material)
+Renderable::Builder& Renderable::Builder::addMaterial(Material* material)
 {
 	mMaterial = material;
 	return *this;

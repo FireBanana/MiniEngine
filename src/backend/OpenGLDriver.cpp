@@ -151,7 +151,18 @@ void OpenGLDriver::draw(Scene* scene)
     for (int i = 0; i < db.size(); ++i)
     {
         glBindVertexArray(db[i].vaoId);
+        
+        for (int j = 0; j < db[i].textures.size(); ++j)
+        {
+            bindTextureUnit(db[i].textures[j].getId(), j);
+        }
+
         glDrawElements(GL_TRIANGLES, db[i].indices.size(), GL_UNSIGNED_INT, 0);
+
+        for (int j = 0; j < db[i].textures.size(); ++j)
+        {
+            bindTextureUnit(0, j);
+        }
     }
 }
 

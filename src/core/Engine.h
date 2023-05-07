@@ -8,6 +8,7 @@
 #include "../components/RenderableComponent.h"
 #include "utils/Color.h"
 #include "Material.h"
+#include "Mesh.h"
 
 class OpenGLPlatform;
 
@@ -23,6 +24,9 @@ public:
 	Engine& operator=(Engine &&) = delete;
 
 	void execute(Scene* scene);
+
+	Texture loadTexture(const char* path);
+	Mesh loadMesh(const char* path);
 
 	inline ShaderRegistry* getShaderRegistry() const { return mShaderRegistry.get(); }
 	inline OpenGLDriver* getOpenGlDriver() const { return mGlPlatform.get()->getDriver(); }

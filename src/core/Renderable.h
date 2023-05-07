@@ -21,7 +21,7 @@ public:
 	{
 	public:
 
-		Builder() { }
+		Builder() : mMaterial(nullptr) { }
 		Builder(const Builder&) = delete;
 		Builder operator=(const Builder&) = delete;
 		Builder(const Builder&&) = delete;
@@ -30,7 +30,7 @@ public:
 		Builder& addBufferData(std::initializer_list<float>&& buffer);
 		Builder& addBufferAttributes(std::initializer_list<unsigned int>&& attributes);
 		Builder& addIndices(std::initializer_list<unsigned int>&& indices);
-		Builder& setMaterial(Material* material);
+		Builder& addMaterial(Material* material);
 		Builder& isLit(bool isLit);
 
 		RenderableComponent* build(Scene* scene, Entity* entity);

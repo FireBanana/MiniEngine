@@ -27,9 +27,17 @@ RenderableComponent* Scene::createRenderable(const Renderable::Builder* builderR
 	m.buffer = builderResults->getBuffer();
 	m.indices = builderResults->getIndices();
 	m.attributes = builderResults->getAttributes();
-	m.textures = builderResults->getMaterial()->getTextureReference();
-	m.shader = *(builderResults->getMaterial()->getShader());
-	
+
+	if (builderResults->getMaterial() == nullptr)
+	{
+		m.shader = *(mEngine->getShaderRegistry()->getDeferredShader());
+	}
+	else
+	{
+		m.shader = *(builderResults->getMaterial()->getShader());
+		m.textures = builderResults->getMaterial()->getTextureReference();
+	}
+
 #ifdef USING_OPENGL
 
 	unsigned int stride = 0;

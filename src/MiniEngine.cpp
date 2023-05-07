@@ -10,7 +10,6 @@ int main(void)
 	params.screenWidth = 500;
 	params.screenHeight = 500;
 	params.clearColor = { 0.2f, 0.6f, 0.5f, 1.0f };
-
 	Engine engine{ params };
 
 	auto scene = Scene{ &engine };
@@ -20,8 +19,9 @@ int main(void)
 	auto cameraEntity = scene.createEntity();
 	auto cameraEntity2 = scene.createEntity();
 
-	Texture texture{ "C:\\Users\\Arthur\\Desktop\\img.png" };
-	Material material{ texture, engine.getShaderRegistry()->getDeferredShader() };
+	auto texture = engine.loadTexture("C:\\Users\\Owais\\Desktop\\img.png");
+	auto mesh = engine.loadMesh("C:\\Users\\Owais\\Desktop\\dino.glb");
+	Material material{ texture, engine.getShaderRegistry()->getDeferredShader() }; //todo: accept multiple textures / values
 
 	Renderable::Builder()
 		.addBufferData(
@@ -37,6 +37,7 @@ int main(void)
 				0, 2, 3
 			})
 		.addBufferAttributes({ 3, 2 })
+		.addMaterial(&material)
 		.build(&scene, meshEntity);
 
 	Renderable::Builder()

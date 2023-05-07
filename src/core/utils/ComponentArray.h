@@ -28,7 +28,7 @@ public:
 		mArray[mPtr++] = std::move(t);
 	}
 
-	const T& operator[] (int index)
+	T& operator[] (int index)
 	{
 		assert(index >= 0 && index < mPtr);
 		return mArray[index];

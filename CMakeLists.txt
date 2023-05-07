@@ -13,6 +13,10 @@ add_definitions(-DGLFW_INCLUDE_NONE)
 add_compile_definitions(DIR="${CMAKE_SOURCE_DIR}")
 add_compile_definitions(USING_OPENGL)
 
+add_compile_definitions(TINYGLTF_IMPLEMENTATION)
+add_compile_definitions(STB_IMAGE_IMPLEMENTATION)
+add_compile_definitions(STB_IMAGE_WRITE_IMPLEMENTATION)
+
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 include_directories(libs)
@@ -57,26 +61,11 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${LIB_HEADERS})
 
 # Get additional libraries
 
-# FetchContent_Declare(
-# 	assimp
-# 	GIT_REPOSITORY https://github.com/assimp/assimp
-# 	GIT_TAG v5.2.5
-# )
-
 FetchContent_Declare(
 	glm
 	GIT_REPOSITORY https://github.com/g-truc/glm
 	GIT_TAG 0.9.9.8
 )
-
-# OPTION (ASSIMP_BUILD_TESTS OFF)
-# OPTION( ASSIMP_INSTALL OFF)
-
-# FetchContent_GetProperties(assimp)
-# if(NOT assimp_POPULATED)
-#   FetchContent_Populate(assimp)
-#   add_subdirectory(${assimp_SOURCE_DIR} ${assimp_BINARY_DIR} EXCLUDE_FROM_ALL)
-# endif()
 
 FetchContent_GetProperties(glm)
 if(NOT glm_POPULATED)
@@ -84,7 +73,5 @@ if(NOT glm_POPULATED)
   add_subdirectory(${glm_SOURCE_DIR} ${glm_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
-# target_include_directories(MiniEngine PUBLIC ${assimp_SOURCE_DIR}/include)
 target_include_directories(MiniEngine PUBLIC ${glm_SOURCE_DIR}/glm)
-# target_link_libraries(MiniEngine assimp)
 target_link_libraries(MiniEngine glm)
