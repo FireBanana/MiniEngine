@@ -34,6 +34,8 @@ Mesh Engine::loadMesh(const char* path)
 	tinygltf::Model model;
 	std::string err, wrn;
 
+	RenderableComponent rComponent{};
+
 	loader.LoadBinaryFromFile(&model, &err, &wrn, path);
 	
 	for (auto& bufferView : model.bufferViews)
@@ -41,6 +43,12 @@ Mesh Engine::loadMesh(const char* path)
 		if (bufferView.target == 0) continue; // Not element array
 
 		auto& buffer = model.buffers[bufferView.buffer];
+
+		rComponent.buffer = 
+			{ 
+				buffer.data.begin() + bufferView.byteOffset/8,
+				buffer.data.begin() + bufferView.byteOffset/8 + bufferView.byteLength/8
+			};
 
 		// glBufferData
 		// bufferView.byteLength
@@ -59,6 +67,15 @@ Mesh Engine::loadMesh(const char* path)
 			auto size = accessor.type == TINYGLTF_TYPE_SCALAR ? 1 : accessor.type;
 
 			if (attrib.first != "POSITION") continue; //Position only currently
+
+			auto& indexBufferView = model.bufferViews[indexAccesor.bufferView];
+			auto& indexBuffer = model.buffers[indexBufferView.buffer];
+			
+			rComponent.attributes = 
+			{
+				indexBuffer.data.begin() + indexBufferView.byteOffset/8,
+				indexBuffer.data.begin() + indexBufferView.byteOffset/8 + indexBufferView.byteLength/8
+			};
 
 			// glEnableVertexAttribArray(attrib.second);
 			//glVertexAttribPointer(attrib.second, size, accessor.componentType,

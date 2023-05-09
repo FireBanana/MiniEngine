@@ -21,7 +21,7 @@ private:
 	size_t mVertexBufferOffset;
 	bool mVertexAttribNormalized;
 
-	// texture data
+	// texture data (not here)
 	int mTextureWidth;
 	int mTextureHeight;
 	int mTextureFormat;
