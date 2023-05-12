@@ -19,8 +19,8 @@ int main(void)
 	auto cameraEntity = scene.createEntity();
 	auto cameraEntity2 = scene.createEntity();
 
-	auto texture = engine.loadTexture("C:\\Users\\Owais\\Desktop\\img.png");
-	auto mesh = engine.loadMesh("C:\\Users\\Owais\\Desktop\\dino.glb");
+	auto texture = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\1.png");
+	auto mesh = engine.loadMesh("C:\\Users\\Arthur\\Desktop\\dino.glb");
 	Material material{ texture, engine.getShaderRegistry()->getDeferredShader() }; //todo: accept multiple textures / values
 
 	Renderable::Builder()

@@ -28,7 +28,9 @@ Texture Engine::loadTexture(const char* path)
 	return { w, h, c, id };
 }
 
-Mesh Engine::loadMesh(const char* path)
+#define BUFFER_OFFSET(i) ((char *)NULL + (i))
+
+RenderableComponent Engine::loadMesh(const char* path)
 {
 	tinygltf::TinyGLTF loader;
 	tinygltf::Model model;
@@ -37,67 +39,49 @@ Mesh Engine::loadMesh(const char* path)
 	RenderableComponent rComponent{};
 
 	loader.LoadBinaryFromFile(&model, &err, &wrn, path);
-	
-	for (auto& bufferView : model.bufferViews)
-	{
-		if (bufferView.target == 0) continue; // Not element array
 
+	auto primitive = model.meshes[0].primitives[0];
+
+	for (auto& attrib : primitive.attributes)
+	{
+		if (attrib.first != "POSITION") continue; //Position only currently
+		auto& accessor = model.accessors[attrib.second];
+		auto& bufferView = model.bufferViews[accessor.bufferView];
+		auto type = accessor.type;
+
+		auto byteStride = accessor.ByteStride(bufferView);
+		auto offset = BUFFER_OFFSET(accessor.byteOffset);
+		auto size = accessor.count;
 		auto& buffer = model.buffers[bufferView.buffer];
 
-		rComponent.buffer = 
-			{ 
-				buffer.data.begin() + bufferView.byteOffset/8,
-				buffer.data.begin() + bufferView.byteOffset/8 + bufferView.byteLength/8
-			};
+		auto section = std::vector<Vector3>();
 
-		// glBufferData
-		// bufferView.byteLength
-		// &buffer.data.at(0) + bufferView.byteOffset
+		for (auto i = 0; i < size; ++i)
+		{
+			section.push_back(
+				{
+					*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride)]))),
+					*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride) + sizeof(float)]))),
+					*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride) + sizeof(float) * 2])))
+				});
+		}
 	}
 
-	for (auto& primitive : model.meshes[0].primitives)
+	if (model.textures.size() > 0)
 	{
-		auto& indexAccesor = model.accessors[primitive.indices];
+		auto& tex = model.textures[0];
 
-		for (auto& attrib : primitive.attributes)
+		if (tex.source > -1)
 		{
-			auto& accessor = model.accessors[attrib.second];
+			auto& image = model.images[tex.source];
 
-			auto byteStride = accessor.ByteStride(model.bufferViews[accessor.bufferView]);
-			auto size = accessor.type == TINYGLTF_TYPE_SCALAR ? 1 : accessor.type;
-
-			if (attrib.first != "POSITION") continue; //Position only currently
-
-			auto& indexBufferView = model.bufferViews[indexAccesor.bufferView];
-			auto& indexBuffer = model.buffers[indexBufferView.buffer];
-			
-			rComponent.attributes = 
-			{
-				indexBuffer.data.begin() + indexBufferView.byteOffset/8,
-				indexBuffer.data.begin() + indexBufferView.byteOffset/8 + indexBufferView.byteLength/8
-			};
-
-			// glEnableVertexAttribArray(attrib.second);
-			//glVertexAttribPointer(attrib.second, size, accessor.componentType,
-			//	accessor.normalized ? GL_TRUE : GL_FALSE,
-			//	byteStride, BUFFER_OFFSET(accessor.byteOffset));
-		}
-
-		if (model.textures.size() > 0)
-		{
-			auto& tex = model.textures[0];
-
-			if (tex.source > -1)
-			{
-				auto& image = model.images[tex.source];
-
-				//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
-				//	format, type, &image.image.at(0));
-			}
+			//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
+			//	format, type, &image.image.at(0));
 		}
 	}
+	
 
-	return{};
+	return rComponent;
 }
 
 
