@@ -1,8 +1,11 @@
 #include "Engine.h"
 #include "Entity.h"
+#include "Renderable.h"
 
 #include <tiny_gltf.h>
 #include <memory>
+
+#define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 Engine::Engine(const EngineInitParams& params)
 {
@@ -28,17 +31,16 @@ Texture Engine::loadTexture(const char* path)
 	return { w, h, c, id };
 }
 
-#define BUFFER_OFFSET(i) ((char *)NULL + (i))
-
-RenderableComponent Engine::loadMesh(const char* path)
+RenderableComponent* Engine::loadMeshToRenderable(const char* path, Scene* scene, Entity* entity)
 {
 	tinygltf::TinyGLTF loader;
 	tinygltf::Model model;
 	std::string err, wrn;
 
-	RenderableComponent rComponent{};
-
 	loader.LoadBinaryFromFile(&model, &err, &wrn, path);
+
+	std::vector<float> bufferData;
+	std::vector<unsigned int> indices;
 
 	auto primitive = model.meshes[0].primitives[0];
 
@@ -50,38 +52,58 @@ RenderableComponent Engine::loadMesh(const char* path)
 		auto type = accessor.type;
 
 		auto byteStride = accessor.ByteStride(bufferView);
-		auto offset = BUFFER_OFFSET(accessor.byteOffset);
 		auto size = accessor.count;
-		auto& buffer = model.buffers[bufferView.buffer];
 
-		auto section = std::vector<Vector3>();
+		auto& positionBuffer = model.buffers[bufferView.buffer];
 
 		for (auto i = 0; i < size; ++i)
 		{
-			section.push_back(
-				{
-					*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride)]))),
-					*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride) + sizeof(float)]))),
-					*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride) + sizeof(float) * 2])))
-				});
+			bufferData.push_back(
+				*(reinterpret_cast<float*>(&(positionBuffer.data[(i * byteStride + bufferView.byteOffset)])))
+			);
+
+			bufferData.push_back(
+				*(reinterpret_cast<float*>(&(positionBuffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float)]))));
+
+			bufferData.push_back(
+				*(reinterpret_cast<float*>(&(positionBuffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float) * 2])))
+			);
 		}
 	}
 
-	if (model.textures.size() > 0)
+	// Get indices
+	auto& indexAccessor = model.accessors[primitive.indices];
+	auto& indexBufferView = model.bufferViews[indexAccessor.bufferView];
+	auto indexStride = indexAccessor.ByteStride(indexBufferView);
+	auto& indexBuffer = model.buffers[indexBufferView.buffer];
+
+	for (auto i = 0; i < indexAccessor.count; ++i)
 	{
-		auto& tex = model.textures[0];
+		auto val = *(reinterpret_cast<unsigned int*>(&(indexBuffer.data[i * indexStride + indexBufferView.byteOffset]))) & ((~0u) >> 16);
 
-		if (tex.source > -1)
-		{
-			auto& image = model.images[tex.source];
-
-			//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
-			//	format, type, &image.image.at(0));
-		}
+		indices.push_back(val);
 	}
-	
 
-	return rComponent;
+	//if (model.textures.size() > 0)
+	//{
+	//	auto& tex = model.textures[0];
+
+	//	if (tex.source > -1)
+	//	{
+	//		auto& image = model.images[tex.source];
+
+	//		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
+	//		//	format, type, &image.image.at(0));
+	//	}
+	//}
+
+	auto rComponent = Renderable::Builder()
+		.addBufferData(std::move(bufferData))
+		.addIndices(std::move(indices))
+		.addBufferAttributes({ 3 })
+		.build(scene, entity);
+
+		return rComponent;
 }
 
 

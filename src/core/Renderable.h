@@ -27,9 +27,9 @@ public:
 		Builder(const Builder&&) = delete;
 		Builder operator=(const Builder&&) = delete;
 
-		Builder& addBufferData(std::initializer_list<float>&& buffer);
-		Builder& addBufferAttributes(std::initializer_list<unsigned int>&& attributes);
-		Builder& addIndices(std::initializer_list<unsigned int>&& indices);
+		Builder& addBufferData(std::vector<float>&& buffer);
+		Builder& addBufferAttributes(std::vector<unsigned int>&& attributes);
+		Builder& addIndices(std::vector<unsigned int>&& indices);
 		Builder& addMaterial(Material* material);
 		Builder& isLit(bool isLit);
 

@@ -16,45 +16,46 @@ int main(void)
 
 	auto meshEntity = scene.createEntity();
 	auto meshEntity2 = scene.createEntity();
+	auto meshEntity3 = scene.createEntity();
 	auto cameraEntity = scene.createEntity();
 	auto cameraEntity2 = scene.createEntity();
 
 	auto texture = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\1.png");
-	auto mesh = engine.loadMesh("C:\\Users\\Arthur\\Desktop\\dino.glb");
+	auto mesh = engine.loadMeshToRenderable("C:\\Users\\Arthur\\Desktop\\dino.glb", &scene, meshEntity3);
 	Material material{ texture, engine.getShaderRegistry()->getDeferredShader() }; //todo: accept multiple textures / values
 
-	Renderable::Builder()
-		.addBufferData(
-			{
-				-0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-				-1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
-				0.0f, 1.0f, 0.0f,   1.0f, 1.0f,
-				1.0f, -0.0f, 0.0f,  1.0f, 0.0f
-			})
-		.addIndices(
-			{
-				0, 1, 2,
-				0, 2, 3
-			})
-		.addBufferAttributes({ 3, 2 })
-		.addMaterial(&material)
-		.build(&scene, meshEntity);
+	//Renderable::Builder()
+	//	.addBufferData(
+	//		{
+	//			-0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+	//			-1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+	//			0.0f, 1.0f, 0.0f,   1.0f, 1.0f,
+	//			1.0f, -0.0f, 0.0f,  1.0f, 0.0f
+	//		})
+	//	.addIndices(
+	//		{
+	//			0, 1, 2,
+	//			0, 2, 3
+	//		})
+	//	.addBufferAttributes({ 3, 2 })
+	//	.addMaterial(&material)
+	//	.build(&scene, meshEntity);
 
-	Renderable::Builder()
-		.addBufferData(
-			{
-				-0.0f, -1.0f, -2.0f, 0.0f, 0.0f,
-				-1.0f, 0.0f, -2.0f,  0.0f, 1.0f,
-				0.0f, 1.0f, -2.0f,   1.0f, 1.0f,
-				1.0f, -0.0f, -2.0f,  1.0f, 0.0f
-			})
-		.addIndices(
-			{
-				0, 1, 2,
-				0, 2, 3
-			})
-		.addBufferAttributes({ 3, 2 })
-		.build(&scene, meshEntity2);
+	//Renderable::Builder()
+	//	.addBufferData(
+	//		{
+	//			-0.0f, -1.0f, -2.0f, 0.0f, 0.0f,
+	//			-1.0f, 0.0f, -2.0f,  0.0f, 1.0f,
+	//			0.0f, 1.0f, -2.0f,   1.0f, 1.0f,
+	//			1.0f, -0.0f, -2.0f,  1.0f, 0.0f
+	//		})
+	//	.addIndices(
+	//		{
+	//			0, 1, 2,
+	//			0, 2, 3
+	//		})
+	//	.addBufferAttributes({ 3, 2 })
+	//	.build(&scene, meshEntity2);
 
 	auto camera = Camera::Builder()
 		.setPosition({ 0,3,-5 })

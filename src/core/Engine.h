@@ -26,7 +26,7 @@ public:
 	void execute(Scene* scene);
 
 	Texture loadTexture(const char* path);
-	RenderableComponent loadMesh(const char* path);
+	RenderableComponent* loadMeshToRenderable(const char* path, Scene* scene, Entity* entity);
 
 	inline ShaderRegistry* getShaderRegistry() const { return mShaderRegistry.get(); }
 	inline OpenGLDriver* getOpenGlDriver() const { return mGlPlatform.get()->getDriver(); }
