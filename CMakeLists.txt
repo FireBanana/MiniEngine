@@ -59,6 +59,14 @@ target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3d
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${LIB_SOURCES})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${LIB_HEADERS})
 
+# Add secondary tools
+
+add_subdirectory(tools/model-loader)
+include_directories(tools/model-loader/src)
+target_link_libraries(MiniEngine model-loader)
+
+install(TARGETS ${TARGET} RUNTIME DESTINATION bin)
+
 # Get additional libraries
 
 FetchContent_Declare(
