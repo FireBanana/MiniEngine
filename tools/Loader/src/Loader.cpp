@@ -1,9 +1,13 @@
-#include "model-loader.h"
+#include "Loader.h"
+
+#define TINYGLTF_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 
 #include <tiny_gltf.h>
 #include <iostream>
 
-namespace ModelLoader
+namespace MiniTools
 {
 	ModelLoaderResults ModelLoader::load(const char* path)
 	{
@@ -17,7 +21,8 @@ namespace ModelLoader
 
 		for (auto& object : model.meshes)
 		{
-			std::vector<float> bufferData;
+			std::vector<float> vertexData;
+			std::vector<float> uvData;
 			std::vector<unsigned int> indices;
 
 			auto primitive = object.primitives[0];
@@ -40,22 +45,40 @@ namespace ModelLoader
 
 					for (auto i = 0; i < size; ++i)
 					{
-						bufferData.push_back(
+						vertexData.push_back(
 							*(reinterpret_cast<float*>(&(positionBuffer.data[(i * byteStride + bufferView.byteOffset)])))
 						);
 
-						bufferData.push_back(
+						vertexData.push_back(
 							*(reinterpret_cast<float*>(&(positionBuffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float)])))
 						);
 
-						bufferData.push_back(
+						vertexData.push_back(
 							*(reinterpret_cast<float*>(&(positionBuffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float) * 2])))
 						);
 					}
 				}
 				else if (attrib.first == "TEXCOORD_0")
 				{
+					auto& accessor = model.accessors[attrib.second];
+					auto& bufferView = model.bufferViews[accessor.bufferView];
+					auto type = accessor.type;
 
+					auto byteStride = accessor.ByteStride(bufferView);
+					auto size = accessor.count;
+
+					auto& positionBuffer = model.buffers[bufferView.buffer];
+
+					for (auto i = 0; i < size; ++i)
+					{
+						uvData.push_back(
+							*(reinterpret_cast<float*>(&(positionBuffer.data[(i * byteStride + bufferView.byteOffset)])))
+						);
+
+						uvData.push_back(
+							*(reinterpret_cast<float*>(&(positionBuffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float)])))
+						);
+					}
 				}
 			}
 
@@ -85,9 +108,31 @@ namespace ModelLoader
 				throw;
 			}
 
-			results.models.push_back({ std::move(bufferData), std::move(indices), {3} });
+			auto bufferData = std::vector<float>();
+			auto it_vert = vertexData.begin();
+			auto it_uv = uvData.begin();
+
+			while (it_vert != vertexData.end() || it_uv != uvData.end())
+			{
+				bufferData.push_back(*(it_vert++));
+				bufferData.push_back(*(it_vert++));
+				bufferData.push_back(*(it_vert++));
+
+				bufferData.push_back(*(it_uv++));
+				bufferData.push_back(*(it_uv++));
+			}
+
+			results.models.push_back({ std::move(bufferData), std::move(indices), {3, 2} });
 		}
 
 		return results;
+	}
+	
+	ImageLoaderResults ImageLoader::load(const char* path)
+	{
+		int w, h, c;
+		auto img = stbi_load(path, &w, &h, &c, 0);
+
+		return { w, h, img };
 	}
 }

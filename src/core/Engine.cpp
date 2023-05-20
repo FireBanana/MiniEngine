@@ -2,9 +2,7 @@
 #include "Entity.h"
 #include "Renderable.h"
 #include "Scene.h"
-#include "model-loader.h"
-
-#include <tiny_gltf.h>
+#include "Loader.h"
 #include <memory>
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
@@ -25,17 +23,17 @@ void Engine::execute(Scene* scene)
 
 Texture Engine::loadTexture(const char* path)
 {
-	int w, h, c;
-	auto img = stbi_load(path, &w, &h, &c, 0);
-	auto id = mGlPlatform.get()->getDriver()->createTexture(w, h, img);
+	auto results = MiniTools::ImageLoader::load(path);
+	auto id = mGlPlatform.get()->getDriver()->createTexture(results.width, results.height, results.data);
 
-	stbi_image_free(img);
-	return { w, h, c, id };
+	return { results.width, results.height, 0, id };
 }
 
 RenderableComponent* Engine::loadMeshToRenderable(const char* path, Scene* scene)
 {
-	auto results = ModelLoader::ModelLoader::load(path);
+	auto results = MiniTools::ModelLoader::load(path);
+	auto texture = loadTexture("C:\\Users\\Owais\\Desktop\\img.png");
+	Material material{ texture, getShaderRegistry()->getDeferredShader() };
 
 	for (auto& i : results.models)
 	{
@@ -43,6 +41,7 @@ RenderableComponent* Engine::loadMeshToRenderable(const char* path, Scene* scene
 			.addBufferData(std::move(i.bufferData))
 			.addIndices(std::move(i.indices))
 			.addBufferAttributes(std::move(i.vertexAttributeSizes))
+			.addMaterial(&material)
 			.build(scene, scene->createEntity());
 	}
 

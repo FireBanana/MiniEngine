@@ -2,8 +2,9 @@
 
 #include <vector>
 
-namespace ModelLoader
+namespace MiniTools
 {
+	// TODO: Add unloader for all
 
 	struct Model
 	{
@@ -25,10 +26,22 @@ namespace ModelLoader
 		TextureData		   mainTexture;
 	};
 
+	struct ImageLoaderResults
+	{
+		int width;
+		int height;
+		unsigned char* data;
+	};
+
 	class ModelLoader
 	{
 	public:
 		static ModelLoaderResults load(const char* path);
 	};
 
+	class ImageLoader
+	{
+	public:
+		static ImageLoaderResults load(const char* path);
+	};
 }

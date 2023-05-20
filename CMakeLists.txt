@@ -13,9 +13,9 @@ add_definitions(-DGLFW_INCLUDE_NONE)
 add_compile_definitions(DIR="${CMAKE_SOURCE_DIR}")
 add_compile_definitions(USING_OPENGL)
 
-add_compile_definitions(TINYGLTF_IMPLEMENTATION)
-add_compile_definitions(STB_IMAGE_IMPLEMENTATION)
-add_compile_definitions(STB_IMAGE_WRITE_IMPLEMENTATION)
+#add_compile_definitions(TINYGLTF_IMPLEMENTATION)
+#add_compile_definitions(STB_IMAGE_IMPLEMENTATION)
+#add_compile_definitions(STB_IMAGE_WRITE_IMPLEMENTATION)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -61,11 +61,11 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${LIB_HEADERS})
 
 # Add secondary tools
 
-add_subdirectory(tools/model-loader)
-include_directories(tools/model-loader/src)
-target_link_libraries(MiniEngine model-loader)
+add_subdirectory(tools/Loader)
+include_directories(tools/Loader/src)
+target_link_libraries(MiniEngine Loader)
 
-install(TARGETS ${TARGET} RUNTIME DESTINATION bin)
+#install(TARGETS ${model-loader} RUNTIME DESTINATION bin)
 
 # Get additional libraries
 
