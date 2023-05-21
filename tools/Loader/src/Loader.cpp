@@ -23,6 +23,8 @@ namespace MiniTools
 		{
 			std::vector<float> vertexData;
 			std::vector<float> uvData;
+			std::vector<float> normalData;
+
 			std::vector<unsigned int> indices;
 
 			auto primitive = object.primitives[0];
@@ -41,20 +43,20 @@ namespace MiniTools
 					auto byteStride = accessor.ByteStride(bufferView);
 					auto size = accessor.count;
 
-					auto& positionBuffer = model.buffers[bufferView.buffer];
+					auto& buffer = model.buffers[bufferView.buffer];
 
 					for (auto i = 0; i < size; ++i)
 					{
 						vertexData.push_back(
-							*(reinterpret_cast<float*>(&(positionBuffer.data[(i * byteStride + bufferView.byteOffset)])))
+							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset)])))
 						);
 
 						vertexData.push_back(
-							*(reinterpret_cast<float*>(&(positionBuffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float)])))
+							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float)])))
 						);
 
 						vertexData.push_back(
-							*(reinterpret_cast<float*>(&(positionBuffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float) * 2])))
+							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float) * 2])))
 						);
 					}
 				}
@@ -67,16 +69,42 @@ namespace MiniTools
 					auto byteStride = accessor.ByteStride(bufferView);
 					auto size = accessor.count;
 
-					auto& positionBuffer = model.buffers[bufferView.buffer];
+					auto& buffer = model.buffers[bufferView.buffer];
 
 					for (auto i = 0; i < size; ++i)
 					{
 						uvData.push_back(
-							*(reinterpret_cast<float*>(&(positionBuffer.data[(i * byteStride + bufferView.byteOffset)])))
+							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset)])))
 						);
 
 						uvData.push_back(
-							*(reinterpret_cast<float*>(&(positionBuffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float)])))
+							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float)])))
+						);
+					}
+				}
+				else if (attrib.first == "NORMAL")
+				{
+					auto& accessor = model.accessors[attrib.second];
+					auto& bufferView = model.bufferViews[accessor.bufferView];
+					auto type = accessor.type;
+
+					auto byteStride = accessor.ByteStride(bufferView);
+					auto size = accessor.count;
+
+					auto& buffer = model.buffers[bufferView.buffer];
+
+					for (auto i = 0; i < size; ++i)
+					{
+						normalData.push_back(
+							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset)])))
+						);
+
+						normalData.push_back(
+							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float)])))
+						);
+
+						normalData.push_back(
+							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float) * 2])))
 						);
 					}
 				}
@@ -111,8 +139,9 @@ namespace MiniTools
 			auto bufferData = std::vector<float>();
 			auto it_vert = vertexData.begin();
 			auto it_uv = uvData.begin();
+			auto it_normal = normalData.begin();
 
-			while (it_vert != vertexData.end() || it_uv != uvData.end())
+			while (it_vert != vertexData.end() && it_uv != uvData.end() && it_normal != normalData.end())
 			{
 				bufferData.push_back(*(it_vert++));
 				bufferData.push_back(*(it_vert++));
@@ -120,9 +149,13 @@ namespace MiniTools
 
 				bufferData.push_back(*(it_uv++));
 				bufferData.push_back(*(it_uv++));
+
+				bufferData.push_back(*(it_normal++));
+				bufferData.push_back(*(it_normal++));
+				bufferData.push_back(*(it_normal++));
 			}
 
-			results.models.push_back({ std::move(bufferData), std::move(indices), {3, 2} });
+			results.models.push_back({ std::move(bufferData), std::move(indices), {3, 2, 3} });
 		}
 
 		return results;

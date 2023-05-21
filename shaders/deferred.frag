@@ -1,6 +1,7 @@
 #version 450 core
 
 in vec2 fUv;
+in vec3 fNormal;
 
 uniform sampler2D iImg;
 
@@ -11,8 +12,10 @@ layout (location = 3) out vec3 oRoughness;
 
 void main()
 {
-	oDiffuse = texture(iImg, fUv).xyz;//vec3(fUv.x, fUv.y, 0.);
+	vec3 v = normalize(fNormal);
+
+	oDiffuse = texture(iImg, fUv).xyz;
 	oPosition = vec3(0.0, 1.0, 0.0);
-	oNormal = vec3(0.0, 0.0, 1.0);
+	oNormal = vec3(v.x, v.y, v.z);
 	oRoughness = vec3(1.0);
 }

@@ -57,7 +57,7 @@ int main(void)
 	//	.build(&scene, meshEntity2);
 
 	auto camera = Camera::Builder()
-		.setPosition({ 60,40,60 })
+		.setPosition({ -60,40,-60 })
 		.setAspectRatio((float)params.screenWidth / (float)params.screenHeight)
 		.setNearFarPlane(0.1f, 1000.0f)
 		.setFOV(45)

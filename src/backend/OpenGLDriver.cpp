@@ -159,6 +159,8 @@ void OpenGLDriver::draw(Scene* scene)
 
         glDrawElements(GL_TRIANGLES, db[i].indices.size(), GL_UNSIGNED_INT, 0);
 
+
+        // unbound
         for (int j = 0; j < db[i].textures.size(); ++j)
         {
             bindTextureUnit(0, j);
