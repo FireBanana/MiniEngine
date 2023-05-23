@@ -180,10 +180,10 @@ void OpenGLDriver::draw(Scene* scene)
 
     const float screenQuad[] =
     {
-        -0.5f, -0.5f, 0.0f, 0.0f,
-        -0.5f, 0.5f, 0.0f , 1.0f,
-        0.5f, 0.5f, 1.0f, 1.0f,
-        0.0f, -0.5f, 1.0f, 0.0f
+        -1.0f, -1.0f, 0.0f, 0.0f,
+        -1.0f, 1.0f, 0.0f , 1.0f,
+        1.0f, 1.0f, 1.0f, 1.0f,
+        1.0f, -1.0f, 1.0f, 0.0f
     };
 
     const unsigned int screenIndex[] =
@@ -221,7 +221,9 @@ void OpenGLDriver::draw(Scene* scene)
 
     useShaderProgram(mEngine->getShaderRegistry()->getPbrShader()->getShaderProgram());
     glBindVertexArray(sVao);
-    glBindTextureUnit(0, db[0].textures[0].getId());
+
+    glBindTextureUnit(0, mColorBuffer);
+
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 

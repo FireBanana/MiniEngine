@@ -14,5 +14,5 @@ layout (location = 1) in vec2 iUv;
 void main()
 {
 	oUv = iUv;
-    gl_Position = vec4(iPos, 0., 0.);
+    gl_Position = vec4(iPos, 0., 1.);
 }
