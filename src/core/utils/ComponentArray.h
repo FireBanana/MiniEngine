@@ -34,6 +34,13 @@ public:
 		return mArray[index];
 	}
 
+	const T& operator[](int index) const
+	{
+		assert(index >= 0 && index < mPtr);
+		return mArray[index];
+	}
+
+
 private:
 
 	T mArray[S];

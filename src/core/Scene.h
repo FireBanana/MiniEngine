@@ -25,8 +25,8 @@ public:
 
 	void setCameraActive(const CameraComponent* camera);
 
-	inline const auto getRenderableComponentDatabase() const { return mRenderableComponentDatabase; }
-	inline const auto getCameraComponentDatabase() const { return mCameraComponentDatabase; }
+	inline const auto& getRenderableComponentDatabase() const { return mRenderableComponentDatabase; }
+	inline const auto& getCameraComponentDatabase() const { return mCameraComponentDatabase; }
 
 private:
 

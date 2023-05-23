@@ -20,6 +20,15 @@ void ShaderRegistry::loadDeferredShader()
 	createShader(shader, mDriver);
 }
 
+void ShaderRegistry::loadPbrShader()
+{
+	auto vertexShader = mDriver->loadShader(LIGHTING_VERTEX_PATH, OpenGLDriver::ShaderType::VERTEX);
+	auto fragmentShader = mDriver->loadShader(LIGHTING_FRAGMENT_PATH, OpenGLDriver::ShaderType::FRAGMENT);
+	auto shader = mDriver->createShaderProgram(vertexShader, fragmentShader);
+
+	createShader(shader, mDriver);
+}
+
 void ShaderRegistry::setActiveUniformBuffer(const char* blockName, size_t dataSize, void* data)
 {
 	mDriver->createUniformBlock(mActiveShader, dataSize, data);

@@ -9,10 +9,11 @@
 
 Engine::Engine(const EngineInitParams& params)
 {
-	mGlPlatform = std::make_unique<OpenGLPlatform>(params);
+	mGlPlatform = std::make_unique<OpenGLPlatform>(params, this);
 	mShaderRegistry = std::make_unique<ShaderRegistry>(mGlPlatform->getDriver());
 
 	mShaderRegistry->loadDeferredShader();
+	mShaderRegistry->loadPbrShader();
 	mShaderRegistry->enable(mShaderRegistry->getDeferredShader());
 }
 
@@ -32,7 +33,7 @@ Texture Engine::loadTexture(const char* path)
 RenderableComponent* Engine::loadMeshToRenderable(const char* path, Scene* scene)
 {
 	auto results = MiniTools::ModelLoader::load(path);
-	auto texture = loadTexture("C:\\Users\\Owais\\Desktop\\img.png");
+	auto texture = loadTexture("C:\\Users\\Arthur\\Desktop\\1.png");
 	Material material{ texture, getShaderRegistry()->getDeferredShader() };
 
 	for (auto& i : results.models)

@@ -4,9 +4,10 @@
 #include <GLFW/glfw3.h>
 #include <unordered_map>
 
-class Scene; //remove
+class Scene;
 class Shader;
 class RenderableComponent;
+class Engine;
 
 class OpenGLDriver
 {
@@ -18,7 +19,7 @@ public:
 		FRAGMENT = GL_FRAGMENT_SHADER
 	};
 
-	void setupGlWindowParams(const EngineInitParams& params);
+	void setupGlWindowParams(const EngineInitParams& params, Engine* engine);
 	void setupFrameBuffer();
 	void setupDebugInfo();
 
@@ -42,7 +43,11 @@ public:
 
 private:
 
+	Engine* mEngine;
+
 	GLuint mMainFrameBuffer;
+	GLuint mAccumBuffer;
+	GLuint mColorBuffer;
 	
 	uint16_t mWidth;
 	uint16_t mHeight;

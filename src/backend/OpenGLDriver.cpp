@@ -3,6 +3,7 @@
 #include "../core/Scene.h"
 #include "../components/RenderableComponent.h"
 #include "../core/Shader.h"
+#include "../core/Engine.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -48,10 +49,12 @@ void debugCallback(GLenum source, GLenum type, GLuint id,
     std::cout << src_str << ", " << type_str << ", " << severity_str << ", " << id << ": " << message << '\n';
 }
 
-void OpenGLDriver::setupGlWindowParams(const EngineInitParams& params)
+void OpenGLDriver::setupGlWindowParams(const EngineInitParams& params, Engine* engine)
 {
     mWidth = params.screenWidth;
     mHeight = params.screenHeight;
+
+    mEngine = engine;
 
     glViewport(0, 0, mWidth, mHeight);
 
@@ -67,25 +70,29 @@ void OpenGLDriver::setupGlWindowParams(const EngineInitParams& params)
 
 void OpenGLDriver::setupFrameBuffer()
 {
-    GLuint color, depth, position, normal, roughness;
+    GLuint depth, position, normal, roughness;
     glCreateFramebuffers(1, &mMainFrameBuffer);
-    glCreateRenderbuffers(1, &color);
     glCreateRenderbuffers(1, &depth);
-    glCreateRenderbuffers(1, &position);
-    glCreateRenderbuffers(1, &normal);
-    glCreateRenderbuffers(1, &roughness);
+    glCreateTextures(GL_TEXTURE_2D, 1, &mColorBuffer);
+    glCreateTextures(GL_TEXTURE_2D, 1, &position);
+    glCreateTextures(GL_TEXTURE_2D, 1, &normal);
+    glCreateTextures(GL_TEXTURE_2D, 1, &roughness);
+    glCreateTextures(GL_TEXTURE_2D, 1, &mAccumBuffer);
 
-    glNamedRenderbufferStorage(color, GL_RGBA16F, mWidth, mHeight);
-    glNamedFramebufferRenderbuffer(mMainFrameBuffer, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, color);
+    glTextureStorage2D(mAccumBuffer, 1, GL_RGBA32F, mWidth, mHeight);
+    glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT0, mAccumBuffer, 0);
 
-    glNamedRenderbufferStorage(position, GL_RGBA16F, mWidth, mHeight);
-    glNamedFramebufferRenderbuffer(mMainFrameBuffer, GL_COLOR_ATTACHMENT1, GL_RENDERBUFFER, position);
+    glTextureStorage2D(mColorBuffer, 1, GL_RGBA32F, mWidth, mHeight);
+    glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT1, mColorBuffer, 0);
 
-    glNamedRenderbufferStorage(normal, GL_RGBA16F, mWidth, mHeight);
-    glNamedFramebufferRenderbuffer(mMainFrameBuffer, GL_COLOR_ATTACHMENT2, GL_RENDERBUFFER, normal);
+    glTextureStorage2D(position, 1, GL_RGBA32F, mWidth, mHeight);
+    glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT2, position, 0);
 
-    glNamedRenderbufferStorage(roughness, GL_RGBA16F, mWidth, mHeight);
-    glNamedFramebufferRenderbuffer(mMainFrameBuffer, GL_COLOR_ATTACHMENT3, GL_RENDERBUFFER, roughness);
+    glTextureStorage2D(normal, 1, GL_RGBA32F, mWidth, mHeight);
+    glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT3, normal, 0);
+
+    glTextureStorage2D(roughness, 1, GL_RGBA32F, mWidth, mHeight);
+    glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT4, roughness, 0);
 
     glNamedRenderbufferStorage(depth, GL_DEPTH24_STENCIL8, mWidth, mHeight);
     glNamedFramebufferRenderbuffer(mMainFrameBuffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth);
@@ -144,14 +151,18 @@ void OpenGLDriver::setupMesh(RenderableComponent* component)
 
 void OpenGLDriver::draw(Scene* scene)
 {
-    auto db = scene->getRenderableComponentDatabase();
+    const auto& db = scene->getRenderableComponentDatabase();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
+    // geometry pass ==========================
+
+    useShaderProgram(mEngine->getShaderRegistry()->getDeferredShader()->getShaderProgram());
+
     for (int i = 0; i < db.size(); ++i)
     {
         glBindVertexArray(db[i].vaoId);
-        
+
         for (int j = 0; j < db[i].textures.size(); ++j)
         {
             bindTextureUnit(db[i].textures[j].getId(), j);
@@ -159,13 +170,62 @@ void OpenGLDriver::draw(Scene* scene)
 
         glDrawElements(GL_TRIANGLES, db[i].indices.size(), GL_UNSIGNED_INT, 0);
 
-
-        // unbound
         for (int j = 0; j < db[i].textures.size(); ++j)
         {
             bindTextureUnit(0, j);
         }
     }
+
+    // light pass ==========================
+
+    const float screenQuad[] =
+    {
+        -0.5f, -0.5f, 0.0f, 0.0f,
+        -0.5f, 0.5f, 0.0f , 1.0f,
+        0.5f, 0.5f, 1.0f, 1.0f,
+        0.0f, -0.5f, 1.0f, 0.0f
+    };
+
+    const unsigned int screenIndex[] =
+    {
+        0, 1, 2,
+        0, 2, 3
+    };
+
+    static GLuint sQuad, sEbo, sVao;
+    static bool once = false;
+
+    if (!once)
+    {
+        once = true;
+        glCreateVertexArrays(1, &sVao);
+        glBindVertexArray(sVao);
+
+        glCreateBuffers(1, &sQuad);
+        glCreateBuffers(1, &sEbo);
+
+        glVertexArrayVertexBuffer(sVao, 0, sQuad, 0, 4 * sizeof(float));
+        glVertexArrayElementBuffer(sVao, sEbo);
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribFormat(0, 2, GL_FLOAT, GL_FALSE, 0);
+        glVertexAttribBinding(0, 0);
+
+        glEnableVertexAttribArray(1);
+        glVertexAttribFormat(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float));
+        glVertexAttribBinding(1, 0);
+
+        glNamedBufferData(sQuad, sizeof(screenQuad), screenQuad, GL_STATIC_DRAW);
+        glNamedBufferData(sEbo, sizeof(screenIndex), screenIndex, GL_STATIC_DRAW);
+    }
+
+    useShaderProgram(mEngine->getShaderRegistry()->getPbrShader()->getShaderProgram());
+    glBindVertexArray(sVao);
+    glBindTextureUnit(0, db[0].textures[0].getId());
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+
+    // unbound ============================
 }
 
 void OpenGLDriver::finalBlit()
@@ -179,15 +239,13 @@ void OpenGLDriver::finalBlit()
 
 void OpenGLDriver::beginRenderpass()
 {
-    GLuint attachments[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+    GLuint attachments[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
 
     glEnable(GL_SCISSOR_TEST);
     glScissor(0, 0, mWidth, mHeight);
 
     glBindFramebuffer(GL_FRAMEBUFFER, mMainFrameBuffer);
-    glNamedFramebufferDrawBuffers(mMainFrameBuffer, 4, attachments);
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glNamedFramebufferDrawBuffers(mMainFrameBuffer, 5, attachments);
 }
 
 void OpenGLDriver::endRenderpass()

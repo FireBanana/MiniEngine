@@ -20,7 +20,7 @@ int main(void)
 	auto cameraEntity2 = scene.createEntity();
 
 	//auto texture = engine.loadTexture("C:\\Users\\Owais\\Desktop\\img.png");
-	auto mesh = engine.loadMeshToRenderable("C:\\Users\\Owais\\Desktop\\dino.glb", &scene);
+	auto mesh = engine.loadMeshToRenderable("C:\\Users\\Arthur\\Desktop\\dino.glb", &scene);
 	//Material material{ texture, engine.getShaderRegistry()->getDeferredShader() }; //todo: accept multiple textures / values
 
 	//Renderable::Builder()
@@ -57,7 +57,7 @@ int main(void)
 	//	.build(&scene, meshEntity2);
 
 	auto camera = Camera::Builder()
-		.setPosition({ -60,40,-60 })
+		.setPosition({ 2,2,2 })
 		.setAspectRatio((float)params.screenWidth / (float)params.screenHeight)
 		.setNearFarPlane(0.1f, 1000.0f)
 		.setFOV(45)

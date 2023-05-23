@@ -4,7 +4,8 @@
 #include <glad/glad.h>
 #include <iostream>
 
-OpenGLPlatform::OpenGLPlatform(const EngineInitParams& params)
+OpenGLPlatform::OpenGLPlatform(const EngineInitParams& params, Engine* engine) :
+    mEngine(engine)
 {
     createWindow(params.screenWidth, params.screenHeight);
     createDriver(params);
@@ -60,6 +61,6 @@ void OpenGLPlatform::createDriver(const EngineInitParams& params)
     mDriver = std::make_unique<OpenGLDriver>();
 
     mDriver->setupDebugInfo();
-    mDriver->setupGlWindowParams(params);
+    mDriver->setupGlWindowParams(params, mEngine);
     mDriver->setupFrameBuffer();
 }
