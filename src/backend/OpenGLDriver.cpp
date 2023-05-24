@@ -176,6 +176,8 @@ void OpenGLDriver::draw(Scene* scene)
         }
     }
 
+    auto mainPassSync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+
     // light pass ==========================
 
     const float screenQuad[] =
@@ -224,8 +226,9 @@ void OpenGLDriver::draw(Scene* scene)
 
     glBindTextureUnit(0, mColorBuffer);
 
+    glWaitSync(mainPassSync, 0, GL_TIMEOUT_IGNORED);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
+    glDeleteSync(mainPassSync);
 
     // unbound ============================
 }
