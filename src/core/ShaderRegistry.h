@@ -25,6 +25,8 @@ public:
 
 	void enable(Shader* shader);
 
+	inline const Shader* getActiveShader() const { return mActiveShader; }
+
 private:
 
 	std::vector<Shader> mShaderTable;

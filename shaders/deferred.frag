@@ -1,9 +1,19 @@
 #version 450 core
 
+layout (std140, binding = 0) uniform MatrixBlock
+{
+	mat4 view;
+	mat4 projection;
+};
+
 in vec2 fUv;
 in vec3 fNormal;
+in vec3 fPosition;
 
-uniform sampler2D iImg;
+uniform sampler2D _Diffuse;
+uniform sampler2D _Position;
+uniform sampler2D _Normal;
+uniform sampler2D _Roughness;
 
 layout (location = 1) out vec4 oDiffuse; 
 layout (location = 2) out vec4 oPosition; 
@@ -14,8 +24,8 @@ void main()
 {
 	vec3 v = normalize(fNormal);
 
-	oDiffuse = texture(iImg, fUv);
-	oPosition = vec4(0.0, 1.0, 0.0, 0.0);
+	oDiffuse = texture(_Diffuse, fUv);
+	oPosition = vec4(normalize(fPosition), 0.0);
 	oNormal = vec4(v.x, v.y, v.z, 0.0);
 	oRoughness = vec4(1.0);
 }

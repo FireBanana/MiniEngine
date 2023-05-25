@@ -12,10 +12,12 @@ layout (location = 2) in vec3 iNormal;
 
 out vec2 fUv;
 out vec3 fNormal;
+out vec3 fPosition;
 
 void main()
 {
 	fUv = iUv;
 	fNormal = iNormal;
+	fPosition = iPos; //mult with model mat
 	gl_Position = projection * view * vec4(iPos, 1.0);
 }

@@ -157,7 +157,11 @@ void OpenGLDriver::draw(Scene* scene)
     
     // geometry pass ==========================
 
-    useShaderProgram(mEngine->getShaderRegistry()->getDeferredShader()->getShaderProgram());
+    mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getDeferredShader());
+    glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_Diffuse"), 0);
+    glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_Position"), 1);
+    glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_Normal"), 2);
+    glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_Roughness"), 3);
 
     for (int i = 0; i < db.size(); ++i)
     {
@@ -180,14 +184,18 @@ void OpenGLDriver::draw(Scene* scene)
 
     // light pass ==========================
 
-    useShaderProgram(mEngine->getShaderRegistry()->getPbrShader()->getShaderProgram());
-
-    glBindVertexArray(mScreenQuadVertexArray);
-
     glBindTextureUnit(0, mColorBuffer);
     glBindTextureUnit(1, mPositionBuffer);
     glBindTextureUnit(2, mNormalBuffer);
     glBindTextureUnit(3, mRoughnessBuffer);
+
+    mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getPbrShader());
+    glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_Diffuse"), 0);
+    glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_Position"), 1);
+    glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_Normal"), 2);
+    glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_Roughness"), 3);
+
+    glBindVertexArray(mScreenQuadVertexArray);
 
     glWaitSync(mainPassSync, 0, GL_TIMEOUT_IGNORED);
 
