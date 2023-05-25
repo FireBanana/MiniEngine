@@ -70,13 +70,13 @@ void OpenGLDriver::setupGlWindowParams(const EngineInitParams& params, Engine* e
 
 void OpenGLDriver::setupFrameBuffer()
 {
-    GLuint depth, position, normal, roughness;
+    GLuint depth;
     glCreateFramebuffers(1, &mMainFrameBuffer);
     glCreateRenderbuffers(1, &depth);
     glCreateTextures(GL_TEXTURE_2D, 1, &mColorBuffer);
-    glCreateTextures(GL_TEXTURE_2D, 1, &position);
-    glCreateTextures(GL_TEXTURE_2D, 1, &normal);
-    glCreateTextures(GL_TEXTURE_2D, 1, &roughness);
+    glCreateTextures(GL_TEXTURE_2D, 1, &mPositionBuffer);
+    glCreateTextures(GL_TEXTURE_2D, 1, &mNormalBuffer);
+    glCreateTextures(GL_TEXTURE_2D, 1, &mRoughnessBuffer);
     glCreateTextures(GL_TEXTURE_2D, 1, &mAccumBuffer);
 
     glTextureStorage2D(mAccumBuffer, 1, GL_RGBA32F, mWidth, mHeight);
@@ -85,14 +85,14 @@ void OpenGLDriver::setupFrameBuffer()
     glTextureStorage2D(mColorBuffer, 1, GL_RGBA32F, mWidth, mHeight);
     glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT1, mColorBuffer, 0);
 
-    glTextureStorage2D(position, 1, GL_RGBA32F, mWidth, mHeight);
-    glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT2, position, 0);
+    glTextureStorage2D(mPositionBuffer, 1, GL_RGBA32F, mWidth, mHeight);
+    glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT2, mPositionBuffer, 0);
 
-    glTextureStorage2D(normal, 1, GL_RGBA32F, mWidth, mHeight);
-    glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT3, normal, 0);
+    glTextureStorage2D(mNormalBuffer, 1, GL_RGBA32F, mWidth, mHeight);
+    glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT3, mNormalBuffer, 0);
 
-    glTextureStorage2D(roughness, 1, GL_RGBA32F, mWidth, mHeight);
-    glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT4, roughness, 0);
+    glTextureStorage2D(mRoughnessBuffer, 1, GL_RGBA32F, mWidth, mHeight);
+    glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT4, mRoughnessBuffer, 0);
 
     glNamedRenderbufferStorage(depth, GL_DEPTH24_STENCIL8, mWidth, mHeight);
     glNamedFramebufferRenderbuffer(mMainFrameBuffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth);
@@ -165,14 +165,14 @@ void OpenGLDriver::draw(Scene* scene)
 
         for (int j = 0; j < db[i].textures.size(); ++j)
         {
-            bindTextureUnit(db[i].textures[j].getId(), j);
+            glBindTextureUnit(j, db[i].textures[j].getId());
         }
 
         glDrawElements(GL_TRIANGLES, db[i].indices.size(), GL_UNSIGNED_INT, 0);
 
         for (int j = 0; j < db[i].textures.size(); ++j)
         {
-            bindTextureUnit(0, j);
+            glBindTextureUnit(j, 0);
         }
     }
 
@@ -180,54 +180,19 @@ void OpenGLDriver::draw(Scene* scene)
 
     // light pass ==========================
 
-    const float screenQuad[] =
-    {
-        -1.0f, -1.0f, 0.0f, 0.0f,
-        -1.0f, 1.0f, 0.0f , 1.0f,
-        1.0f, 1.0f, 1.0f, 1.0f,
-        1.0f, -1.0f, 1.0f, 0.0f
-    };
-
-    const unsigned int screenIndex[] =
-    {
-        0, 1, 2,
-        0, 2, 3
-    };
-
-    static GLuint sQuad, sEbo, sVao;
-    static bool once = false;
-
-    if (!once)
-    {
-        once = true;
-        glCreateVertexArrays(1, &sVao);
-        glBindVertexArray(sVao);
-
-        glCreateBuffers(1, &sQuad);
-        glCreateBuffers(1, &sEbo);
-
-        glVertexArrayVertexBuffer(sVao, 0, sQuad, 0, 4 * sizeof(float));
-        glVertexArrayElementBuffer(sVao, sEbo);
-
-        glEnableVertexAttribArray(0);
-        glVertexAttribFormat(0, 2, GL_FLOAT, GL_FALSE, 0);
-        glVertexAttribBinding(0, 0);
-
-        glEnableVertexAttribArray(1);
-        glVertexAttribFormat(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float));
-        glVertexAttribBinding(1, 0);
-
-        glNamedBufferData(sQuad, sizeof(screenQuad), screenQuad, GL_STATIC_DRAW);
-        glNamedBufferData(sEbo, sizeof(screenIndex), screenIndex, GL_STATIC_DRAW);
-    }
-
     useShaderProgram(mEngine->getShaderRegistry()->getPbrShader()->getShaderProgram());
-    glBindVertexArray(sVao);
+
+    glBindVertexArray(mScreenQuadVertexArray);
 
     glBindTextureUnit(0, mColorBuffer);
+    glBindTextureUnit(1, mPositionBuffer);
+    glBindTextureUnit(2, mNormalBuffer);
+    glBindTextureUnit(3, mRoughnessBuffer);
 
     glWaitSync(mainPassSync, 0, GL_TIMEOUT_IGNORED);
+
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    
     glDeleteSync(mainPassSync);
 
     // unbound ============================
@@ -311,9 +276,43 @@ unsigned int OpenGLDriver::createTexture(int width, int height, void* data)
     return tex;
 }
 
-void OpenGLDriver::bindTextureUnit(unsigned int texId, unsigned int bindUnit)
+void OpenGLDriver::setupScreenQuad()
 {
-    glBindTextureUnit(bindUnit, texId);
+    constexpr float screenQuad[] =
+    {
+        -1.0f, -1.0f, 0.0f, 0.0f,
+        -1.0f, 1.0f, 0.0f , 1.0f,
+        1.0f, 1.0f, 1.0f, 1.0f,
+        1.0f, -1.0f, 1.0f, 0.0f
+    };
+
+    constexpr unsigned int screenIndex[] =
+    {
+        0, 1, 2,
+        0, 2, 3
+    };
+
+    static GLuint sQuad, sEbo;
+
+    glCreateVertexArrays(1, &mScreenQuadVertexArray);
+    glBindVertexArray(mScreenQuadVertexArray);
+
+    glCreateBuffers(1, &sQuad);
+    glCreateBuffers(1, &sEbo);
+
+    glVertexArrayVertexBuffer(mScreenQuadVertexArray, 0, sQuad, 0, 4 * sizeof(float));
+    glVertexArrayElementBuffer(mScreenQuadVertexArray, sEbo);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribFormat(0, 2, GL_FLOAT, GL_FALSE, 0);
+    glVertexAttribBinding(0, 0);
+
+    glEnableVertexAttribArray(1);
+    glVertexAttribFormat(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float));
+    glVertexAttribBinding(1, 0);
+
+    glNamedBufferData(sQuad, sizeof(screenQuad), screenQuad, GL_STATIC_DRAW);
+    glNamedBufferData(sEbo, sizeof(screenIndex), screenIndex, GL_STATIC_DRAW);
 }
 
 unsigned int OpenGLDriver::createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader) const

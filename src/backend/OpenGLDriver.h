@@ -21,6 +21,7 @@ public:
 
 	void setupGlWindowParams(const EngineInitParams& params, Engine* engine);
 	void setupFrameBuffer();
+	void setupScreenQuad();
 	void setupDebugInfo();
 
 	void setupMesh(RenderableComponent* component);
@@ -39,7 +40,6 @@ public:
 	void createUniformBlock(Shader* program, size_t dataSize, void* data) const;
 
 	unsigned int createTexture(int width, int height, void* data);
-	void bindTextureUnit(unsigned int texId, unsigned int bindUnit);
 
 private:
 
@@ -48,6 +48,10 @@ private:
 	GLuint mMainFrameBuffer;
 	GLuint mAccumBuffer;
 	GLuint mColorBuffer;
+	GLuint mPositionBuffer;
+	GLuint mNormalBuffer;
+	GLuint mRoughnessBuffer;
+	GLuint mScreenQuadVertexArray;
 	
 	uint16_t mWidth;
 	uint16_t mHeight;

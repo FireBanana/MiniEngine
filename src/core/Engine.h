@@ -35,6 +35,4 @@ private:
 
 	std::unique_ptr<OpenGLPlatform> mGlPlatform;	
 	std::unique_ptr<ShaderRegistry> mShaderRegistry;
-
-	void makeRenderable_internal();
 };

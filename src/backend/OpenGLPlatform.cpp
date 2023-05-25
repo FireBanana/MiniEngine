@@ -63,4 +63,5 @@ void OpenGLPlatform::createDriver(const EngineInitParams& params)
     mDriver->setupDebugInfo();
     mDriver->setupGlWindowParams(params, mEngine);
     mDriver->setupFrameBuffer();
+    mDriver->setupScreenQuad();
 }
