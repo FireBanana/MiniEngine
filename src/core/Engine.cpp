@@ -30,23 +30,4 @@ Texture Engine::loadTexture(const char* path)
 	return { results.width, results.height, 0, id };
 }
 
-RenderableComponent* Engine::loadMeshToRenderable(const char* path, Scene* scene)
-{
-	auto results = MiniTools::ModelLoader::load(path);
-	auto texture = loadTexture("C:\\Users\\Owais\\Desktop\\img.png");
-	Material material{ texture, getShaderRegistry()->getDeferredShader() };
-
-	for (auto& i : results.models)
-	{
-		auto rComponent = Renderable::Builder()
-			.addBufferData(std::move(i.bufferData))
-			.addIndices(std::move(i.indices))
-			.addBufferAttributes(std::move(i.vertexAttributeSizes))
-			.addMaterial(&material)
-			.build(scene, scene->createEntity());
-	}
-
-	return {};
-}
-
 

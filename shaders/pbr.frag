@@ -18,7 +18,13 @@ layout (location = 0) out vec4 oAccum;
 void main()
 {
     // Egzample light position
-    const vec3 lPos = vec3(3.0,4.0,5.0);
+    const vec3 lPos = vec3(-3.0,4.0,-5.0);
+    vec3 position = texture(_Position, oUv).xyz;
+    vec3 normal = texture(_Normal, oUv).xyz;
 
-    oAccum = texture(_Position, oUv);
+    float a = 0.1 * length(normal);    
+    a += max(dot(normalize(normal), normalize(position - lPos)), 0.);
+    vec4 res = vec4(a,a,a,1.);
+
+    oAccum = texture(_Diffuse, oUv) * a;
 }

@@ -26,6 +26,12 @@ Renderable::Builder& Renderable::Builder::addMaterial(Material* material)
 	return *this;
 }
 
+Renderable::Builder& Renderable::Builder::addModel(const char* path)
+{
+	mModelPath = path;
+	return *this;
+}
+
 Renderable::Builder& Renderable::Builder::isLit(bool isLit)
 {
 	mIsLit = isLit;

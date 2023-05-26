@@ -28,10 +28,19 @@ public:
 		mArray[mPtr++] = std::move(t);
 	}
 
-	T& operator[] (int index)
+	/// <summary>
+	/// Sets value at an index.
+	/// <i>Note: Causes the array pointer to grow. Values will be default in between.</i>
+	/// </summary>
+	/// <param name="index"></param>
+	/// <param name="t"></param>
+	void set(int index, T& t)
 	{
-		assert(index >= 0 && index < mPtr);
-		return mArray[index];
+		assert(index >= 0 && index < S);
+
+		if (mPtr <= index) mPtr = index + 1;
+
+		mArray[index] = t;
 	}
 
 	const T& operator[](int index) const

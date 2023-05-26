@@ -31,6 +31,7 @@ public:
 		Builder& addBufferAttributes(std::vector<unsigned int>&& attributes);
 		Builder& addIndices(std::vector<unsigned int>&& indices);
 		Builder& addMaterial(Material* material);
+		Builder& addModel(const char* path);
 		Builder& isLit(bool isLit);
 
 		RenderableComponent* build(Scene* scene, Entity* entity);
@@ -39,14 +40,16 @@ public:
 		inline const std::vector<unsigned int>& getIndices() const { return mIndices; }
 		inline const std::vector<unsigned int>& getAttributes() const { return mAttributes; }
 		inline const Material* getMaterial() const { return mMaterial; }
+		inline const char* getModelPath() const { return mModelPath; }
 
 	private:
 
-		std::vector<float> mBuffer;
+		std::vector<float>		  mBuffer;
 		std::vector<unsigned int> mIndices;
 		std::vector<unsigned int> mAttributes;
-		Material* mMaterial;
-		bool mIsLit;
+		Material*				  mMaterial;
+		bool					  mIsLit;
+		const char*				  mModelPath;
 	};
 
 };

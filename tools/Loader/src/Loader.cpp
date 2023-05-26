@@ -123,19 +123,6 @@ namespace MiniTools
 				indices.push_back(val);
 			}
 
-			// Get image
-			auto& imgView = model.bufferViews[model.images[0].bufferView];
-			auto& imgBuffer = model.buffers[imgView.buffer];
-
-			int w, h, comp;
-			auto f = stbi_loadf_from_memory(&(*(imgBuffer.data.begin() + imgView.byteOffset)), imgView.byteLength, &w, &h, &comp, 0);
-
-			if (f == nullptr)
-			{
-				std::cout << stbi_failure_reason();
-				throw;
-			}
-
 			auto bufferData = std::vector<float>();
 			auto it_vert = vertexData.begin();
 			auto it_uv = uvData.begin();
@@ -165,6 +152,8 @@ namespace MiniTools
 	{
 		int w, h, c;
 		auto img = stbi_load(path, &w, &h, &c, 0);
+
+		if(img == nullptr) std::cout << stbi_failure_reason() << std::endl;
 
 		return { w, h, img };
 	}

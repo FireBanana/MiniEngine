@@ -8,18 +8,25 @@ class Engine;
 class Entity;
 class Shader;
 
+// =========================
+// Diffuse    - Location 1
+// Normal     - Location 2
+// Roughness  - Location 3
+// =========================
 class Material
 {
 public:
+	
+	Material( Shader* shader );
 
-	Material( Texture texture, Shader* shader );
+	void addTexture(int index, Texture texture);
 
-	inline ComponentArray<Texture, 32> getTextureReference() const { return mTextureReference; }
+	inline ComponentArray<Texture, 3> getTextureReference() const { return mTextureReference; }
 	inline Shader* getShader() const { return mShader; }
 
 private:
 
-	ComponentArray<Texture, 32> mTextureReference;
+	ComponentArray<Texture, 3> mTextureReference;
 	Shader* mShader;
 
 };

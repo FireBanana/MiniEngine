@@ -1,8 +1,13 @@
 #include "Material.h"
 #include "Texture.h"
 
-Material::Material(Texture texture, Shader* shader) :
+Material::Material(Shader* shader) :
 	mShader(shader)
 {
-	mTextureReference.push(texture);
+	
+}
+
+void Material::addTexture(int index, Texture texture)
+{
+	mTextureReference.set(index, texture);
 }

@@ -4,6 +4,7 @@
 #include "Entity.h"
 #include "Engine.h"
 #include "Material.h"
+#include "Loader.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -20,13 +21,25 @@ Entity* Scene::createEntity()
 	return &(mEntityDatabase.getLast());
 }
 
-RenderableComponent* Scene::createRenderable(const Renderable::Builder* builderResults, Entity* entity)
+RenderableComponent* Scene::createRenderable(const Renderable::Builder* builderResults, Entity* entity) //TODO: Move this elsewhere
 {
 	RenderableComponent m{};
 	m.entityHandle = entity;
-	m.buffer = builderResults->getBuffer();
-	m.indices = builderResults->getIndices();
-	m.attributes = builderResults->getAttributes();
+
+	if (builderResults->getModelPath() != nullptr)
+	{
+		auto results = MiniTools::ModelLoader::load(builderResults->getModelPath());
+
+		m.buffer = std::move(results.models[0].bufferData);
+		m.indices = std::move(results.models[0].indices);
+		m.attributes = std::move(results.models[0].vertexAttributeSizes);
+	}
+	else
+	{
+		m.buffer = builderResults->getBuffer();
+		m.indices = builderResults->getIndices();
+		m.attributes = builderResults->getAttributes();
+	}
 
 	if (builderResults->getMaterial() == nullptr)
 	{

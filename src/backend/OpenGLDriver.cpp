@@ -279,8 +279,8 @@ unsigned int OpenGLDriver::createTexture(int width, int height, void* data)
 {
     GLuint tex;
     glCreateTextures(GL_TEXTURE_2D, 1, &tex);
-    glTextureStorage2D(tex, 1, GL_RGBA32F, width, height);
-    glTextureSubImage2D(tex, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTextureStorage2D(tex, 1, GL_RGB32F, width, height);
+    glTextureSubImage2D(tex, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
     return tex;
 }
 

@@ -4,12 +4,13 @@
 #include "core/Scene.h"
 #include "core/Texture.h"
 
+#include <glm/glm.hpp>
 int main(void)
 {
 	EngineInitParams params{};
 	params.screenWidth = 500;
 	params.screenHeight = 500;
-	params.clearColor = { 0.2f, 0.6f, 0.5f, 1.0f };
+	params.clearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
 	Engine engine{ params };
 
 	auto scene = Scene{ &engine };
@@ -19,9 +20,13 @@ int main(void)
 	auto cameraEntity = scene.createEntity();
 	auto cameraEntity2 = scene.createEntity();
 
-	//auto texture = engine.loadTexture("C:\\Users\\Owais\\Desktop\\img.png");
-	auto mesh = engine.loadMeshToRenderable("C:\\Users\\Owais\\Desktop\\dino2.glb", &scene);
-	//Material material{ texture, engine.getShaderRegistry()->getDeferredShader() }; //todo: accept multiple textures / values
+	Texture texture = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\1.png");
+	Material material{ engine.getShaderRegistry()->getDeferredShader() };
+	material.addTexture(0, texture);
+	auto mesh = Renderable::Builder()
+		.addModel("C:\\Users\\Arthur\\Desktop\\din.glb")
+		.addMaterial(&material)
+		.build(&scene, meshEntity);
 
 	//Renderable::Builder()
 	//	.addBufferData(
@@ -57,7 +62,7 @@ int main(void)
 	//	.build(&scene, meshEntity2);
 
 	auto camera = Camera::Builder()
-		.setPosition({ 80,80,80 })
+		.setPosition({ 1.3,1.3,1.3 })
 		.setAspectRatio((float)params.screenWidth / (float)params.screenHeight)
 		.setNearFarPlane(0.1f, 1000.0f)
 		.setFOV(45)
