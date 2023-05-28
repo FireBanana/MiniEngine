@@ -4,12 +4,16 @@
 #include "core/Scene.h"
 #include "core/Texture.h"
 
+#include <thread>
+#include <iostream>
+#include <functional>
 #include <glm/glm.hpp>
+
 int main(void)
 {
 	EngineInitParams params{};
-	params.screenWidth = 500;
-	params.screenHeight = 500;
+	params.screenWidth = 1200;
+	params.screenHeight = 800;
 	params.clearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
 	Engine engine{ params };
 
@@ -20,11 +24,12 @@ int main(void)
 	auto cameraEntity = scene.createEntity();
 	auto cameraEntity2 = scene.createEntity();
 
-	Texture texture = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\1.png");
+	Texture texture = engine.loadTexture("C:\\Users\\Owais\\Desktop\\img.png");
 	Material material{ engine.getShaderRegistry()->getDeferredShader() };
 	material.addTexture(0, texture);
+
 	auto mesh = Renderable::Builder()
-		.addModel("C:\\Users\\Arthur\\Desktop\\din.glb")
+		.addModel("C:\\Users\\Owais\\Desktop\\dino2.glb")
 		.addMaterial(&material)
 		.build(&scene, meshEntity);
 
@@ -62,7 +67,7 @@ int main(void)
 	//	.build(&scene, meshEntity2);
 
 	auto camera = Camera::Builder()
-		.setPosition({ 1.3,1.3,1.3 })
+		.setPosition({60,60,60 })
 		.setAspectRatio((float)params.screenWidth / (float)params.screenHeight)
 		.setNearFarPlane(0.1f, 1000.0f)
 		.setFOV(45)
@@ -71,6 +76,22 @@ int main(void)
 	scene.setCameraActive(camera);
 
 	// std funtion to have input callbacks
+
+	mesh->worldPosition.y = -20;
+
+	auto t = std::thread([&]()
+		{	
+			float t = 0.0f;
+			float d = 0.0f;
+
+			while (1)
+			{
+				d = glfwGetTime() - t;
+				t = glfwGetTime();
+				mesh->rotation.y += 100 * d;
+
+			}
+		});
 
 	engine.execute(&scene); //move to separate thread
 }

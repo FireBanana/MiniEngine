@@ -155,6 +155,6 @@ namespace MiniTools
 
 		if(img == nullptr) std::cout << stbi_failure_reason() << std::endl;
 
-		return { w, h, img };
+		return { w, h, c, img };
 	}
 }

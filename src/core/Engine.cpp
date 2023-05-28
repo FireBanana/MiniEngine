@@ -25,9 +25,9 @@ void Engine::execute(Scene* scene)
 Texture Engine::loadTexture(const char* path)
 {
 	auto results = MiniTools::ImageLoader::load(path);
-	auto id = mGlPlatform.get()->getDriver()->createTexture(results.width, results.height, results.data);
+	auto id = mGlPlatform.get()->getDriver()->createTexture(results.width, results.height, results.channels, results.data);
 
-	return { results.width, results.height, 0, id };
+	return { results.width, results.height, results.channels, id };
 }
 
 

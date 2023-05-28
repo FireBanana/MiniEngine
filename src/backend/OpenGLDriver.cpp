@@ -5,6 +5,8 @@
 #include "../core/Shader.h"
 #include "../core/Engine.h"
 
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/glm.hpp>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -172,6 +174,18 @@ void OpenGLDriver::draw(Scene* scene)
             glBindTextureUnit(j, db[i].textures[j].getId());
         }
 
+        auto m = glm::mat4{ 1.0f };
+
+        m = glm::rotate(m, glm::radians(db[i].rotation.x), glm::vec3{1, 0, 0});
+        m = glm::rotate(m, glm::radians(db[i].rotation.y), glm::vec3{0, 1, 0});
+        m = glm::rotate(m, glm::radians(db[i].rotation.z), glm::vec3{0, 0, 1});
+
+        setMat4(db[i].shader.getShaderProgram(), "_rotation_only", m);
+
+        m = glm::translate(m, glm::vec3{db[i].worldPosition.x, db[i].worldPosition.y, db[i].worldPosition.z});
+
+        setMat4(db[i].shader.getShaderProgram(), "_model", m );
+        
         glDrawElements(GL_TRIANGLES, db[i].indices.size(), GL_UNSIGNED_INT, 0);
 
         for (int j = 0; j < db[i].textures.size(); ++j)
@@ -275,13 +289,31 @@ void OpenGLDriver::createUniformBlock(Shader* program, size_t dataSize, void* da
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, *indexPtr); // only 0 binding
 }
 
-unsigned int OpenGLDriver::createTexture(int width, int height, void* data)
+unsigned int OpenGLDriver::createTexture(int width, int height, int channels, void* data)
 {
     GLuint tex;
     glCreateTextures(GL_TEXTURE_2D, 1, &tex);
-    glTextureStorage2D(tex, 1, GL_RGB32F, width, height);
-    glTextureSubImage2D(tex, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glTextureStorage2D(tex, 1, channels == 3 ? GL_RGB32F : GL_RGBA32F, width, height);
+    glTextureSubImage2D(tex, 0, 0, 0, width, height, channels == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, data);
     return tex;
+}
+
+void OpenGLDriver::setFloat(unsigned int program, const char* name, float value) const
+{
+    auto location = glGetUniformLocation(program, name);
+    glUniform1f(location, value);
+}
+
+void OpenGLDriver::setVec3(unsigned int program, const char* name, Vector3 value) const
+{
+    auto location = glGetUniformLocation(program, name);
+    glUniform3f(location, value.x, value.y, value.z);
+}
+
+void OpenGLDriver::setMat4(unsigned int program, const char* name, Matrix4x4 value) const
+{
+    auto location = glGetUniformLocation(program, name);
+    glUniformMatrix4fv(location, 1, GL_FALSE, &(value[0].x));
 }
 
 void OpenGLDriver::setupScreenQuad()

@@ -3,8 +3,11 @@
 #ifndef MINIENGINE_TYPES_H
 #define MINIENGINE_TYPES_H
 
+#include <glm/glm.hpp>
 #include <cstdint>
 #include "../utils/Color.h"
+
+using Matrix4x4 = glm::mat4;
 
 struct EngineInitParams
 {

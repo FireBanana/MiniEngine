@@ -14,6 +14,7 @@ struct RenderableComponent : public Component
 	ComponentArray<Texture, 3> textures;
 	Shader					   shader;
 	Vector3					   worldPosition;
+	Vector3					   rotation;
 
 #ifdef USING_OPENGL
 	unsigned int			  vaoId;

@@ -39,7 +39,11 @@ public:
 	void registerUniformBlock(const char* blockName, const Shader* program) const;
 	void createUniformBlock(Shader* program, size_t dataSize, void* data) const;
 
-	unsigned int createTexture(int width, int height, void* data);
+	unsigned int createTexture(int width, int height, int channels, void* data);
+
+	void setFloat(unsigned int program, const char* name, float value) const;
+	void setVec3(unsigned int program, const char* name, Vector3 value) const;
+	void setMat4(unsigned int program, const char* name, Matrix4x4 value) const;
 
 private:
 

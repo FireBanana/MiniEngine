@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../backend/OpenGLDriver.h"
+#include "types/EngineTypes.h"
 
 class Shader
 {
@@ -18,6 +19,10 @@ public:
 
 	//move these to separate uniformbuffer?}
 	inline unsigned int* getUniformBlockBufferPoint() { return &mUniformBufferIndex; }
+
+	void setFloat(const char* name, float value);
+	void setVec3(const char* name, Vector3 value);
+	void setMat4(const char* name, Matrix4x4 value);
 
 private:
 

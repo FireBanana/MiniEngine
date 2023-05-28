@@ -6,7 +6,7 @@ class Texture
 public:
 
 	Texture() {}
-	Texture(int width, int height, int compression, unsigned int id);
+	Texture(int width, int height, int channels, unsigned int id);
 	~Texture() { /*free();*/ }
 
 	inline const int getHeight() const { return mHeight; }
@@ -17,7 +17,7 @@ private:
 
 	int mWidth;
 	int mHeight;
-	int mCompression;
+	int mChannels;
 	unsigned int mId;
 
 };
