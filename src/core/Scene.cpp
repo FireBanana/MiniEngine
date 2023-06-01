@@ -99,10 +99,12 @@ void Scene::setCameraActive(const CameraComponent* camera)
 	{
 		glm::mat4 view;
 		glm::mat4 projection;
+		glm::vec3 cameraPos;
 	} t1;
 
 	t1.view = view;
 	t1.projection = projection;
+	t1.cameraPos = { camera->position.x, camera->position.y, camera->position.z };
 
 	mEngine->getShaderRegistry()->setActiveUniformBuffer("MatrixBlock", sizeof(MatrixBlock), &t1);
 }

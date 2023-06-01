@@ -24,12 +24,12 @@ int main(void)
 	auto cameraEntity = scene.createEntity();
 	auto cameraEntity2 = scene.createEntity();
 
-	Texture texture = engine.loadTexture("C:\\Users\\Owais\\Desktop\\img.png");
+	Texture texture = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\1.png");
 	Material material{ engine.getShaderRegistry()->getDeferredShader() };
 	material.addTexture(0, texture);
 
 	auto mesh = Renderable::Builder()
-		.addModel("C:\\Users\\Owais\\Desktop\\dino2.glb")
+		.addModel("C:\\Users\\Arthur\\Desktop\\din.glb")
 		.addMaterial(&material)
 		.build(&scene, meshEntity);
 
@@ -67,7 +67,7 @@ int main(void)
 	//	.build(&scene, meshEntity2);
 
 	auto camera = Camera::Builder()
-		.setPosition({60,60,60 })
+		.setPosition({2,2,2 })
 		.setAspectRatio((float)params.screenWidth / (float)params.screenHeight)
 		.setNearFarPlane(0.1f, 1000.0f)
 		.setFOV(45)
@@ -77,7 +77,7 @@ int main(void)
 
 	// std funtion to have input callbacks
 
-	mesh->worldPosition.y = -20;
+	//mesh->worldPosition.y = -20;
 
 	auto t = std::thread([&]()
 		{	
