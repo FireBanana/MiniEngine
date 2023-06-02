@@ -9,6 +9,9 @@
 #include <functional>
 #include <glm/glm.hpp>
 
+// ultra TODOs:
+// Integrate lighting
+
 int main(void)
 {
 	EngineInitParams params{};

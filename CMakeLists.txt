@@ -8,6 +8,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin/)
 set(CMAKE_RUNTIME_LIBRARY_DIRECTORY bin/)
 
 set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*")
+set(CMAKE_CXX_STANDARD 17)
 
 add_definitions(-DGLFW_INCLUDE_NONE)
 add_compile_definitions(DIR="${CMAKE_SOURCE_DIR}")
