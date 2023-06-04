@@ -18,20 +18,20 @@ int main(void)
 	params.screenWidth = 1200;
 	params.screenHeight = 800;
 	params.clearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
-	Engine engine{ params };
+	MiniEngine::Engine engine{ params };
 
-	auto scene = Scene{ &engine };
+	auto scene = MiniEngine::Scene{ &engine };
 
 	auto meshEntity = scene.createEntity();
 	auto meshEntity2 = scene.createEntity();
 	auto cameraEntity = scene.createEntity();
 	auto cameraEntity2 = scene.createEntity();
 
-	Texture texture = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\1.png");
-	Material material{ engine.getShaderRegistry()->getDeferredShader() };
+	MiniEngine::Texture texture = engine.loadTexture("C:\\Users\\Owais\\Desktop\\1.png");
+	MiniEngine::Material material{ engine.getShaderRegistry()->getDeferredShader() };
 	material.addTexture(0, texture);
 
-	auto mesh = Renderable::Builder()
+	auto mesh = MiniEngine::Renderable::Builder()
 		.addModel("C:\\Users\\Arthur\\Desktop\\din.glb")
 		.addMaterial(&material)
 		.build(&scene, meshEntity);
@@ -69,7 +69,7 @@ int main(void)
 	//	.addBufferAttributes({ 3, 2 })
 	//	.build(&scene, meshEntity2);
 
-	auto camera = Camera::Builder()
+	auto camera = MiniEngine::Camera::Builder()
 		.setPosition({2,2,2 })
 		.setAspectRatio((float)params.screenWidth / (float)params.screenHeight)
 		.setNearFarPlane(0.1f, 1000.0f)
@@ -92,7 +92,6 @@ int main(void)
 				d = glfwGetTime() - t;
 				t = glfwGetTime();
 				mesh->rotation.y += 100 * d;
-
 			}
 		});
 

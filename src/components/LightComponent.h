@@ -5,9 +5,8 @@
 
 namespace MiniEngine::Components
 {
-	class LightComponent : public Component
+	struct LightComponent : public Component
 	{
-	public:
 		Vector3 position; //Move to transform
 		float intensity;
 	};

@@ -7,27 +7,30 @@
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
-Engine::Engine(const EngineInitParams& params)
+namespace MiniEngine
 {
-	mGlPlatform = std::make_unique<OpenGLPlatform>(params, this);
-	mShaderRegistry = std::make_unique<ShaderRegistry>(mGlPlatform->getDriver());
+	Engine::Engine(const EngineInitParams& params)
+	{
+		mGlPlatform = std::make_unique<Backend::OpenGLPlatform>(params, this);
+		mShaderRegistry = std::make_unique<ShaderRegistry>(mGlPlatform->getDriver());
 
-	mShaderRegistry->loadDeferredShader();
-	mShaderRegistry->loadPbrShader();
-	mShaderRegistry->enable(mShaderRegistry->getDeferredShader());
-}
+		mShaderRegistry->loadDeferredShader();
+		mShaderRegistry->loadPbrShader();
+		mShaderRegistry->enable(mShaderRegistry->getDeferredShader());
+	}
 
-void Engine::execute(Scene* scene)
-{
-	mGlPlatform->execute(scene);
-}
+	void Engine::execute(Scene* scene)
+	{
+		mGlPlatform->execute(scene);
+	}
 
-Texture Engine::loadTexture(const char* path)
-{
-	auto results = MiniTools::ImageLoader::load(path);
-	auto id = mGlPlatform.get()->getDriver()->createTexture(results.width, results.height, results.channels, results.data);
+	Texture Engine::loadTexture(const char* path)
+	{
+		auto results = MiniTools::ImageLoader::load(path);
+		auto id = mGlPlatform.get()->getDriver()->createTexture(results.width, results.height, results.channels, results.data);
 
-	return { results.width, results.height, results.channels, id };
+		return { results.width, results.height, results.channels, id };
+	}
 }
 
 

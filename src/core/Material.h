@@ -8,25 +8,28 @@ class Engine;
 class Entity;
 class Shader;
 
-// =========================
-// Diffuse    - Location 1
-// Normal     - Location 2
-// Roughness  - Location 3
-// =========================
-class Material
+namespace MiniEngine
 {
-public:
-	
-	Material( Shader* shader );
+	// =========================
+	// Diffuse    - Location 1
+	// Normal     - Location 2
+	// Roughness  - Location 3
+	// =========================
+	class Material
+	{
+	public:
 
-	void addTexture(int index, Texture texture);
+		Material(Shader* shader);
 
-	inline ComponentArray<Texture, 3> getTextureReference() const { return mTextureReference; }
-	inline Shader* getShader() const { return mShader; }
+		void addTexture(int index, Texture texture);
 
-private:
+		inline ComponentArray<Texture, 3> getTextureReference() const { return mTextureReference; }
+		inline Shader* getShader() const { return mShader; }
 
-	ComponentArray<Texture, 3> mTextureReference;
-	Shader* mShader;
+	private:
 
-};
+		ComponentArray<Texture, 3> mTextureReference;
+		Shader* mShader;
+
+	};
+}

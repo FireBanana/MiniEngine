@@ -10,28 +10,31 @@
 #include "Material.h"
 #include "Mesh.h"
 
-class OpenGLPlatform;
-
-class Engine
+namespace MiniEngine
 {
-public:
+	class Backend::OpenGLPlatform;
 
-	Engine(const EngineInitParams& params);
+	class Engine
+	{
+	public:
 
-	Engine(Engine const&) = delete;
-	Engine(Engine &&) = delete;
-	Engine& operator=(Engine const&) = delete;
-	Engine& operator=(Engine &&) = delete;
+		Engine(const EngineInitParams& params);
 
-	void execute(Scene* scene);
+		Engine(Engine const&) = delete;
+		Engine(Engine&&) = delete;
+		Engine& operator=(Engine const&) = delete;
+		Engine& operator=(Engine&&) = delete;
 
-	Texture loadTexture(const char* path);
+		void execute(Scene* scene);
 
-	inline ShaderRegistry* getShaderRegistry() const { return mShaderRegistry.get(); }
-	inline OpenGLDriver* getOpenGlDriver() const { return mGlPlatform.get()->getDriver(); }
+		Texture loadTexture(const char* path);
 
-private:
+		inline ShaderRegistry* getShaderRegistry() const { return mShaderRegistry.get(); }
+		inline Backend::OpenGLDriver* getOpenGlDriver() const { return mGlPlatform.get()->getDriver(); }
 
-	std::unique_ptr<OpenGLPlatform> mGlPlatform;	
-	std::unique_ptr<ShaderRegistry> mShaderRegistry;
-};
+	private:
+
+		std::unique_ptr<Backend::OpenGLPlatform> mGlPlatform;
+		std::unique_ptr<ShaderRegistry> mShaderRegistry;
+	};
+}

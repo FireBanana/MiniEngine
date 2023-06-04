@@ -4,59 +4,70 @@
 #include <GLFW/glfw3.h>
 #include <unordered_map>
 
-class Scene;
-class Shader;
-class RenderableComponent;
-class Engine;
-
-class OpenGLDriver
+namespace MiniEngine
 {
-public:
+	class Scene;
+	class Shader;
+	class Engine;
 
-	enum class ShaderType : GLenum
+	namespace Components
 	{
-		VERTEX  = GL_VERTEX_SHADER,
-		FRAGMENT = GL_FRAGMENT_SHADER
-	};
+		class RenderableComponent;
+	}
 
-	void setupGlWindowParams(const EngineInitParams& params, Engine* engine);
-	void setupFrameBuffer();
-	void setupScreenQuad();
-	void setupDebugInfo();
+	namespace Backend
+	{
 
-	void setupMesh(RenderableComponent* component);
+		class OpenGLDriver
+		{
+		public:
 
-	void draw(Scene* scene);
-	void finalBlit();
+			enum class ShaderType : GLenum
+			{
+				VERTEX = GL_VERTEX_SHADER,
+				FRAGMENT = GL_FRAGMENT_SHADER
+			};
 
-	void beginRenderpass();
-	void endRenderpass();
+			void setupGlWindowParams(const EngineInitParams& params, Engine* engine);
+			void setupFrameBuffer();
+			void setupScreenQuad();
+			void setupDebugInfo();
 
-	unsigned int loadShader(const char* path, ShaderType type) const;
-	unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader) const; //create deleter
-	void		 useShaderProgram(unsigned int program) const;
+			void setupMesh(MiniEngine::Components::RenderableComponent* component);
 
-	void registerUniformBlock(const char* blockName, const Shader* program) const;
-	void createUniformBlock(Shader* program, size_t dataSize, void* data) const;
+			void draw(MiniEngine::Scene* scene);
+			void finalBlit();
 
-	unsigned int createTexture(int width, int height, int channels, void* data);
+			void beginRenderpass();
+			void endRenderpass();
 
-	void setFloat(unsigned int program, const char* name, float value) const;
-	void setVec3(unsigned int program, const char* name, Vector3 value) const;
-	void setMat4(unsigned int program, const char* name, Matrix4x4 value) const;
+			unsigned int loadShader(const char* path, ShaderType type) const;
+			unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader) const; //create deleter
+			void		 useShaderProgram(unsigned int program) const;
 
-private:
+			void registerUniformBlock(const char* blockName, const Shader* program) const;
+			void createUniformBlock(Shader* program, size_t dataSize, void* data) const;
 
-	Engine* mEngine;
+			unsigned int createTexture(int width, int height, int channels, void* data);
 
-	GLuint mMainFrameBuffer;
-	GLuint mAccumBuffer;
-	GLuint mColorBuffer;
-	GLuint mPositionBuffer;
-	GLuint mNormalBuffer;
-	GLuint mRoughnessBuffer;
-	GLuint mScreenQuadVertexArray;
-	
-	uint16_t mWidth;
-	uint16_t mHeight;
-};
+			void setFloat(unsigned int program, const char* name, float value) const;
+			void setVec3(unsigned int program, const char* name, Vector3 value) const;
+			void setMat4(unsigned int program, const char* name, Matrix4x4 value) const;
+
+		private:
+
+			Engine* mEngine;
+
+			GLuint mMainFrameBuffer;
+			GLuint mAccumBuffer;
+			GLuint mColorBuffer;
+			GLuint mPositionBuffer;
+			GLuint mNormalBuffer;
+			GLuint mRoughnessBuffer;
+			GLuint mScreenQuadVertexArray;
+
+			uint16_t mWidth;
+			uint16_t mHeight;
+		};
+	}
+}

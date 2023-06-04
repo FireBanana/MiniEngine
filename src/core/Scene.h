@@ -2,7 +2,9 @@
 
 #include <vector>
 #include "Renderable.h"
+#include "Light.h"
 #include "Camera.h"
+#include "../components/LightComponent.h"
 #include "../components/RenderableComponent.h"
 #include "../components/CameraComponent.h"
 #include "../components/TransformComponent.h"
@@ -12,28 +14,33 @@
 
 constexpr size_t MAX_COMPONENT_SIZE = 256;
 
-class Scene
+namespace MiniEngine
 {
-public:
+	class Scene
+	{
+	public:
 
-	Scene(Engine* engine);
+		Scene(Engine* engine);
 
-	Entity* createEntity();
+		Entity* createEntity();
 
-	RenderableComponent* createRenderable(const Renderable::Builder* builderResults, Entity* entity);
-	CameraComponent* createCamera(const Camera::Builder* builderResults, Entity* entity);
+		Components::RenderableComponent* createRenderable(const Renderable::Builder* builderResults, Entity* entity);
+		Components::CameraComponent* createCamera(const Camera::Builder* builderResults, Entity* entity);
+		Components::LightComponent* createLight(const Light::Builder* builderResults, Entity* entity);
 
-	void setCameraActive(const CameraComponent* camera);
+		void setCameraActive(const Components::CameraComponent* camera);
 
-	inline const auto& getRenderableComponentDatabase() const { return mRenderableComponentDatabase; }
-	inline const auto& getCameraComponentDatabase() const { return mCameraComponentDatabase; }
+		inline const auto& getRenderableComponentDatabase() const { return mRenderableComponentDatabase; }
+		inline const auto& getCameraComponentDatabase() const { return mCameraComponentDatabase; }
 
-private:
+	private:
 
-	Engine* mEngine;
+		Engine* mEngine;
 
-	ComponentArray<Entity, MAX_COMPONENT_SIZE>			    mEntityDatabase;
-	ComponentArray<CameraComponent, MAX_COMPONENT_SIZE>	    mCameraComponentDatabase;
-	ComponentArray<RenderableComponent, MAX_COMPONENT_SIZE> mRenderableComponentDatabase;
-	ComponentArray<TransformComponent, MAX_COMPONENT_SIZE>  mTransformComponentDatabase;
-};
+		ComponentArray<Entity, MAX_COMPONENT_SIZE>							mEntityDatabase;
+		ComponentArray<Components::CameraComponent, MAX_COMPONENT_SIZE>	    mCameraComponentDatabase;
+		ComponentArray<Components::RenderableComponent, MAX_COMPONENT_SIZE> mRenderableComponentDatabase;
+		ComponentArray<Components::TransformComponent, MAX_COMPONENT_SIZE>  mTransformComponentDatabase;
+	};
+
+}

@@ -1,23 +1,26 @@
 #pragma once
 #include <memory>
 
-class Texture
+namespace MiniEngine
 {
-public:
+	class Texture
+	{
+	public:
 
-	Texture() {}
-	Texture(int width, int height, int channels, unsigned int id);
-	~Texture() { /*free();*/ }
+		Texture() {}
+		Texture(int width, int height, int channels, unsigned int id);
+		~Texture() { /*free();*/ }
 
-	inline const int getHeight() const { return mHeight; }
-	inline const int getWidth() const { return mWidth; }
-	inline const int getId() const { return mId; }
+		inline const int getHeight() const { return mHeight; }
+		inline const int getWidth() const { return mWidth; }
+		inline const int getId() const { return mId; }
 
-private:
+	private:
 
-	int mWidth;
-	int mHeight;
-	int mChannels;
-	unsigned int mId;
+		int mWidth;
+		int mHeight;
+		int mChannels;
+		unsigned int mId;
 
-};
+	};
+}

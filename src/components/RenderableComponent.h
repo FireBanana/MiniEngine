@@ -6,18 +6,21 @@
 #include "../core/Texture.h"
 #include "../core/Shader.h"
 
-struct RenderableComponent : public Component
+namespace MiniEngine::Components
 {
-	std::vector<float>		   buffer;
-	std::vector<unsigned int>  indices;
-	std::vector<unsigned int>  attributes;
-	ComponentArray<Texture, 3> textures;
-	Shader					   shader;
-	Vector3					   worldPosition;
-	Vector3					   rotation;
+	struct RenderableComponent : public Component
+	{
+		std::vector<float>		   buffer;
+		std::vector<unsigned int>  indices;
+		std::vector<unsigned int>  attributes;
+		ComponentArray<Texture, 3> textures;
+		Shader					   shader;
+		Vector3					   worldPosition;
+		Vector3					   rotation;
 
 #ifdef USING_OPENGL
-	unsigned int			  vaoId;
-	unsigned int			  stride;
+		unsigned int			  vaoId;
+		unsigned int			  stride;
 #endif
-};
+	};
+}

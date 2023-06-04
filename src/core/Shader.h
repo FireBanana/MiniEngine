@@ -3,31 +3,34 @@
 #include "../backend/OpenGLDriver.h"
 #include "types/EngineTypes.h"
 
-class Shader
+namespace MiniEngine
 {
-public:
+	class Shader
+	{
+	public:
 
-	Shader(unsigned int program, const OpenGLDriver* driver);
+		Shader(unsigned int program, const Backend::OpenGLDriver* driver);
 
-	Shader() {};
-	Shader(const Shader&) = default;
-	Shader& operator=(const Shader&) = default;
-	Shader(Shader&&) = default;
-	Shader& operator=(Shader&&) = default;
+		Shader() {};
+		Shader(const Shader&) = default;
+		Shader& operator=(const Shader&) = default;
+		Shader(Shader&&) = default;
+		Shader& operator=(Shader&&) = default;
 
-	inline const unsigned int getShaderProgram() const { return mShaderId; }
+		inline const unsigned int getShaderProgram() const { return mShaderId; }
 
-	//move these to separate uniformbuffer?}
-	inline unsigned int* getUniformBlockBufferPoint() { return &mUniformBufferIndex; }
+		//move these to separate uniformbuffer?}
+		inline unsigned int* getUniformBlockBufferPoint() { return &mUniformBufferIndex; }
 
-	void setFloat(const char* name, float value);
-	void setVec3(const char* name, Vector3 value);
-	void setMat4(const char* name, Matrix4x4 value);
+		void setFloat(const char* name, float value);
+		void setVec3(const char* name, Vector3 value);
+		void setMat4(const char* name, Matrix4x4 value);
 
-private:
+	private:
 
-	unsigned int mShaderId;
-	const OpenGLDriver* mDriver;
+		unsigned int mShaderId;
+		const Backend::OpenGLDriver* mDriver;
 
-	unsigned int mUniformBufferIndex;
-};
+		unsigned int mUniformBufferIndex;
+	};
+}

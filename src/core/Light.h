@@ -5,7 +5,11 @@ namespace MiniEngine
 {
 	class Scene;
 	class Entity;
-	class LightComponent;
+
+	namespace Components
+	{
+		class LightComponent;
+	}	
 
 	class Light
 	{
@@ -30,7 +34,7 @@ namespace MiniEngine
 			Builder& setPosition(Vector3 position);
 			Builder& setIntensity(float intensity);
 
-			LightComponent* build(Scene* scene, Entity* entity);
+			Components::LightComponent* build(Scene* scene, Entity* entity);
 
 		private:
 

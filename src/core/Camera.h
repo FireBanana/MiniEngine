@@ -2,48 +2,55 @@
 
 #include "types/EngineTypes.h"
 
-class Scene;
-class Entity;
-class CameraComponent;
-
-class Camera
+namespace MiniEngine
 {
-public:
+	class Scene;
+	class Entity;
 
-	Camera() = delete;
-	Camera(Camera&) = delete;
-	Camera operator=(Camera&) = delete;
-	Camera(Camera&&) = default;
+	namespace Components
+	{
+		class CameraComponent;
+	}
 
-	class Builder
+	class Camera
 	{
 	public:
 
-		Builder() { }
-		Builder(const Builder&) = delete;
-		Builder operator=(const Builder&) = delete;
-		Builder(const Builder&&) = delete;
-		Builder operator=(const Builder&&) = delete;
+		Camera() = delete;
+		Camera(Camera&) = delete;
+		Camera operator=(Camera&) = delete;
+		Camera(Camera&&) = default;
 
-		Builder& setPosition(Vector3 position);
-		Builder& setFOV(float fov);
-		Builder& setAspectRatio(float ratio);
-		Builder& setNearFarPlane(float near, float far);
+		class Builder
+		{
+		public:
 
-		CameraComponent* build(Scene* scene, Entity* entity);
+			Builder() { }
+			Builder(const Builder&) = delete;
+			Builder operator=(const Builder&) = delete;
+			Builder(const Builder&&) = delete;
+			Builder operator=(const Builder&&) = delete;
 
-		inline const Vector3 getPosition() const { return mPosition; }
-		inline const float getFov() const { return mFov; }
-		inline const float getAspectRatio() const { return mAspectRatio; }
-		inline const float getNearPlane() const { return mNearPlane; }
-		inline const float getFarPlane() const { return mFarPlane; }
+			Builder& setPosition(Vector3 position);
+			Builder& setFOV(float fov);
+			Builder& setAspectRatio(float ratio);
+			Builder& setNearFarPlane(float near, float far);
 
-	private:
+			Components::CameraComponent* build(Scene* scene, Entity* entity);
 
-		Vector3 mPosition;
-		float mFov;
-		float mAspectRatio;
-		float mNearPlane;
-		float mFarPlane;		
+			inline const Vector3 getPosition() const { return mPosition; }
+			inline const float getFov() const { return mFov; }
+			inline const float getAspectRatio() const { return mAspectRatio; }
+			inline const float getNearPlane() const { return mNearPlane; }
+			inline const float getFarPlane() const { return mFarPlane; }
+
+		private:
+
+			Vector3 mPosition;
+			float mFov;
+			float mAspectRatio;
+			float mNearPlane;
+			float mFarPlane;
+		};
 	};
-};
+}

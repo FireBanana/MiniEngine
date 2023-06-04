@@ -2,9 +2,12 @@
 
 #include "Component.h"
 
-class TransformComponent : public Component
+namespace MiniEngine::Components
 {
-	Vector3 position;
-	Vector3 rotation;
-	Vector3 scale;
-};
+	struct TransformComponent : public Component
+	{
+		Vector3 position;
+		Vector3 rotation;
+		Vector3 scale;
+	};
+}
