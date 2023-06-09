@@ -31,16 +31,18 @@ namespace MiniEngine
 		createShader(shader, mDriver);
 	}
 
-	void ShaderRegistry::setActiveUniformBuffer(const char* blockName, size_t dataSize, void* data)
-	{
-		mDriver->createUniformBlock(mActiveShader, dataSize, data);
-		mDriver->registerUniformBlock(blockName, mActiveShader);
-	}
-
 	void ShaderRegistry::enable(Shader* shader)
 	{
 		mDriver->useShaderProgram(shader->getShaderProgram());
 		mActiveShader = shader;
+	}
+
+	void ShaderRegistry::bindGlobalBufferToAll(const char* name, unsigned int bindIndex)
+	{
+		for (auto& shader : mShaderTable)
+		{
+			mDriver->registerUniformBlock(name, &shader, bindIndex);
+		}
 	}
 
 	void ShaderRegistry::createShader(unsigned int program, const Backend::OpenGLDriver * driver)

@@ -89,7 +89,13 @@ namespace MiniEngine
 
 	Components::LightComponent* Scene::createLight(const Light::Builder* builderResults, Entity* entity)
 	{
-		return nullptr;
+		Components::LightComponent l{};
+		l.entityHandle = entity;
+		l.position = builderResults->getPosition();
+		l.intensity = builderResults->getIntensity();
+
+		mLightComponentDatabase.push(std::move(l));
+		return &(mLightComponentDatabase.getLast());
 	}
 
 	void Scene::setCameraActive(const Components::CameraComponent* camera)
@@ -103,7 +109,7 @@ namespace MiniEngine
 				camera->aspectRatio, camera->nearPlane,
 				camera->farPlane);
 
-		struct MatrixBlock
+		struct CameraUniformBlock
 		{
 			glm::mat4 view;
 			glm::mat4 projection;
@@ -114,6 +120,21 @@ namespace MiniEngine
 		t1.projection = projection;
 		t1.cameraPos = { camera->position.x, camera->position.y, camera->position.z };
 
-		mEngine->getShaderRegistry()->setActiveUniformBuffer("MatrixBlock", sizeof(MatrixBlock), &t1);
+		mEngine->getGlobalBufferRegistry()->createNewBinding(sizeof(CameraUniformBlock), &t1, 0);
+		mEngine->getShaderRegistry()->bindGlobalBufferToAll("CameraBlock", 0);
+	}
+	
+	void Scene::addLight(const Components::LightComponent* light)
+	{
+		struct LightUniformBlock
+		{
+			glm::vec3 lightPos1;
+			float lightIntensity1;
+		} l1;
+
+		l1.lightPos1 = glm::vec3{ light->position.x, light->position.y, light->position.z };
+
+		mEngine->getGlobalBufferRegistry()->createNewBinding(sizeof(LightUniformBlock), &l1, 1);
+		mEngine->getShaderRegistry()->bindGlobalBufferToAll("LightBlock", 1);
 	}
 }

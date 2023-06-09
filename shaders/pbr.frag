@@ -4,11 +4,23 @@
 
 in vec2 oUv;
 
-layout (std140, binding = 0) uniform MatrixBlock
+layout (std140, binding = 0) uniform CameraBlock
 {
 	mat4 view;
 	mat4 projection;
     vec3 cameraPos;
+};
+
+layout (std140, binding = 1) uniform LightBlock
+{
+	vec3 lightPos1;
+    float lightIntensity1;
+};
+
+layout (std140, binding = 2) uniform MaterialBlock
+{
+    float roughness;
+    float metallic;
 };
 
 uniform sampler2D _Diffuse;
@@ -67,36 +79,30 @@ vec3 BRDF(vec3 albedo, vec3 v, vec3 n, vec3 l, float a)
     float V = V_SmithGGXCorrelated(NoV, NoL, roughness);
 
     // specular BRDF
-    vec3 Fr = (D * V) * F;
+    vec3 Fr = ((D * V) * F) / (4 * NoV * NoL);
 
     vec3 li = ( albedo / PI );
 
-    float illuminance = NoL * 50.; //intensity
+    float illuminance = NoL * 2.; //intensity
 
     return (Fr + li) * illuminance;
 }
 
 void main()
-{
-    // Example light position
-    const vec3 lPos = vec3(4.,3.,-1.);
-    
+{    
     vec3 albedo = texture(_Diffuse, oUv).xyz;
     vec3 position = texture(_Position, oUv).xyz;
     vec3 normal = texture(_Normal, oUv).xyz;
 
-    float a = 0.1 * length(normal);
-    a += max(dot(normalize(normal), normalize(lPos - position)), 0.);
-    vec4 res = vec4(a,a,a,1.);
-
     vec3 viewDirClipSpace = cameraPos - position;
     
     vec3 viewDir = normalize(viewDirClipSpace).xyz;
-    vec3 lightDir = normalize(lPos - position);
+    vec3 lightDir = normalize(lightPos1 - position);
     vec3 halfv = normalize( viewDir + lightDir );
 
-    vec3 c = BRDF(albedo, viewDir, normalize(normal), lightDir, 0.3);
-    c *= 1.0 / pow( length(lPos - position), 2. ); //attenuation
+    vec3 c = BRDF(albedo, viewDir, normalize(normal), lightDir, 0.1);
+
+    //c *= 1.0 / pow( length(lightPos1 - position), 2. ); //attenuation
 
     oAccum = vec4(c,1.0);
 }

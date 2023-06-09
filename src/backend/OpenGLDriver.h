@@ -45,8 +45,8 @@ namespace MiniEngine
 			unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader) const; //create deleter
 			void		 useShaderProgram(unsigned int program) const;
 
-			void registerUniformBlock(const char* blockName, const Shader* program) const;
-			void createUniformBlock(Shader* program, size_t dataSize, void* data) const;
+			void registerUniformBlock(const char* blockName, const Shader* program, unsigned int bindIndex) const;
+			unsigned int createUniformBlock(size_t dataSize, void* data, unsigned int bindIndex) const;
 
 			unsigned int createTexture(int width, int height, int channels, void* data);
 

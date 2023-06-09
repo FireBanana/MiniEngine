@@ -23,9 +23,8 @@ namespace MiniEngine
 		inline Shader* getDeferredShader() noexcept { return &mShaderTable[0]; }
 		inline Shader* getPbrShader() noexcept { return &mShaderTable[1]; }
 
-		void setActiveUniformBuffer(const char* blockName, size_t dataSize, void* data);
-
 		void enable(Shader* shader);
+		void bindGlobalBufferToAll(const char* name, unsigned int bindIndex);
 
 		inline const Shader* getActiveShader() const { return mActiveShader; }
 

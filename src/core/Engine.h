@@ -9,6 +9,7 @@
 #include "utils/Color.h"
 #include "Material.h"
 #include "Mesh.h"
+#include "GlobalBufferRegistry.h"
 
 namespace MiniEngine
 {
@@ -30,10 +31,12 @@ namespace MiniEngine
 		Texture loadTexture(const char* path);
 
 		inline ShaderRegistry* getShaderRegistry() const { return mShaderRegistry.get(); }
+		inline GlobalBufferRegistry* getGlobalBufferRegistry() const { return mGlobalBufferRegistry.get(); }
 		inline Backend::OpenGLDriver* getOpenGlDriver() const { return mGlPlatform.get()->getDriver(); }
 
 	private:
 
+		std::unique_ptr<GlobalBufferRegistry> mGlobalBufferRegistry;
 		std::unique_ptr<Backend::OpenGLPlatform> mGlPlatform;
 		std::unique_ptr<ShaderRegistry> mShaderRegistry;
 	};

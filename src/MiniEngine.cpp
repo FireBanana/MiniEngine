@@ -24,10 +24,10 @@ int main(void)
 
 	auto meshEntity = scene.createEntity();
 	auto meshEntity2 = scene.createEntity();
-	auto cameraEntity = scene.createEntity();
 	auto cameraEntity2 = scene.createEntity();
+	auto mainLightEntity = scene.createEntity();
 
-	MiniEngine::Texture texture = engine.loadTexture("C:\\Users\\Owais\\Desktop\\1.png");
+	MiniEngine::Texture texture = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\1.png");
 	MiniEngine::Material material{ engine.getShaderRegistry()->getDeferredShader() };
 	material.addTexture(0, texture);
 
@@ -76,11 +76,15 @@ int main(void)
 		.setFOV(45)
 		.build(&scene, cameraEntity2);
 
+	auto light = MiniEngine::Light::Builder()
+		.setPosition({ 4.0f,3.0f,-1.0f })
+		.setIntensity(1.0f)
+		.build(&scene, mainLightEntity);
+
 	scene.setCameraActive(camera);
-
-	// std funtion to have input callbacks
-
-	//mesh->worldPosition.y = -20;
+	
+	scene.addLight(light);
+	//scene.removeLight();
 
 	auto t = std::thread([&]()
 		{	
@@ -91,7 +95,7 @@ int main(void)
 			{
 				d = glfwGetTime() - t;
 				t = glfwGetTime();
-				mesh->rotation.y += 100 * d;
+				//mesh->rotation.y += 100 * d;
 			}
 		});
 

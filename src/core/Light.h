@@ -25,7 +25,7 @@ namespace MiniEngine
 		{
 
 		public:
-			Builder();
+			Builder() {};
 			Builder(const Builder&) = delete;
 			Builder operator=(const Builder&) = delete;
 			Builder(const Builder&&) = delete;
@@ -33,6 +33,9 @@ namespace MiniEngine
 
 			Builder& setPosition(Vector3 position);
 			Builder& setIntensity(float intensity);
+
+			inline const Vector3 getPosition() const { return mPosition; }
+			inline const float getIntensity() const { return mIntensity; }
 
 			Components::LightComponent* build(Scene* scene, Entity* entity);
 

@@ -29,6 +29,7 @@ namespace MiniEngine
 		Components::LightComponent* createLight(const Light::Builder* builderResults, Entity* entity);
 
 		void setCameraActive(const Components::CameraComponent* camera);
+		void addLight(const Components::LightComponent* light);
 
 		inline const auto& getRenderableComponentDatabase() const { return mRenderableComponentDatabase; }
 		inline const auto& getCameraComponentDatabase() const { return mCameraComponentDatabase; }
@@ -41,6 +42,7 @@ namespace MiniEngine
 		ComponentArray<Components::CameraComponent, MAX_COMPONENT_SIZE>	    mCameraComponentDatabase;
 		ComponentArray<Components::RenderableComponent, MAX_COMPONENT_SIZE> mRenderableComponentDatabase;
 		ComponentArray<Components::TransformComponent, MAX_COMPONENT_SIZE>  mTransformComponentDatabase;
+		ComponentArray<Components::LightComponent, MAX_COMPONENT_SIZE>		mLightComponentDatabase;
 	};
 
 }

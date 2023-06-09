@@ -13,6 +13,7 @@ namespace MiniEngine
 	{
 		mGlPlatform = std::make_unique<Backend::OpenGLPlatform>(params, this);
 		mShaderRegistry = std::make_unique<ShaderRegistry>(mGlPlatform->getDriver());
+		mGlobalBufferRegistry = std::make_unique<GlobalBufferRegistry>(mGlPlatform->getDriver());
 
 		mShaderRegistry->loadDeferredShader();
 		mShaderRegistry->loadPbrShader();

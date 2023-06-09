@@ -1,10 +1,16 @@
 #version 450 core
 
-layout (std140, binding = 0) uniform MatrixBlock
+layout (std140, binding = 0) uniform CameraBlock
 {
 	mat4 view;
 	mat4 projection;
 	vec3 cameraPos;
+};
+
+layout (std140, binding = 1) uniform LightBlock
+{
+	vec3 lightPos1;
+	float lightIntensity1;
 };
 
 uniform mat4 _model;

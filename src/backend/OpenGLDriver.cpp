@@ -275,20 +275,22 @@ namespace MiniEngine::Backend
         glUseProgram(program);
     }
 
-    void OpenGLDriver::registerUniformBlock(const char* blockName, const Shader* program) const
+    void OpenGLDriver::registerUniformBlock(const char* blockName, const Shader* program, unsigned int bindIndex) const
     {
         auto blockIndex = glGetUniformBlockIndex(program->getShaderProgram(), blockName);
-        glUniformBlockBinding(program->getShaderProgram(), blockIndex, 0); //only 0 binding
+        glUniformBlockBinding(program->getShaderProgram(), blockIndex, bindIndex);
     }
 
-    void OpenGLDriver::createUniformBlock(Shader* program, size_t dataSize, void* data) const
+    unsigned int OpenGLDriver::createUniformBlock(size_t dataSize, void* data, unsigned int bindIndex) const
     {
-        auto indexPtr = program->getUniformBlockBufferPoint();
+        unsigned int bindingPoint;
 
-        glCreateBuffers(1, indexPtr);
-        glBindBuffer(GL_UNIFORM_BUFFER, *indexPtr);
-        glBufferData(GL_UNIFORM_BUFFER, dataSize, data, GL_STATIC_DRAW);
-        glBindBufferBase(GL_UNIFORM_BUFFER, 0, *indexPtr); // only 0 binding
+        glCreateBuffers(1, &bindingPoint);
+        glBindBuffer(GL_UNIFORM_BUFFER, bindingPoint);
+        glBufferData(GL_UNIFORM_BUFFER, dataSize, data, GL_DYNAMIC_DRAW);
+        glBindBufferBase(GL_UNIFORM_BUFFER, bindIndex, bindingPoint);
+
+        return bindingPoint;
     }
 
     unsigned int OpenGLDriver::createTexture(int width, int height, int channels, void* data)
