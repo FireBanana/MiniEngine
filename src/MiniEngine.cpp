@@ -9,9 +9,6 @@
 #include <functional>
 #include <glm/glm.hpp>
 
-// ultra TODOs:
-// Integrate lighting
-
 int main(void)
 {
 	EngineInitParams params{};
@@ -27,12 +24,16 @@ int main(void)
 	auto cameraEntity2 = scene.createEntity();
 	auto mainLightEntity = scene.createEntity();
 
-	MiniEngine::Texture texture = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\1.png");
-	MiniEngine::Material material{ engine.getShaderRegistry()->getDeferredShader() };
-	material.addTexture(0, texture);
+	MiniEngine::Texture texture = engine.loadTexture("C:\\Users\\Owais\\Desktop\\img.png");
+
+	auto material = MiniEngine::Material::Creator()
+		.addTexture(MiniEngine::Material::TextureType::Diffuse, texture)
+		.addShader(engine.getShaderRegistry()->getDeferredShader())
+		.addMaterialProperty(MiniEngine::Material::PropertyType::Roughness, 0.025f)
+		.create();
 
 	auto mesh = MiniEngine::Renderable::Builder()
-		.addModel("C:\\Users\\Arthur\\Desktop\\din.glb")
+		.addModel("C:\\Users\\Owais\\Desktop\\dino2.glb")
 		.addMaterial(&material)
 		.build(&scene, meshEntity);
 
@@ -70,7 +71,7 @@ int main(void)
 	//	.build(&scene, meshEntity2);
 
 	auto camera = MiniEngine::Camera::Builder()
-		.setPosition({2,2,2 })
+		.setPosition({60,60,60 })
 		.setAspectRatio((float)params.screenWidth / (float)params.screenHeight)
 		.setNearFarPlane(0.1f, 1000.0f)
 		.setFOV(45)
@@ -95,7 +96,7 @@ int main(void)
 			{
 				d = glfwGetTime() - t;
 				t = glfwGetTime();
-				//mesh->rotation.y += 100 * d;
+				mesh->rotation.y += 100 * d;
 			}
 		});
 

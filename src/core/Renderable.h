@@ -6,7 +6,7 @@ namespace MiniEngine
 	class Engine;
 	class Entity;
 	class Scene;
-	class Material;
+	class MaterialInstance;
 
 	namespace Components
 	{
@@ -27,7 +27,7 @@ namespace MiniEngine
 		{
 		public:
 
-			Builder() : mMaterial(nullptr) { }
+			Builder() : mMaterialInstance(nullptr) { }
 			Builder(const Builder&) = delete;
 			Builder operator=(const Builder&) = delete;
 			Builder(const Builder&&) = delete;
@@ -36,7 +36,7 @@ namespace MiniEngine
 			Builder& addBufferData(std::vector<float>&& buffer);
 			Builder& addBufferAttributes(std::vector<unsigned int>&& attributes);
 			Builder& addIndices(std::vector<unsigned int>&& indices);
-			Builder& addMaterial(Material* material);
+			Builder& addMaterialInstance(MaterialInstance* MaterialInstance);
 			Builder& addModel(const char* path);
 			Builder& isLit(bool isLit);
 
@@ -45,7 +45,7 @@ namespace MiniEngine
 			inline const std::vector<float>& getBuffer() const { return mBuffer; }
 			inline const std::vector<unsigned int>& getIndices() const { return mIndices; }
 			inline const std::vector<unsigned int>& getAttributes() const { return mAttributes; }
-			inline const Material* getMaterial() const { return mMaterial; }
+			inline const MaterialInstance* getMaterialInstance() const { return mMaterialInstance; }
 			inline const char* getModelPath() const { return mModelPath; }
 
 		private:
@@ -53,7 +53,7 @@ namespace MiniEngine
 			std::vector<float>		  mBuffer;
 			std::vector<unsigned int> mIndices;
 			std::vector<unsigned int> mAttributes;
-			Material* mMaterial;
+			MaterialInstance* mMaterialInstance;
 			bool					  mIsLit;
 			const char* mModelPath;
 		};

@@ -14,6 +14,7 @@ namespace MiniEngine::Components
 		std::vector<unsigned int>  indices;
 		std::vector<unsigned int>  attributes;
 		ComponentArray<Texture, 3> textures;
+		ComponentArray<float, 16>  materialProperties;
 		Shader					   shader;
 		Vector3					   worldPosition;
 		Vector3					   rotation;

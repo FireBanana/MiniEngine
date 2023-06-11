@@ -44,14 +44,15 @@ namespace MiniEngine
 			m.attributes = builderResults->getAttributes();
 		}
 
-		if (builderResults->getMaterial() == nullptr)
+		if (builderResults->getMaterialInstance() == nullptr)
 		{
 			m.shader = *(mEngine->getShaderRegistry()->getDeferredShader());
 		}
 		else
 		{
-			m.shader = *(builderResults->getMaterial()->getShader());
-			m.textures = builderResults->getMaterial()->getTextureReference();
+			m.shader = *(builderResults->getMaterialInstance()->shader);
+			m.textures = builderResults->getMaterialInstance()->textureReference;
+			m.materialProperties = builderResults->getMaterialInstance()->materialProperties;
 		}
 
 #ifdef USING_OPENGL

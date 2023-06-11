@@ -22,9 +22,9 @@ namespace MiniEngine
 		return *this;
 	}
 
-	Renderable::Builder& Renderable::Builder::addMaterial(Material* material)
+	Renderable::Builder& Renderable::Builder::addMaterialInstance(MaterialInstance* MaterialInstance)
 	{
-		mMaterial = material;
+		mMaterialInstance = MaterialInstance;
 		return *this;
 	}
 

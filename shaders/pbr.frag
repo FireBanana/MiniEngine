@@ -28,6 +28,9 @@ uniform sampler2D _Position;
 uniform sampler2D _Normal;
 uniform sampler2D _Roughness;
 
+uniform float _Roughness;
+uniform float _Metallic;
+
 layout (location = 0) out vec4 oAccum;
 
 float D_GGX(float NoH, float a) 
@@ -100,7 +103,7 @@ void main()
     vec3 lightDir = normalize(lightPos1 - position);
     vec3 halfv = normalize( viewDir + lightDir );
 
-    vec3 c = BRDF(albedo, viewDir, normalize(normal), lightDir, 0.1);
+    vec3 c = BRDF(albedo, viewDir, normalize(normal), lightDir, _Rougness);
 
     //c *= 1.0 / pow( length(lightPos1 - position), 2. ); //attenuation
 

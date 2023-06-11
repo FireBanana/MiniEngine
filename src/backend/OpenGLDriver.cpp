@@ -211,6 +211,9 @@ namespace MiniEngine::Backend
         glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_Normal"), 2);
         glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_Roughness"), 3);
 
+        // add here
+        glUniform1f(glGetUniformLocation("_Roughness"), db[i])
+
         glBindVertexArray(mScreenQuadVertexArray);
 
         glWaitSync(mainPassSync, 0, GL_TIMEOUT_IGNORED);

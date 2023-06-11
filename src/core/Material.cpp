@@ -3,14 +3,24 @@
 
 namespace MiniEngine
 {
-	Material::Material(Shader* shader) :
-		mShader(shader)
+	Material::Creator& Material::Creator::addTexture(TextureType textureType, Texture texture)
 	{
-
+		mTextureReference.set((int)textureType, texture);
+		return *this;
 	}
-
-	void Material::addTexture(int index, Texture texture)
+	
+	Material::Creator& Material::Creator::addShader(Shader* shader)
 	{
-		mTextureReference.set(index, texture);
+		mShader = shader;
+		return *this;
+	}
+	
+	Material::Creator& Material::Creator::addMaterialProperty(PropertyType propertyType, float value)
+	{
+		mMaterialProperties.set((int)propertyType, value);
+	}
+	MaterialInstance Material::Creator::create()
+	{
+		return { mShader, std::move(mTextureReference), std::move(mMaterialProperties) };
 	}
 }
