@@ -12,6 +12,8 @@
 #include <iostream>
 #include <cassert>
 
+#define SET_TEXTURE_ID(n, id) glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), n), id);
+
 void debugCallback(GLenum source, GLenum type, GLuint id,
     GLenum severity, GLsizei length, GLchar const* message, void const* user_param)
 {
@@ -68,8 +70,6 @@ namespace MiniEngine::Backend
             params.clearColor.b(),
             params.clearColor.a()
         );
-
-        glEnable(GL_DEPTH_TEST);
     }
 
     void OpenGLDriver::setupFrameBuffer()
@@ -115,6 +115,72 @@ namespace MiniEngine::Backend
         glDebugMessageCallback(debugCallback, nullptr);
     }
 
+    void OpenGLDriver::setupSkybox(MiniEngine::Components::SkyboxComponent* skybox)
+    {
+        constexpr float skyboxVertices[] =
+        {
+            //   Coordinates
+            -1.0f, -1.0f,  1.0f,//        7--------6
+             1.0f, -1.0f,  1.0f,//       /|       /|
+             1.0f, -1.0f, -1.0f,//      4--------5 |
+            -1.0f, -1.0f, -1.0f,//      | |      | |
+            -1.0f,  1.0f,  1.0f,//      | 3------|-2
+             1.0f,  1.0f,  1.0f,//      |/       |/
+             1.0f,  1.0f, -1.0f,//      0--------1
+            -1.0f,  1.0f, -1.0f
+        };
+
+        constexpr unsigned int skyboxIndices[] =
+        {
+            // Right
+            1, 2, 6,
+            6, 5, 1,
+            // Left
+            0, 4, 7,
+            7, 3, 0,
+            // Top
+            4, 5, 6,
+            6, 7, 4,
+            // Bottom
+            0, 3, 2,
+            2, 1, 0,
+            // Back
+            0, 1, 5,
+            5, 4, 0,
+            // Front
+            3, 7, 6,
+            6, 2, 3
+        };
+
+        unsigned int vao;
+        glCreateVertexArrays(1, &vao);
+        glBindVertexArray(vao);
+
+        skybox->vaoId = vao;
+
+        glBindVertexArray(vao);
+
+        unsigned int vbo, ebo;
+
+        glCreateBuffers(1, &vbo);
+        glCreateBuffers(1, &ebo);
+
+        glVertexArrayVertexBuffer(vao, 0, vbo, 0, 3 * sizeof(float));
+        glVertexArrayElementBuffer(vao, ebo);
+
+        glEnableVertexAttribArray(0);
+
+        glVertexAttribFormat(0, 3, GL_FLOAT, GL_FALSE, 0);
+        glVertexAttribBinding(0, 0);
+
+        glNamedBufferData(
+            vbo, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
+        glNamedBufferData(
+            ebo, sizeof(skyboxIndices), skyboxIndices, GL_STATIC_DRAW);
+
+        glBindVertexArray(0);
+    }
+
     void OpenGLDriver::setupMesh(MiniEngine::Components::RenderableComponent* component)
     {
         unsigned int vao;
@@ -157,15 +223,33 @@ namespace MiniEngine::Backend
     {
         const auto& db = scene->getRenderableComponentDatabase();
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // enviroment pass ========================
+
+        const auto& skybox = scene->getSkyBox();
+
+        if (skybox.skyboxType == Skybox::SkyboxType::Skybox)
+        {
+            glDisable(GL_DEPTH_TEST);
+
+            glBindVertexArray(skybox.vaoId);
+            mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getSkyboxShader());
+            glBindTextureUnit(0, skybox.mainTexture.getId());
+            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+            glEnable(GL_DEPTH_TEST);
+        }
+        else
+        {
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        }
 
         // geometry pass ==========================
 
         mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getDeferredShader());
-        glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_Diffuse"), 0);
-        glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_Position"), 1);
-        glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_Normal"), 2);
-        glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_Roughness"), 3);
+        SET_TEXTURE_ID("_Diffuse", 0);
+        SET_TEXTURE_ID("_Position", 1);
+        SET_TEXTURE_ID("_Normal", 2);
+        SET_TEXTURE_ID("_Roughness", 3);
 
         for (int i = 0; i < db.size(); ++i)
         {
@@ -187,13 +271,14 @@ namespace MiniEngine::Backend
             m = glm::translate(m, glm::vec3{db[i].worldPosition.x, db[i].worldPosition.y, db[i].worldPosition.z});
 
             setMat4(db[i].shader.getShaderProgram(), "_model", m);
+            setFloat(db[i].shader.getShaderProgram(), "_baseRoughness", db[i].materialProperties[(int)MiniEngine::Material::PropertyType::Roughness]);
 
             glDrawElements(GL_TRIANGLES, db[i].indices.size(), GL_UNSIGNED_INT, 0);
 
-            for (int j = 0; j < db[i].textures.size(); ++j)
-            {
-                glBindTextureUnit(j, 0);
-            }
+            //for (int j = 0; j < db[i].textures.size(); ++j)
+            //{
+            //    glBindTextureUnit(j, 0);
+            //}
         }
 
         auto mainPassSync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
@@ -206,13 +291,10 @@ namespace MiniEngine::Backend
         glBindTextureUnit(3, mRoughnessBuffer);
 
         mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getPbrShader());
-        glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_Diffuse"), 0);
-        glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_Position"), 1);
-        glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_Normal"), 2);
-        glUniform1i(glGetUniformLocation(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_Roughness"), 3);
-
-        // add here
-        glUniform1f(glGetUniformLocation("_Roughness"), db[i])
+        SET_TEXTURE_ID("_Diffuse", 0);
+        SET_TEXTURE_ID("_Position", 1);
+        SET_TEXTURE_ID("_Normal", 2);
+        SET_TEXTURE_ID("_Roughness", 3);
 
         glBindVertexArray(mScreenQuadVertexArray);
 
@@ -302,6 +384,24 @@ namespace MiniEngine::Backend
         glCreateTextures(GL_TEXTURE_2D, 1, &tex);
         glTextureStorage2D(tex, 1, channels == 3 ? GL_RGB32F : GL_RGBA32F, width, height);
         glTextureSubImage2D(tex, 0, 0, 0, width, height, channels == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, data);
+        return tex;
+    }
+
+    //TODO: unify to createTexture
+    unsigned int OpenGLDriver::createCubeMap(int width, int height, int channels, void* data)
+    {
+        GLuint tex;
+        glCreateTextures(GL_TEXTURE_2D, 1, &tex);
+        
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glTextureStorage2D(tex, 1, channels == 3 ? GL_RGB32F : GL_RGBA32F, width, height);
+        glTextureSubImage2D(tex, 0, 0, 0, width, height, channels == 3 ? GL_RGB : GL_RGBA, GL_FLOAT, (float*)data);
+        
         return tex;
     }
 

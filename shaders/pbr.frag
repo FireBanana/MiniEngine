@@ -28,9 +28,6 @@ uniform sampler2D _Position;
 uniform sampler2D _Normal;
 uniform sampler2D _Roughness;
 
-uniform float _Roughness;
-uniform float _Metallic;
-
 layout (location = 0) out vec4 oAccum;
 
 float D_GGX(float NoH, float a) 
@@ -86,8 +83,8 @@ vec3 BRDF(vec3 albedo, vec3 v, vec3 n, vec3 l, float a)
 
     vec3 li = ( albedo / PI );
 
+    // directional light
     float illuminance = NoL * 2.; //intensity
-
     return (Fr + li) * illuminance;
 }
 
@@ -96,6 +93,7 @@ void main()
     vec3 albedo = texture(_Diffuse, oUv).xyz;
     vec3 position = texture(_Position, oUv).xyz;
     vec3 normal = texture(_Normal, oUv).xyz;
+    vec3 roughness = texture(_Roughness, oUv).xyz;
 
     vec3 viewDirClipSpace = cameraPos - position;
     
@@ -103,7 +101,7 @@ void main()
     vec3 lightDir = normalize(lightPos1 - position);
     vec3 halfv = normalize( viewDir + lightDir );
 
-    vec3 c = BRDF(albedo, viewDir, normalize(normal), lightDir, _Rougness);
+    vec3 c = BRDF(albedo, viewDir, normalize(normal), lightDir, roughness.x);
 
     //c *= 1.0 / pow( length(lightPos1 - position), 2. ); //attenuation
 

@@ -22,6 +22,9 @@ uniform sampler2D _Position;
 uniform sampler2D _Normal;
 uniform sampler2D _Roughness;
 
+uniform float _baseRoughness;
+uniform float _baseMetallic;
+
 layout (location = 1) out vec4 oDiffuse; 
 layout (location = 2) out vec4 oPosition; 
 layout (location = 3) out vec4 oNormal; 
@@ -34,5 +37,5 @@ void main()
 	oDiffuse = texture(_Diffuse, fUv);
 	oPosition = vec4(normalize(fPosition), 0.0);
 	oNormal = vec4(v.x, v.y, v.z, 0.0);
-	oRoughness = vec4(1.0);
+	oRoughness = vec4(_baseRoughness);
 }

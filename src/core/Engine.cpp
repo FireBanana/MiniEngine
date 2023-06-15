@@ -17,7 +17,7 @@ namespace MiniEngine
 
 		mShaderRegistry->loadDeferredShader();
 		mShaderRegistry->loadPbrShader();
-		mShaderRegistry->enable(mShaderRegistry->getDeferredShader());
+		mShaderRegistry->loadSkyboxShader();
 	}
 
 	void Engine::execute(Scene* scene)
@@ -25,10 +25,13 @@ namespace MiniEngine
 		mGlPlatform->execute(scene);
 	}
 
-	Texture Engine::loadTexture(const char* path)
+	Texture Engine::loadTexture(const char* path, Texture::TextureType type)
 	{
-		auto results = MiniTools::ImageLoader::load(path);
-		auto id = mGlPlatform.get()->getDriver()->createTexture(results.width, results.height, results.channels, results.data);
+		auto results = MiniTools::ImageLoader::load(path, type == Texture::TextureType::CubeMap);
+
+		auto id = type == Texture::TextureType::Default ?
+			mGlPlatform.get()->getDriver()->createTexture(results.width, results.height, results.channels, results.data) :
+			mGlPlatform.get()->getDriver()->createCubeMap(results.width, results.height, results.channels, results.data);
 
 		return { results.width, results.height, results.channels, id };
 	}

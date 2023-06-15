@@ -15,7 +15,8 @@ namespace MiniEngine
 	Scene::Scene(Engine* engine) :
 		mEngine(engine)
 	{
-
+		mActiveSkybox = {};
+		mActiveSkybox.skyboxType = Skybox::SkyboxType::Default;
 	}
 
 	Entity* Scene::createEntity()
@@ -99,6 +100,18 @@ namespace MiniEngine
 		return &(mLightComponentDatabase.getLast());
 	}
 
+	Components::SkyboxComponent* Scene::createSkybox(const Skybox::Builder* builderResults, Entity* entity)
+	{
+		Components::SkyboxComponent s{};
+		s.mainTexture = builderResults->getTexture();
+		s.skyboxType = Skybox::SkyboxType::Skybox;
+
+		mEngine->getOpenGlDriver()->setupSkybox(&s);
+		mActiveSkybox = s;
+
+		return &mActiveSkybox;
+	}
+
 	void Scene::setCameraActive(const Components::CameraComponent* camera)
 	{
 		glm::vec3 pos = { camera->position.x, camera->position.y, camera->position.z };
@@ -123,6 +136,11 @@ namespace MiniEngine
 
 		mEngine->getGlobalBufferRegistry()->createNewBinding(sizeof(CameraUniformBlock), &t1, 0);
 		mEngine->getShaderRegistry()->bindGlobalBufferToAll("CameraBlock", 0);
+	}
+
+	void Scene::toggleSkyBox(bool enable)
+	{
+		// Add functionality 
 	}
 	
 	void Scene::addLight(const Components::LightComponent* light)

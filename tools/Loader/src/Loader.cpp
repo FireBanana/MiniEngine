@@ -148,13 +148,18 @@ namespace MiniTools
 		return results;
 	}
 	
-	ImageLoaderResults ImageLoader::load(const char* path)
+	ImageLoaderResults ImageLoader::load(const char* path, bool isFloat)
 	{
 		int w, h, c;
-		auto img = stbi_load(path, &w, &h, &c, 0);
+		void* data;
 
-		if(img == nullptr) std::cout << stbi_failure_reason() << std::endl;
+		if(isFloat)
+			data = stbi_loadf(path, &w, &h, &c, 0);
+		else
+			data = stbi_load(path, &w, &h, &c, 0);
 
-		return { w, h, c, img };
+		if(data == nullptr) std::cout << stbi_failure_reason() << std::endl;
+
+		return { w, h, c, isFloat, data };
 	}
 }

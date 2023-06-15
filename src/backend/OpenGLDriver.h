@@ -13,6 +13,7 @@ namespace MiniEngine
 	namespace Components
 	{
 		class RenderableComponent;
+		class SkyboxComponent;
 	}
 
 	namespace Backend
@@ -33,6 +34,7 @@ namespace MiniEngine
 			void setupScreenQuad();
 			void setupDebugInfo();
 
+			void setupSkybox(MiniEngine::Components::SkyboxComponent* skybox);
 			void setupMesh(MiniEngine::Components::RenderableComponent* component);
 
 			void draw(MiniEngine::Scene* scene);
@@ -49,6 +51,7 @@ namespace MiniEngine
 			unsigned int createUniformBlock(size_t dataSize, void* data, unsigned int bindIndex) const;
 
 			unsigned int createTexture(int width, int height, int channels, void* data);
+			unsigned int createCubeMap(int width, int height, int channels, void* data);
 
 			void setFloat(unsigned int program, const char* name, float value) const;
 			void setVec3(unsigned int program, const char* name, Vector3 value) const;

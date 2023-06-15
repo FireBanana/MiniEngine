@@ -8,6 +8,8 @@ static constexpr char* DEFERRED_VERTEX_PATH = "../shaders/deferred.vert";
 static constexpr char* DEFERRED_FRAGMENT_PATH = "../shaders/deferred.frag";
 static constexpr char* LIGHTING_VERTEX_PATH = "../shaders/pbr.vert";
 static constexpr char* LIGHTING_FRAGMENT_PATH = "../shaders/pbr.frag";
+static constexpr char* SKYBOX_VERTEX_PATH = "../shaders/sky.vert";
+static constexpr char* SKYBOX_FRAGMENT_PATH = "../shaders/sky.frag";
 
 namespace MiniEngine
 {
@@ -19,9 +21,11 @@ namespace MiniEngine
 
 		void loadDeferredShader();
 		void loadPbrShader();
+		void loadSkyboxShader();
 
 		inline Shader* getDeferredShader() noexcept { return &mShaderTable[0]; }
 		inline Shader* getPbrShader() noexcept { return &mShaderTable[1]; }
+		inline Shader* getSkyboxShader() noexcept { return &mShaderTable[2]; }
 
 		void enable(Shader* shader);
 		void bindGlobalBufferToAll(const char* name, unsigned int bindIndex);

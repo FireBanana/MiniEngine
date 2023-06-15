@@ -1,10 +1,9 @@
 # MiniEngine
-### Refactoring Section
+### a small PBR Game Engine 
 
-To-Do List:
+Current features (still WIP):
+- OpenGL backend
+- PBR based on Unreal Engine 4's study
+- Simple textual API
 
-- [ ] Move engine specific items out of main and into respective files
-- [ ] Deal with raw pointers -> smart pointers
-- [ ] Improve constness of program
-- [x] Add libraries as submodules
-- [ ] Update and remove forward declarations
+- Documentation in progress. Will be updated soon

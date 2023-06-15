@@ -31,6 +31,15 @@ namespace MiniEngine
 		createShader(shader, mDriver);
 	}
 
+	void ShaderRegistry::loadSkyboxShader()
+	{
+		auto vertexShader = mDriver->loadShader(SKYBOX_VERTEX_PATH, Backend::OpenGLDriver::ShaderType::VERTEX);
+		auto fragmentShader = mDriver->loadShader(SKYBOX_FRAGMENT_PATH, Backend::OpenGLDriver::ShaderType::FRAGMENT);
+		auto shader = mDriver->createShaderProgram(vertexShader, fragmentShader);
+
+		createShader(shader, mDriver);
+	}
+
 	void ShaderRegistry::enable(Shader* shader)
 	{
 		mDriver->useShaderProgram(shader->getShaderProgram());

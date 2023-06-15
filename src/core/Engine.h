@@ -28,7 +28,7 @@ namespace MiniEngine
 
 		void execute(Scene* scene);
 
-		Texture loadTexture(const char* path);
+		Texture loadTexture(const char* path, Texture::TextureType type);
 
 		inline ShaderRegistry* getShaderRegistry() const { return mShaderRegistry.get(); }
 		inline GlobalBufferRegistry* getGlobalBufferRegistry() const { return mGlobalBufferRegistry.get(); }

@@ -18,6 +18,7 @@ namespace MiniEngine
 	Material::Creator& Material::Creator::addMaterialProperty(PropertyType propertyType, float value)
 	{
 		mMaterialProperties.set((int)propertyType, value);
+		return *this;
 	}
 	MaterialInstance Material::Creator::create()
 	{

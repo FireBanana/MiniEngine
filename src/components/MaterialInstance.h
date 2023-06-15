@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../core/Shader.h"
+#include "../core/Texture.h"
 #include "../core/utils/ComponentArray.h"
 
 namespace MiniEngine

@@ -31,7 +31,8 @@ namespace MiniTools
 		int width;
 		int height;
 		int channels;
-		unsigned char* data;
+		bool isFloat;
+		void* data;
 	};
 
 	class ModelLoader
@@ -43,6 +44,6 @@ namespace MiniTools
 	class ImageLoader
 	{
 	public:
-		static ImageLoaderResults load(const char* path);
+		static ImageLoaderResults load(const char* path, bool isFloat = false);
 	};
 }
