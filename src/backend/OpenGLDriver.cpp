@@ -70,6 +70,8 @@ namespace MiniEngine::Backend
             params.clearColor.b(),
             params.clearColor.a()
         );
+
+        glEnable(GL_DEPTH_TEST);
     }
 
     void OpenGLDriver::setupFrameBuffer()
@@ -82,6 +84,7 @@ namespace MiniEngine::Backend
         glCreateTextures(GL_TEXTURE_2D, 1, &mNormalBuffer);
         glCreateTextures(GL_TEXTURE_2D, 1, &mRoughnessBuffer);
         glCreateTextures(GL_TEXTURE_2D, 1, &mAccumBuffer);
+        glCreateTextures(GL_TEXTURE_2D, 1, &mSkyboxBuffer);
 
         glTextureStorage2D(mAccumBuffer, 1, GL_RGBA32F, mWidth, mHeight);
         glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT0, mAccumBuffer, 0);
@@ -97,6 +100,9 @@ namespace MiniEngine::Backend
 
         glTextureStorage2D(mRoughnessBuffer, 1, GL_RGBA32F, mWidth, mHeight);
         glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT4, mRoughnessBuffer, 0);
+
+        glTextureStorage2D(mSkyboxBuffer, 1, GL_RGBA32F, mWidth, mHeight);
+        glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT5, mSkyboxBuffer, 0);
 
         glNamedRenderbufferStorage(depth, GL_DEPTH24_STENCIL8, mWidth, mHeight);
         glNamedFramebufferRenderbuffer(mMainFrameBuffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth);
@@ -222,6 +228,7 @@ namespace MiniEngine::Backend
     void OpenGLDriver::draw(Scene* scene)
     {
         const auto& db = scene->getRenderableComponentDatabase();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // enviroment pass ========================
 
@@ -230,18 +237,16 @@ namespace MiniEngine::Backend
         if (skybox.skyboxType == Skybox::SkyboxType::Skybox)
         {
             glDisable(GL_DEPTH_TEST);
+            glDepthMask(GL_FALSE);
 
             glBindVertexArray(skybox.vaoId);
             mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getSkyboxShader());
             glBindTextureUnit(0, skybox.mainTexture.getId());
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
+            glDepthMask(GL_TRUE);
             glEnable(GL_DEPTH_TEST);
-        }
-        else
-        {
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        }
+        }        
 
         // geometry pass ==========================
 
@@ -274,11 +279,6 @@ namespace MiniEngine::Backend
             setFloat(db[i].shader.getShaderProgram(), "_baseRoughness", db[i].materialProperties[(int)MiniEngine::Material::PropertyType::Roughness]);
 
             glDrawElements(GL_TRIANGLES, db[i].indices.size(), GL_UNSIGNED_INT, 0);
-
-            //for (int j = 0; j < db[i].textures.size(); ++j)
-            //{
-            //    glBindTextureUnit(j, 0);
-            //}
         }
 
         auto mainPassSync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
@@ -300,11 +300,11 @@ namespace MiniEngine::Backend
 
         glWaitSync(mainPassSync, 0, GL_TIMEOUT_IGNORED);
 
+
+        // TODO switch to main framebuffer, draw there and remove blit
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         glDeleteSync(mainPassSync);
-
-        // unbound ============================
     }
 
     void OpenGLDriver::finalBlit()
@@ -360,22 +360,27 @@ namespace MiniEngine::Backend
         glUseProgram(program);
     }
 
-    void OpenGLDriver::registerUniformBlock(const char* blockName, const Shader* program, unsigned int bindIndex) const
+    void OpenGLDriver::registerUniformBlock(const char* blockName, const Shader* program, unsigned int layoutIndex) const
     {
         auto blockIndex = glGetUniformBlockIndex(program->getShaderProgram(), blockName);
-        glUniformBlockBinding(program->getShaderProgram(), blockIndex, bindIndex);
+        glUniformBlockBinding(program->getShaderProgram(), blockIndex, layoutIndex);
     }
 
-    unsigned int OpenGLDriver::createUniformBlock(size_t dataSize, void* data, unsigned int bindIndex) const
+    unsigned int OpenGLDriver::createUniformBlock(size_t dataSize, unsigned int bindIndex) const
     {
-        unsigned int bindingPoint;
+        unsigned int uniformBufferId;
 
-        glCreateBuffers(1, &bindingPoint);
-        glBindBuffer(GL_UNIFORM_BUFFER, bindingPoint);
-        glBufferData(GL_UNIFORM_BUFFER, dataSize, data, GL_DYNAMIC_DRAW);
-        glBindBufferBase(GL_UNIFORM_BUFFER, bindIndex, bindingPoint);
+        glCreateBuffers(1, &uniformBufferId);
+        glBindBuffer(GL_UNIFORM_BUFFER, uniformBufferId);
+        glBufferData(GL_UNIFORM_BUFFER, dataSize, nullptr, GL_DYNAMIC_DRAW);
+        glBindBufferBase(GL_UNIFORM_BUFFER, bindIndex, uniformBufferId);
 
-        return bindingPoint;
+        return uniformBufferId;
+    }
+
+    void OpenGLDriver::updateUniformData(unsigned int bufferId, unsigned int offset, size_t size, void* data) const
+    {
+        glNamedBufferSubData(bufferId, offset, size, data);
     }
 
     unsigned int OpenGLDriver::createTexture(int width, int height, int channels, void* data)

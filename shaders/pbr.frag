@@ -4,21 +4,15 @@
 
 in vec2 oUv;
 
-layout (std140, binding = 0) uniform CameraBlock
+layout (std140, binding = 0) uniform SceneBlock
 {
 	mat4 view;
 	mat4 projection;
     vec3 cameraPos;
-};
 
-layout (std140, binding = 1) uniform LightBlock
-{
 	vec3 lightPos1;
     float lightIntensity1;
-};
 
-layout (std140, binding = 2) uniform MaterialBlock
-{
     float roughness;
     float metallic;
 };
@@ -102,8 +96,6 @@ void main()
     vec3 halfv = normalize( viewDir + lightDir );
 
     vec3 c = BRDF(albedo, viewDir, normalize(normal), lightDir, roughness.x);
-
-    //c *= 1.0 / pow( length(lightPos1 - position), 2. ); //attenuation
 
     oAccum = vec4(c,1.0);
 }

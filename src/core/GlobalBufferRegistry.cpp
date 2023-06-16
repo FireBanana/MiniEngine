@@ -6,10 +6,24 @@ namespace MiniEngine
 		: mDriver(driver)
 	{
 	}
-	unsigned int GlobalBufferRegistry::createNewBinding(size_t dataSize, void* data, unsigned int bindIndex)
+
+	void GlobalBufferRegistry::createNewBinding(BlockType block, unsigned int bindIndex)
 	{
-		auto bindingPoint = mDriver->createUniformBlock(dataSize, data, bindIndex);
-		mBindingPoints.push_back(bindingPoint);
-		return bindingPoint;
+		auto uniformBufferId = mDriver->createUniformBlock(parseBlockSize(block), bindIndex);
+		mBindingPoints.insert({ block, uniformBufferId });
+	}
+
+	void GlobalBufferRegistry::updateUniformData(BlockType block, unsigned int offset, size_t size, void* data)
+	{
+		mDriver->updateUniformData(mBindingPoints[block], offset, size, data);
+	}
+
+	size_t GlobalBufferRegistry::parseBlockSize(BlockType type)
+	{
+		switch (type)
+		{
+			case BlockType::SceneBlock: return sizeof(SceneBlock); break;
+			default: throw;
+		}
 	}
 }

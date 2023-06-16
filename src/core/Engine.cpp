@@ -15,6 +15,8 @@ namespace MiniEngine
 		mShaderRegistry = std::make_unique<ShaderRegistry>(mGlPlatform->getDriver());
 		mGlobalBufferRegistry = std::make_unique<GlobalBufferRegistry>(mGlPlatform->getDriver());
 
+		mGlobalBufferRegistry->createNewBinding(GlobalBufferRegistry::BlockType::SceneBlock, 0);
+
 		mShaderRegistry->loadDeferredShader();
 		mShaderRegistry->loadPbrShader();
 		mShaderRegistry->loadSkyboxShader();

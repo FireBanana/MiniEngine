@@ -2,11 +2,17 @@
 
 layout (location = 0) in vec3 vPos;
 
-layout (std140, binding = 0) uniform CameraBlock
+layout (std140, binding = 0) uniform SceneBlock
 {
 	mat4 view;
 	mat4 projection;
     vec3 cameraPos;
+
+	vec3 lightPos1;
+    float lightIntensity1;
+
+    float roughness;
+    float metallic;
 };
 
 out vec3 fPos;

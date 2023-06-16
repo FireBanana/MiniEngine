@@ -115,6 +115,7 @@ namespace MiniEngine
 	void Scene::setCameraActive(const Components::CameraComponent* camera)
 	{
 		glm::vec3 pos = { camera->position.x, camera->position.y, camera->position.z };
+		auto sceneBlock = mEngine->getGlobalBufferRegistry()->getSceneBlockInstance();
 
 		auto view = glm::lookAt(pos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		auto projection =
@@ -123,19 +124,16 @@ namespace MiniEngine
 				camera->aspectRatio, camera->nearPlane,
 				camera->farPlane);
 
-		struct CameraUniformBlock
-		{
-			glm::mat4 view;
-			glm::mat4 projection;
-			glm::vec3 cameraPos;
-		} t1;
+		sceneBlock->view = view;
+		sceneBlock->projection = projection;
+		sceneBlock->cameraPos = { camera->position.x, camera->position.y, camera->position.z };
 
-		t1.view = view;
-		t1.projection = projection;
-		t1.cameraPos = { camera->position.x, camera->position.y, camera->position.z };
+		mEngine->getGlobalBufferRegistry()->updateUniformData(
+			GlobalBufferRegistry::BlockType::SceneBlock,
+			offsetof(GlobalBufferRegistry::SceneBlock, GlobalBufferRegistry::SceneBlock::view),
+			sizeof(sceneBlock->view) + sizeof(sceneBlock->projection) + sizeof(sceneBlock->cameraPos), &(sceneBlock->view));
 
-		mEngine->getGlobalBufferRegistry()->createNewBinding(sizeof(CameraUniformBlock), &t1, 0);
-		mEngine->getShaderRegistry()->bindGlobalBufferToAll("CameraBlock", 0);
+		mEngine->getShaderRegistry()->bindGlobalBufferToAll("SceneBlock", 0);
 	}
 
 	void Scene::toggleSkyBox(bool enable)
@@ -145,15 +143,14 @@ namespace MiniEngine
 	
 	void Scene::addLight(const Components::LightComponent* light)
 	{
-		struct LightUniformBlock
-		{
-			glm::vec3 lightPos1;
-			float lightIntensity1;
-		} l1;
+		auto sceneBlock = mEngine->getGlobalBufferRegistry()->getSceneBlockInstance();
+		sceneBlock->lightPos1 = light->position;//glm::vec3{ light->position.x, light->position.y, light->position.z };
 
-		l1.lightPos1 = glm::vec3{ light->position.x, light->position.y, light->position.z };
+		mEngine->getGlobalBufferRegistry()->updateUniformData(
+			GlobalBufferRegistry::BlockType::SceneBlock,
+			offsetof(GlobalBufferRegistry::SceneBlock, GlobalBufferRegistry::SceneBlock::lightPos1),
+			sizeof(sceneBlock->lightPos1), &(sceneBlock->lightPos1));
 
-		mEngine->getGlobalBufferRegistry()->createNewBinding(sizeof(LightUniformBlock), &l1, 1);
-		mEngine->getShaderRegistry()->bindGlobalBufferToAll("LightBlock", 1);
+		mEngine->getShaderRegistry()->bindGlobalBufferToAll("SceneBlock", 0);
 	}
 }

@@ -2,17 +2,17 @@
 
 out vec2 oUv;
 
-layout (std140, binding = 0) uniform CameraBlock
+layout (std140, binding = 0) uniform SceneBlock
 {
 	mat4 view;
 	mat4 projection;
-	vec3 cameraPos;
-};
+    vec3 cameraPos;
 
-layout (std140, binding = 1) uniform LightBlock
-{
 	vec3 lightPos1;
-	float lightIntensity1;
+    float lightIntensity1;
+
+    float roughness;
+    float metallic;
 };
 
 layout (location = 0) in vec2 iPos;

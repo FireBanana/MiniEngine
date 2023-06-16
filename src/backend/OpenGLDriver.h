@@ -47,8 +47,9 @@ namespace MiniEngine
 			unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader) const; //create deleter
 			void		 useShaderProgram(unsigned int program) const;
 
-			void registerUniformBlock(const char* blockName, const Shader* program, unsigned int bindIndex) const;
-			unsigned int createUniformBlock(size_t dataSize, void* data, unsigned int bindIndex) const;
+			void registerUniformBlock(const char* blockName, const Shader* program, unsigned int layoutIndex) const;
+			unsigned int createUniformBlock(size_t dataSize, unsigned int bindIndex) const;
+			void updateUniformData(unsigned int bufferId, unsigned int offset, size_t size, void* data) const;
 
 			unsigned int createTexture(int width, int height, int channels, void* data);
 			unsigned int createCubeMap(int width, int height, int channels, void* data);
@@ -67,6 +68,7 @@ namespace MiniEngine
 			GLuint mPositionBuffer;
 			GLuint mNormalBuffer;
 			GLuint mRoughnessBuffer;
+			GLuint mSkyboxBuffer;
 			GLuint mScreenQuadVertexArray;
 
 			uint16_t mWidth;
