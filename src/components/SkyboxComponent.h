@@ -15,7 +15,8 @@ namespace MiniEngine::Components
 		Texture			   mainTexture;
 
 #ifdef USING_OPENGL
-		unsigned int			  vaoId;
+		unsigned int vaoId;
+		unsigned int environmentCubemapId;
 #endif
 	};
 }

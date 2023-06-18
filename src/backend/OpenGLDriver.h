@@ -1,5 +1,6 @@
 #pragma once
 #include "../core/types/EngineTypes.h"
+#include "../core/Texture.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <unordered_map>
@@ -51,8 +52,7 @@ namespace MiniEngine
 			unsigned int createUniformBlock(size_t dataSize, unsigned int bindIndex) const;
 			void updateUniformData(unsigned int bufferId, unsigned int offset, size_t size, void* data) const;
 
-			unsigned int createTexture(int width, int height, int channels, void* data);
-			unsigned int createCubeMap(int width, int height, int channels, void* data);
+			unsigned int createTexture(int width, int height, int channels, void* data, Texture::TextureType type);
 
 			void setFloat(unsigned int program, const char* name, float value) const;
 			void setVec3(unsigned int program, const char* name, Vector3 value) const;
@@ -68,7 +68,6 @@ namespace MiniEngine
 			GLuint mPositionBuffer;
 			GLuint mNormalBuffer;
 			GLuint mRoughnessBuffer;
-			GLuint mSkyboxBuffer;
 			GLuint mScreenQuadVertexArray;
 
 			uint16_t mWidth;

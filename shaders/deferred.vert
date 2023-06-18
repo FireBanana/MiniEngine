@@ -14,7 +14,6 @@ layout (std140, binding = 0) uniform SceneBlock
 };
 
 uniform mat4 _model;
-uniform mat4 _rotation_only;
 
 layout (location = 0) in vec3 iPos;
 layout (location = 1) in vec2 iUv;
@@ -27,7 +26,7 @@ out vec3 fPosition;
 void main()
 {
 	fUv = iUv;
-	fNormal = (_rotation_only * vec4(iNormal, 1.0)).xyz;
+	fNormal = (mat4(mat3(_model)) * vec4(iNormal, 1.0)).xyz;
 	fPosition = (_model * vec4(iPos, 1.0)).xyz;
 	gl_Position = projection * view * _model * vec4(iPos, 1.0);
 }

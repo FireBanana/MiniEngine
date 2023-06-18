@@ -72,6 +72,8 @@ namespace MiniEngine::Backend
         );
 
         glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LEQUAL);
     }
 
     void OpenGLDriver::setupFrameBuffer()
@@ -84,7 +86,6 @@ namespace MiniEngine::Backend
         glCreateTextures(GL_TEXTURE_2D, 1, &mNormalBuffer);
         glCreateTextures(GL_TEXTURE_2D, 1, &mRoughnessBuffer);
         glCreateTextures(GL_TEXTURE_2D, 1, &mAccumBuffer);
-        glCreateTextures(GL_TEXTURE_2D, 1, &mSkyboxBuffer);
 
         glTextureStorage2D(mAccumBuffer, 1, GL_RGBA32F, mWidth, mHeight);
         glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT0, mAccumBuffer, 0);
@@ -100,9 +101,6 @@ namespace MiniEngine::Backend
 
         glTextureStorage2D(mRoughnessBuffer, 1, GL_RGBA32F, mWidth, mHeight);
         glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT4, mRoughnessBuffer, 0);
-
-        glTextureStorage2D(mSkyboxBuffer, 1, GL_RGBA32F, mWidth, mHeight);
-        glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT5, mSkyboxBuffer, 0);
 
         glNamedRenderbufferStorage(depth, GL_DEPTH24_STENCIL8, mWidth, mHeight);
         glNamedFramebufferRenderbuffer(mMainFrameBuffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth);
@@ -184,6 +182,22 @@ namespace MiniEngine::Backend
         glNamedBufferData(
             ebo, sizeof(skyboxIndices), skyboxIndices, GL_STATIC_DRAW);
 
+        // Set-up cubemap =====================
+
+        glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &(skybox->environmentCubemapId));
+
+        for (unsigned int i = 0; i < 6; ++i)
+        {
+            glTextureStorage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 1, GL_RGB16F, 512, 512);
+            glTextureSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, 0, 0, 512, 512, GL_RGB, GL_FLOAT, nullptr);
+        }
+
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
         glBindVertexArray(0);
     }
 
@@ -230,25 +244,9 @@ namespace MiniEngine::Backend
         const auto& db = scene->getRenderableComponentDatabase();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // enviroment pass ========================
-
-        const auto& skybox = scene->getSkyBox();
-
-        if (skybox.skyboxType == Skybox::SkyboxType::Skybox)
-        {
-            glDisable(GL_DEPTH_TEST);
-            glDepthMask(GL_FALSE);
-
-            glBindVertexArray(skybox.vaoId);
-            mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getSkyboxShader());
-            glBindTextureUnit(0, skybox.mainTexture.getId());
-            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-            glDepthMask(GL_TRUE);
-            glEnable(GL_DEPTH_TEST);
-        }        
-
         // geometry pass ==========================
+
+        glEnable(GL_DEPTH_TEST);
 
         mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getDeferredShader());
         SET_TEXTURE_ID("_Diffuse", 0);
@@ -271,8 +269,6 @@ namespace MiniEngine::Backend
             m = glm::rotate(m, glm::radians(db[i].rotation.y), glm::vec3{0, 1, 0});
             m = glm::rotate(m, glm::radians(db[i].rotation.z), glm::vec3{0, 0, 1});
 
-            setMat4(db[i].shader.getShaderProgram(), "_rotation_only", m);
-
             m = glm::translate(m, glm::vec3{db[i].worldPosition.x, db[i].worldPosition.y, db[i].worldPosition.z});
 
             setMat4(db[i].shader.getShaderProgram(), "_model", m);
@@ -284,6 +280,8 @@ namespace MiniEngine::Backend
         auto mainPassSync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
         // light pass ==========================
+
+        glDisable(GL_DEPTH_TEST);
 
         glBindTextureUnit(0, mColorBuffer);
         glBindTextureUnit(1, mPositionBuffer);
@@ -305,6 +303,31 @@ namespace MiniEngine::Backend
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         glDeleteSync(mainPassSync);
+
+        // enviroment pass ========================
+
+        const auto& skybox = scene->getSkyBox();
+        const glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+        const glm::mat4 captureViews[] =
+        {
+           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
+           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
+           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
+        };
+
+        if (skybox.skyboxType == Skybox::SkyboxType::Skybox)
+        {
+            glEnable(GL_DEPTH_TEST);
+
+            glBindVertexArray(skybox.vaoId);
+            mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getSkyboxShader());
+            glBindTextureUnit(0, skybox.mainTexture.getId());
+            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        }
+
     }
 
     void OpenGLDriver::finalBlit()
@@ -383,30 +406,13 @@ namespace MiniEngine::Backend
         glNamedBufferSubData(bufferId, offset, size, data);
     }
 
-    unsigned int OpenGLDriver::createTexture(int width, int height, int channels, void* data)
+    unsigned int OpenGLDriver::createTexture(int width, int height, int channels, void* data, Texture::TextureType type)
     {
         GLuint tex;
         glCreateTextures(GL_TEXTURE_2D, 1, &tex);
         glTextureStorage2D(tex, 1, channels == 3 ? GL_RGB32F : GL_RGBA32F, width, height);
-        glTextureSubImage2D(tex, 0, 0, 0, width, height, channels == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, data);
-        return tex;
-    }
-
-    //TODO: unify to createTexture
-    unsigned int OpenGLDriver::createCubeMap(int width, int height, int channels, void* data)
-    {
-        GLuint tex;
-        glCreateTextures(GL_TEXTURE_2D, 1, &tex);
-        
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glTextureStorage2D(tex, 1, channels == 3 ? GL_RGB32F : GL_RGBA32F, width, height);
-        glTextureSubImage2D(tex, 0, 0, 0, width, height, channels == 3 ? GL_RGB : GL_RGBA, GL_FLOAT, (float*)data);
-        
+        glTextureSubImage2D(tex, 0, 0, 0, width, height, channels == 3 ? GL_RGB : GL_RGBA,
+            type == Texture::TextureType::CubeMap ? GL_FLOAT : GL_UNSIGNED_BYTE, data);
         return tex;
     }
 

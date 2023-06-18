@@ -1,6 +1,6 @@
 #version 450 core
 
-layout (location = 5) out vec4 oAccum;
+layout (location = 0) out vec4 oAccum;
 
 in vec3 fPos;
 

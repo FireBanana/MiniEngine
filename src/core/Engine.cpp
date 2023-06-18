@@ -31,9 +31,7 @@ namespace MiniEngine
 	{
 		auto results = MiniTools::ImageLoader::load(path, type == Texture::TextureType::CubeMap);
 
-		auto id = type == Texture::TextureType::Default ?
-			mGlPlatform.get()->getDriver()->createTexture(results.width, results.height, results.channels, results.data) :
-			mGlPlatform.get()->getDriver()->createCubeMap(results.width, results.height, results.channels, results.data);
+		auto id = mGlPlatform.get()->getDriver()->createTexture(results.width, results.height, results.channels, results.data, type);
 
 		return { results.width, results.height, results.channels, id };
 	}
