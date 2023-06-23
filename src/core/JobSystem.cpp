@@ -55,7 +55,7 @@ void JobSystem::Dispatch(uint32_t jobCount, uint32_t groupSize, const std::funct
 
 	for (auto groupIndex = 0; groupIndex < groupCount; ++groupIndex)
 	{
-		auto& jobGroup = [&]
+		const auto& jobGroup = [&]
 		{
 			const auto groupJobOffset = groupIndex * groupSize;
 			const auto groupJobEnd = std::min(groupJobOffset + groupSize, jobCount);

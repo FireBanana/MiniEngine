@@ -182,13 +182,22 @@ namespace MiniEngine::Backend
         glNamedBufferData(
             ebo, sizeof(skyboxIndices), skyboxIndices, GL_STATIC_DRAW);
 
+        // Set-up temporary framebuffer =======
+
+        //unsigned int tFrameBuffer;
+        //glCreateFramebuffers(1, &tFrameBuffer);
+        //glBindFramebuffer(GL_FRAMEBUFFER, tFrameBuffer);
+
+        // Create 
+
         // Set-up cubemap =====================
 
         glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &(skybox->environmentCubemapId));
 
         for (unsigned int i = 0; i < 6; ++i)
         {
-            glTextureStorage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 1, GL_RGB16F, 512, 512);
+            //here
+            glTextureStorage2D(skybox->environmentCubemapId, 1, GL_RGB16F, 512, 512);
             glTextureSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, 0, 0, 512, 512, GL_RGB, GL_FLOAT, nullptr);
         }
 
@@ -198,7 +207,34 @@ namespace MiniEngine::Backend
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+        // Render cubemap ======================
+
+        const glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+        const glm::mat4 captureViews[] =
+        {
+           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
+           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
+           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
+        };
+
+        mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getSkyboxShader());
+        setMat4(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "projection", captureProjection);
+
+        for (auto i = 0; i < 6; ++i)
+        {
+            setMat4(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "view", captureViews[0]);
+
+            glBindImageTexture(0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, 0, 0, GL_WRITE_ONLY, GL_RGBA16F);
+            glDrawElements(GL_TRIANGLES, sizeof(skyboxIndices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
+        }
+
+        // Cleanup =============================
+        
         glBindVertexArray(0);
+        //glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     void OpenGLDriver::setupMesh(MiniEngine::Components::RenderableComponent* component)
@@ -307,25 +343,15 @@ namespace MiniEngine::Backend
         // enviroment pass ========================
 
         const auto& skybox = scene->getSkyBox();
-        const glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-        const glm::mat4 captureViews[] =
-        {
-           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
-           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
-           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
-        };
 
         if (skybox.skyboxType == Skybox::SkyboxType::Skybox)
         {
             glEnable(GL_DEPTH_TEST);
+            mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getSkyboxShader());
 
             glBindVertexArray(skybox.vaoId);
-            mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getSkyboxShader());
             glBindTextureUnit(0, skybox.mainTexture.getId());
-            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+            //glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         }
 
     }

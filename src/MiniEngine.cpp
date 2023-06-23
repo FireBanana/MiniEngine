@@ -24,8 +24,8 @@ int main(void)
 	auto cameraEntity2 = scene.createEntity();
 	auto mainLightEntity = scene.createEntity();
 
-	MiniEngine::Texture texture = engine.loadTexture("C:\\Users\\Owais\\Desktop\\img.png", MiniEngine::Texture::TextureType::Default);
-	MiniEngine::Texture texture2 = engine.loadTexture("C:\\Users\\Owais\\Desktop\\hdri.hdr", MiniEngine::Texture::TextureType::CubeMap);
+	MiniEngine::Texture texture = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\1.png", MiniEngine::Texture::TextureType::Default);
+	MiniEngine::Texture texture2 = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\hdri.hdr", MiniEngine::Texture::TextureType::CubeMap);
 
 	auto material = MiniEngine::Material::Creator()
 		.addTexture(MiniEngine::Material::TextureType::Diffuse, texture)
@@ -34,7 +34,7 @@ int main(void)
 		.create();
 
 	auto mesh = MiniEngine::Renderable::Builder()
-		.addModel("C:\\Users\\Owais\\Desktop\\dino2.glb")
+		.addModel("C:\\Users\\Arthur\\Desktop\\din.glb")
 		.addMaterialInstance(&material)
 		.build(&scene, meshEntity);
 
@@ -76,7 +76,7 @@ int main(void)
 	//	.build(&scene, meshEntity2);
 
 	auto camera = MiniEngine::Camera::Builder()
-		.setPosition({60, 60, 60 })
+		.setPosition({2, 2, 2 })
 		.setAspectRatio((float)params.screenWidth / (float)params.screenHeight)
 		.setNearFarPlane(0.1f, 1000.0f)
 		.setFOV(45)

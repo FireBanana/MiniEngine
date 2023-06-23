@@ -43,11 +43,6 @@ float V_SmithGGXCorrelated(float NoV, float NoL, float a)
     float g1 = ( NoV ) / ( NoV * ( 1. - k ) + k );
     float g2 = ( NoL ) / ( NoL * ( 1. - k ) + k );
     return g1 * g2;
-
-    // float a2 = a * a;
-    // float GGXL = NoV * sqrt((-NoL * a2 + NoL) * NoL + a2);
-    // float GGXV = NoL * sqrt((-NoV * a2 + NoV) * NoV + a2);
-    // return 0.5 / (GGXV + GGXL);
 }
 
 float Fd_Lambert() 
@@ -69,7 +64,7 @@ vec3 BRDF(vec3 albedo, vec3 v, vec3 n, vec3 l, float a)
     float roughness = a * a;
 
     float D = D_GGX(NoH, a);
-    vec3  F = F_Schlick(vec3(0.5), VoH);
+    vec3  F = F_Schlick(vec3(1.), VoH);
     float V = V_SmithGGXCorrelated(NoV, NoL, roughness);
 
     // specular BRDF

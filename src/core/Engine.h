@@ -13,7 +13,10 @@
 
 namespace MiniEngine
 {
-	class Backend::OpenGLPlatform;
+	namespace
+	{
+		class OpenGLPlatform;
+	}
 
 	class Engine
 	{

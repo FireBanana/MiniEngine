@@ -6,29 +6,32 @@
 #include"../core/utils/Color.h"
 #include"../core/ShaderRegistry.h"
 
-class MiniEngine::Scene;
-class MiniEngine::Engine;
-
-namespace MiniEngine::Backend
+namespace MiniEngine
 {
-	class OpenGLPlatform
+	class Scene;
+	class Engine;
+
+	namespace Backend
 	{
-	public:
+		class OpenGLPlatform
+		{
+		public:
 
-		OpenGLPlatform(const EngineInitParams& params, Engine* engine);
+			OpenGLPlatform(const EngineInitParams& params, Engine* engine);
 
-		void makeCurrent();
-		void execute(Scene* scene);
+			void makeCurrent();
+			void execute(Scene* scene);
 
-		inline OpenGLDriver* const getDriver() const { return mDriver.get(); }
+			inline OpenGLDriver* const getDriver() const { return mDriver.get(); }
 
-	private:
+		private:
 
-		std::unique_ptr<OpenGLDriver> mDriver;
-		GLFWwindow* mWindow;
-		Engine* mEngine;
+			std::unique_ptr<OpenGLDriver> mDriver;
+			GLFWwindow* mWindow;
+			Engine* mEngine;
 
-		void createWindow(uint16_t width, uint16_t height);
-		void createDriver(const EngineInitParams& params);
-	};
+			void createWindow(uint16_t width, uint16_t height);
+			void createDriver(const EngineInitParams& params);
+		};
+	}
 }

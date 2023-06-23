@@ -20,10 +20,10 @@ add_compile_definitions(USING_OPENGL)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-include_directories(libs)
-include_directories(libs/glad/include)
-include_directories(libs/glm/glm)
-include_directories(libs/glfw/include)
+include_directories(SYSTEM libs)
+include_directories(SYSTEM libs/glad/include)
+include_directories(SYSTEM libs/glm/glm)
+include_directories(SYSTEM libs/glfw/include)
 
 file( GLOB LIB_SOURCES 
 	src/*.cpp
@@ -53,6 +53,8 @@ foreach( testsourcefile ${APP_SOURCES} )
 	add_executable( ${testname} ${testsourcefile})	
 	target_link_libraries( ${testname} MiniEngine )
 endforeach( testsourcefile ${APP_SOURCES} )
+
+set_target_properties( MiniEngine PROPERTIES VS_PLATFORM_TOOLSET ClangCL )
 
 target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3.lib)
 target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3dll.lib)
