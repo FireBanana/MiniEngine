@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../backend/OpenGLDriver.h"
-#include "types/EngineTypes.h"
+#include "OpenGLDriver.h"
+#include "EngineTypes.h"
 
 namespace MiniEngine
 {

@@ -6,11 +6,11 @@ namespace MiniEngine
 	class Engine;
 	class Entity;
 	class Scene;
-	class MaterialInstance;
+	struct MaterialInstance;
 
 	namespace Components
 	{
-		class RenderableComponent;
+		struct RenderableComponent;
 	}
 
 	class Renderable

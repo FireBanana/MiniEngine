@@ -1,5 +1,5 @@
 #pragma once
-#include "types/EngineTypes.h"
+#include "EngineTypes.h"
 #include "Texture.h"
 
 namespace MiniEngine
@@ -9,7 +9,7 @@ namespace MiniEngine
 
 	namespace Components
 	{
-		class SkyboxComponent;
+		struct SkyboxComponent;
 	}
 
 	class Skybox

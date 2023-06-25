@@ -1,13 +1,17 @@
 #pragma once
 
-#include "types/EngineTypes.h"
-
-class TransformComponent;
-class Scene;
-class Entity;
+#include "EngineTypes.h"
 
 namespace MiniEngine
 {
+	namespace Components
+	{
+		struct TransformComponent;
+	}
+
+	class Scene;
+	class Entity;
+
 	class Transform
 	{
 	public:
@@ -32,7 +36,7 @@ namespace MiniEngine
 			Builder& setRotation(Vector3 rotation);
 			Builder& setScale(Vector3 scale);
 
-			TransformComponent* build(Scene* scene, Entity* entity);
+			Components::TransformComponent* build(Scene* scene, Entity* entity);
 
 			inline Vector3 getPosition() const { return mPosition; }
 			inline Vector3 getRotation() const { return mRotation; }

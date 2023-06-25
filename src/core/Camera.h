@@ -9,7 +9,7 @@ namespace MiniEngine
 
 	namespace Components
 	{
-		class CameraComponent;
+		struct CameraComponent;
 	}
 
 	class Camera

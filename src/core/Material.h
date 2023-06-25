@@ -2,7 +2,7 @@
 
 #include "Shader.h"
 #include "utils/ComponentArray.h"
-#include "../components/MaterialInstance.h"
+#include "MaterialInstance.h"
 #include "Texture.h"
 
 class Engine;

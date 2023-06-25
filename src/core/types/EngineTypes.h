@@ -5,7 +5,7 @@
 
 #include <glm/glm.hpp>
 #include <cstdint>
-#include "../utils/Color.h"
+#include "Color.h"
 
 using Matrix4x4 = glm::mat4;
 

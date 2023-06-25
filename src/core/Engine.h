@@ -2,10 +2,11 @@
 
 #include <GLFW/glfw3.h>
 #include <unordered_map>
+
 #include "types/EngineTypes.h"
 #include "Entity.h"
-#include "../backend/OpenGLPlatform.h"
-#include "../components/RenderableComponent.h"
+#include "OpenGLPlatform.h"
+#include "RenderableComponent.h"
 #include "utils/Color.h"
 #include "Material.h"
 #include "Mesh.h"

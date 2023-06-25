@@ -46,6 +46,20 @@ file( GLOB LIB_HEADERS
 add_executable( MiniEngine ${LIB_SOURCES} ${LIB_HEADERS} )
 target_sources( MiniEngine PRIVATE ${CMAKE_SOURCE_DIR}/libs/glad/src/glad.c)
 
+target_include_directories(MiniEngine PRIVATE src/)
+target_include_directories(MiniEngine PRIVATE src/components)
+target_include_directories(MiniEngine PRIVATE src/systems)
+target_include_directories(MiniEngine PRIVATE src/backend)
+target_include_directories(MiniEngine PRIVATE src/core)
+target_include_directories(MiniEngine PRIVATE src/core/utils)
+target_include_directories(MiniEngine PRIVATE src/core/types)
+
+if(MSVC)
+  target_compile_options(MiniEngine PRIVATE /W4 /external:anglebrackets)
+else()
+  target_compile_options(MiniEngine PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 file( GLOB APP_SOURCES app/*.cxx )
 
 foreach( testsourcefile ${APP_SOURCES} )
@@ -54,7 +68,7 @@ foreach( testsourcefile ${APP_SOURCES} )
 	target_link_libraries( ${testname} MiniEngine )
 endforeach( testsourcefile ${APP_SOURCES} )
 
-set_target_properties( MiniEngine PROPERTIES VS_PLATFORM_TOOLSET ClangCL )
+# set_target_properties( MiniEngine PROPERTIES VS_PLATFORM_TOOLSET ClangCL )
 
 target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3.lib)
 target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3dll.lib)

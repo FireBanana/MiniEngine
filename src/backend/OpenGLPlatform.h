@@ -2,9 +2,10 @@
 
 #include <memory>
 #include <GLFW/glfw3.h>
+
 #include "OpenGLDriver.h"
-#include"../core/utils/Color.h"
-#include"../core/ShaderRegistry.h"
+#include "Color.h"
+#include "ShaderRegistry.h"
 
 namespace MiniEngine
 {
@@ -18,11 +19,13 @@ namespace MiniEngine
 		public:
 
 			OpenGLPlatform(const EngineInitParams& params, Engine* engine);
+			OpenGLPlatform(OpenGLPlatform&) = delete;
+			OpenGLPlatform(OpenGLPlatform&&) = delete;
 
 			void makeCurrent();
 			void execute(Scene* scene);
 
-			inline OpenGLDriver* const getDriver() const { return mDriver.get(); }
+			inline OpenGLDriver* getDriver() const { return mDriver.get(); }
 
 		private:
 

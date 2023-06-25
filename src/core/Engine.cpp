@@ -20,6 +20,7 @@ namespace MiniEngine
 		mShaderRegistry->loadDeferredShader();
 		mShaderRegistry->loadPbrShader();
 		mShaderRegistry->loadSkyboxShader();
+		mShaderRegistry->loadSkyboxRenderShader();
 	}
 
 	void Engine::execute(Scene* scene)

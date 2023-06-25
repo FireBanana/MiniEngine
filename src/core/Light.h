@@ -8,7 +8,7 @@ namespace MiniEngine
 
 	namespace Components
 	{
-		class LightComponent;
+		struct LightComponent;
 	}	
 
 	class Light

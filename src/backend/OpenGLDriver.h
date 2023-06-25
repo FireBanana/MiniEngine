@@ -1,6 +1,7 @@
 #pragma once
-#include "../core/types/EngineTypes.h"
-#include "../core/Texture.h"
+#include "EngineTypes.h"
+#include "Texture.h"
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <unordered_map>
@@ -13,8 +14,8 @@ namespace MiniEngine
 
 	namespace Components
 	{
-		class RenderableComponent;
-		class SkyboxComponent;
+		struct RenderableComponent;
+		struct SkyboxComponent;
 	}
 
 	namespace Backend
