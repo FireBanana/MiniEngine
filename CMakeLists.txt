@@ -20,10 +20,10 @@ add_compile_definitions(USING_OPENGL)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-include_directories(SYSTEM libs)
-include_directories(SYSTEM libs/glad/include)
-include_directories(SYSTEM libs/glm/glm)
-include_directories(SYSTEM libs/glfw/include)
+include_directories(libs)
+include_directories(libs/glad/include)
+include_directories(libs/glm/glm)
+include_directories(libs/glfw/include)
 
 file( GLOB LIB_SOURCES 
 	src/*.cpp

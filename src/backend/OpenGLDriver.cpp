@@ -189,8 +189,8 @@ namespace MiniEngine::Backend
 
         for (unsigned int i = 0; i < 6; ++i)
         {
-            glTextureSubImage3D(
-                skybox->environmentCubemapId, 0, 0, 0, i, 512, 512, 1, GL_RGB, GL_FLOAT, nullptr);
+            //glTextureSubImage3D(
+            //    skybox->environmentCubemapId, 0, 0, 0, i, 512, 512, 1, GL_RGB, GL_FLOAT, nullptr);
         }
 
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
