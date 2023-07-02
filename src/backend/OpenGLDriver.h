@@ -12,67 +12,67 @@ namespace MiniEngine
 	class Shader;
 	class Engine;
 
-	namespace Components
-	{
-		struct RenderableComponent;
-		struct SkyboxComponent;
-	}
+namespace Components
+{
+	struct RenderableComponent;
+	struct SkyboxComponent;
+}
 
-	namespace Backend
-	{
+namespace Backend
+{
 
-		class OpenGLDriver
+	class OpenGLDriver
+	{
+	public:
+
+		enum class ShaderType : GLenum
 		{
-		public:
-
-			enum class ShaderType : GLenum
-			{
-				VERTEX = GL_VERTEX_SHADER,
-				FRAGMENT = GL_FRAGMENT_SHADER
-			};
-
-			void setupGlWindowParams(const EngineInitParams& params, Engine* engine);
-			void setupFrameBuffer();
-			void setupScreenQuad();
-			void setupDebugInfo();
-
-			void setupSkybox(MiniEngine::Components::SkyboxComponent* skybox);
-			void setupMesh(MiniEngine::Components::RenderableComponent* component);
-
-			void draw(MiniEngine::Scene* scene);
-			void finalBlit();
-
-			void beginRenderpass();
-			void endRenderpass();
-
-			unsigned int loadShader(const char* path, ShaderType type) const;
-			unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader) const; //create deleter
-			void		 useShaderProgram(unsigned int program) const;
-
-			void registerUniformBlock(const char* blockName, const Shader* program, unsigned int layoutIndex) const;
-			unsigned int createUniformBlock(size_t dataSize, unsigned int bindIndex) const;
-			void updateUniformData(unsigned int bufferId, unsigned int offset, size_t size, void* data) const;
-
-			unsigned int createTexture(int width, int height, int channels, void* data, Texture::TextureType type);
-
-			void setFloat(unsigned int program, const char* name, float value) const;
-			void setVec3(unsigned int program, const char* name, Vector3 value) const;
-			void setMat4(unsigned int program, const char* name, Matrix4x4 value) const;
-
-		private:
-
-			Engine* mEngine;
-
-			GLuint mMainFrameBuffer;
-			GLuint mAccumBuffer;
-			GLuint mColorBuffer;
-			GLuint mPositionBuffer;
-			GLuint mNormalBuffer;
-			GLuint mRoughnessBuffer;
-			GLuint mScreenQuadVertexArray;
-
-			uint16_t mWidth;
-			uint16_t mHeight;
+			VERTEX = GL_VERTEX_SHADER,
+			FRAGMENT = GL_FRAGMENT_SHADER
 		};
-	}
+
+		void setupGlWindowParams(const EngineInitParams& params, Engine* engine);
+		void setupFrameBuffer();
+		void setupScreenQuad();
+		void setupDebugInfo();
+
+		void setupSkybox(MiniEngine::Components::SkyboxComponent* skybox);
+		void setupMesh(MiniEngine::Components::RenderableComponent* component);
+
+		void draw(MiniEngine::Scene* scene);
+		void finalBlit();
+
+		void beginRenderpass();
+		void endRenderpass();
+
+		unsigned int loadShader(const char* path, ShaderType type) const;
+		unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader) const; //create deleter
+		void		 useShaderProgram(unsigned int program) const;
+
+		void registerUniformBlock(const char* blockName, const Shader* program, unsigned int layoutIndex) const;
+		unsigned int createUniformBlock(size_t dataSize, unsigned int bindIndex) const;
+		void updateUniformData(unsigned int bufferId, unsigned int offset, size_t size, void* data) const;
+
+		unsigned int createTexture(int width, int height, int channels, void* data, Texture::TextureType type);
+
+		void setFloat(unsigned int program, const char* name, float value) const;
+		void setVec3(unsigned int program, const char* name, Vector3 value) const;
+		void setMat4(unsigned int program, const char* name, Matrix4x4 value) const;
+
+	private:
+
+		Engine* mEngine;
+
+		GLuint mMainFrameBuffer;
+		GLuint mAccumBuffer;
+		GLuint mColorBuffer;
+		GLuint mPositionBuffer;
+		GLuint mNormalBuffer;
+		GLuint mRoughnessBuffer;
+		GLuint mScreenQuadVertexArray;
+
+		uint16_t mWidth;
+		uint16_t mHeight;
+	};
+}
 }

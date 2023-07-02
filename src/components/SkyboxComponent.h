@@ -13,6 +13,7 @@ namespace MiniEngine::Components
 	{
 		Skybox::SkyboxType skyboxType;
 		Texture			   mainTexture;
+		float			   rotation;
 
 #ifdef USING_OPENGL
 		unsigned int vaoId;

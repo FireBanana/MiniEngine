@@ -38,6 +38,9 @@ namespace MiniEngine
 		inline GlobalBufferRegistry* getGlobalBufferRegistry() const { return mGlobalBufferRegistry.get(); }
 		inline Backend::OpenGLDriver* getOpenGlDriver() const { return mGlPlatform.get()->getDriver(); }
 
+		// UI
+		void addSlider(float* value, float min, float max);
+
 	private:
 
 		std::unique_ptr<GlobalBufferRegistry> mGlobalBufferRegistry;

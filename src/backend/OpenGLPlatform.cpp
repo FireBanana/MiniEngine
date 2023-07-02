@@ -11,6 +11,7 @@ namespace MiniEngine::Backend
     {
         createWindow(params.screenWidth, params.screenHeight);
         createDriver(params);
+        createImguiInterface();
     }
 
     void OpenGLPlatform::createWindow(uint16_t width, uint16_t height)
@@ -48,10 +49,12 @@ namespace MiniEngine::Backend
         while (!glfwWindowShouldClose(mWindow)) //run separate thread
         {
             mDriver->beginRenderpass();
-            mDriver->draw(scene);
+            mDriver->draw(scene); 
             mDriver->endRenderpass();
 
             mDriver->finalBlit();
+
+            mImgui->draw();
 
             glfwSwapBuffers(mWindow);
             glfwPollEvents();
@@ -66,5 +69,10 @@ namespace MiniEngine::Backend
         mDriver->setupGlWindowParams(params, mEngine);
         mDriver->setupFrameBuffer();
         mDriver->setupScreenQuad();
+    }
+    void OpenGLPlatform::createImguiInterface()
+    {
+        mImgui = std::make_unique<OpenGLImgui>();
+        mImgui->Initialize(mWindow);
     }
 }

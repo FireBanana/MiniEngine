@@ -36,6 +36,11 @@ namespace MiniEngine
 
 		return { results.width, results.height, results.channels, id };
 	}
+
+	void Engine::addSlider(float* value, float min, float max)
+	{
+		mGlPlatform->getUiInterface()->createSliderPanel(value, min, max);
+	}
 }
 
 

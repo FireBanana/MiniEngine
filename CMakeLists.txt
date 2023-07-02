@@ -32,7 +32,8 @@ file( GLOB LIB_SOURCES
 	src/backend/*.cpp
 	src/core/*.cpp
 	src/core/utils/*.cpp
-	src/core/types/*.cpp)
+	src/core/types/*.cpp
+	src/core/ui/*.cpp)
 
 file( GLOB LIB_HEADERS 
 	src/*.h
@@ -41,7 +42,8 @@ file( GLOB LIB_HEADERS
 	src/backend/*.h 
 	src/core/*.h 
 	src/core/utils/*.h
-	src/core/types/*.h)
+	src/core/types/*.h
+	src/core/ui/*.h)
 
 add_executable( MiniEngine ${LIB_SOURCES} ${LIB_HEADERS} )
 target_sources( MiniEngine PRIVATE ${CMAKE_SOURCE_DIR}/libs/glad/src/glad.c)
@@ -92,11 +94,38 @@ FetchContent_Declare(
 	GIT_TAG 0.9.9.8
 )
 
+FetchContent_Declare(
+	imgui
+	GIT_REPOSITORY https://github.com/ocornut/imgui
+	GIT_TAG v1.89.6
+)
+
 FetchContent_GetProperties(glm)
 if(NOT glm_POPULATED)
   FetchContent_Populate(glm)
   add_subdirectory(${glm_SOURCE_DIR} ${glm_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
+FetchContent_GetProperties(imgui)
+if(NOT imgui_POPULATED)
+  FetchContent_Populate(imgui)
+endif()
+
 target_include_directories(MiniEngine PUBLIC ${glm_SOURCE_DIR}/glm)
 target_link_libraries(MiniEngine glm)
+
+target_include_directories(MiniEngine PUBLIC ${imgui_SOURCE_DIR}/)
+target_include_directories(MiniEngine PUBLIC ${imgui_SOURCE_DIR}/backends)
+
+add_library(IMGUI EXCLUDE_FROM_ALL 
+	${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp 
+	${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp 
+	${imgui_SOURCE_DIR}/imgui.cpp
+	${imgui_SOURCE_DIR}/imgui_demo.cpp
+	${imgui_SOURCE_DIR}/imgui_draw.cpp
+	${imgui_SOURCE_DIR}/imgui_tables.cpp
+	${imgui_SOURCE_DIR}/imgui_widgets.cpp)
+
+target_include_directories(IMGUI PUBLIC ${imgui_SOURCE_DIR}/backends)
+target_include_directories(IMGUI PUBLIC ${imgui_SOURCE_DIR}/)
+target_link_libraries(MiniEngine IMGUI)
