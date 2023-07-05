@@ -50,7 +50,9 @@ void debugCallback(GLenum source, GLenum type, GLuint id,
         case GL_DEBUG_SEVERITY_HIGH: return "HIGH";
         }
     }();
-    std::cout << src_str << ", " << type_str << ", " << severity_str << ", " << id << ": " << message << '\n';
+
+    if(severity != GL_DEBUG_SEVERITY_NOTIFICATION)
+        std::cout << src_str << ", " << type_str << ", " << severity_str << ", " << id << ": " << message << '\n';
 }
 
 namespace MiniEngine::Backend
@@ -73,6 +75,7 @@ namespace MiniEngine::Backend
 
         glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
         glEnable(GL_DEPTH_TEST);
+
         glDepthMask(GL_TRUE);
         glDepthFunc(GL_LEQUAL);
     }
@@ -186,7 +189,7 @@ namespace MiniEngine::Backend
 
         glBindFramebuffer(GL_FRAMEBUFFER, mMainFrameBuffer);
         glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &(skybox->environmentCubemapId));
-        glTextureStorage2D(skybox->environmentCubemapId, 1, GL_RGB16F, 512, 512);
+        glTextureStorage2D(skybox->environmentCubemapId, 1, GL_RGBA16F, 512, 512);
 
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -285,9 +288,9 @@ namespace MiniEngine::Backend
         {
             glBindVertexArray(db[i].vaoId);
 
-            for (int j = 0; j < db[i].textures.size(); ++j)
+            for (int j = 0; j < db[i].materialInstance->textureReference.size(); ++j)
             {
-                glBindTextureUnit(j, db[i].textures[j].getId());
+                glBindTextureUnit(j, db[i].materialInstance->textureReference[j].getId());
             }
 
             auto m = glm::mat4{ 1.0f };
@@ -299,7 +302,7 @@ namespace MiniEngine::Backend
             m = glm::translate(m, glm::vec3{db[i].worldPosition.x, db[i].worldPosition.y, db[i].worldPosition.z});
 
             setMat4(db[i].shader.getShaderProgram(), "_model", m);
-            setFloat(db[i].shader.getShaderProgram(), "_baseRoughness", db[i].materialProperties[(int)MiniEngine::Material::PropertyType::Roughness]);
+            setFloat(db[i].shader.getShaderProgram(), "_baseRoughness", db[i].materialInstance->materialProperties[(int)MiniEngine::Material::PropertyType::Roughness]);
 
             glDrawElements(GL_TRIANGLES, static_cast<int>(db[i].indices.size()), GL_UNSIGNED_INT, 0);
         }
@@ -333,7 +336,7 @@ namespace MiniEngine::Backend
 
         const auto& skybox = scene->getSkyBox();
 
-        if (skybox.skyboxType == Skybox::SkyboxType::Skybox)
+        if (skybox != nullptr && skybox->skyboxType == Skybox::SkyboxType::Skybox)
         {
             mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getSkyboxRenderShader());
 
@@ -342,13 +345,13 @@ namespace MiniEngine::Backend
             setMat4(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_projection", captureProjection);
 
             //set rotation
-            auto rotMatrix = glm::rotate(glm::mat4{1.0}, skybox.rotation, glm::vec3 { 0, 1, 0 });
+            auto rotMatrix = glm::rotate(glm::mat4{1.0}, skybox->rotation, glm::vec3 { 0, 1, 0 });
             setMat4(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_view", rotMatrix);
 
-            glBindVertexArray(skybox.vaoId);
+            glBindVertexArray(skybox->vaoId);
             glEnable(GL_DEPTH_TEST);
 
-            glBindTextureUnit(0, skybox.environmentCubemapId);
+            glBindTextureUnit(0, skybox->environmentCubemapId);
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         }
 
@@ -419,7 +422,7 @@ namespace MiniEngine::Backend
 
         glCreateBuffers(1, &uniformBufferId);
         glBindBuffer(GL_UNIFORM_BUFFER, uniformBufferId);
-        glBufferData(GL_UNIFORM_BUFFER, dataSize, nullptr, GL_DYNAMIC_DRAW);
+        glBufferData(GL_UNIFORM_BUFFER, dataSize, nullptr, GL_STREAM_DRAW);
         glBindBufferBase(GL_UNIFORM_BUFFER, bindIndex, uniformBufferId);
 
         return uniformBufferId;

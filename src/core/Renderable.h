@@ -45,8 +45,8 @@ namespace MiniEngine
 			inline const std::vector<float>& getBuffer() const { return mBuffer; }
 			inline const std::vector<unsigned int>& getIndices() const { return mIndices; }
 			inline const std::vector<unsigned int>& getAttributes() const { return mAttributes; }
-			inline const MaterialInstance* getMaterialInstance() const { return mMaterialInstance; }
 			inline const char* getModelPath() const { return mModelPath; }
+			inline MaterialInstance* getMaterialInstance() const { return mMaterialInstance; }
 
 		private:
 

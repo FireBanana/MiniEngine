@@ -22,14 +22,20 @@ namespace MiniEngine
 			Matrix4x4 view;
 			Matrix4x4 projection;
 			Vector3 cameraPos;
+			float p1; //padding
 
 			// Lights
 			Vector3 lightPos1;
+			float p2; //padding
+
 			float lightIntensity1;
+			float p3[3]; //padding
 
 			//Material
 			float roughness;
+			float p4[3]; //padding
 			float metallic;
+			float p5[3]; //padding
 		};
 
 		GlobalBufferRegistry(const Backend::OpenGLDriver* driver);

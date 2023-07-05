@@ -29,11 +29,11 @@ namespace MiniEngine
 		Components::RenderableComponent* createRenderable(const Renderable::Builder* builderResults, Entity* entity);
 		Components::CameraComponent* createCamera(const Camera::Builder* builderResults, Entity* entity);
 		Components::LightComponent* createLight(const Light::Builder* builderResults, Entity* entity);
-		Components::SkyboxComponent* createSkybox(const Skybox::Builder* builderResults, Entity* entity);
+		Components::SkyboxComponent createSkybox(const Skybox::Builder* builderResults, Entity* entity);
 
 		void setCameraActive(const Components::CameraComponent* camera);
 		void addLight(const Components::LightComponent* light);
-		void toggleSkyBox(bool enable);
+		void setSkyboxActive(Components::SkyboxComponent* skybox);
 
 		inline const auto& getRenderableComponentDatabase() const { return mRenderableComponentDatabase; }
 		inline const auto& getCameraComponentDatabase() const { return mCameraComponentDatabase; }
@@ -42,7 +42,7 @@ namespace MiniEngine
 	private:
 
 		Engine* mEngine;
-		Components::SkyboxComponent mActiveSkybox;
+		Components::SkyboxComponent* mActiveSkybox;
 
 		ComponentArray<Entity, MAX_COMPONENT_SIZE>							mEntityDatabase;
 		ComponentArray<Components::CameraComponent, MAX_COMPONENT_SIZE>	    mCameraComponentDatabase;

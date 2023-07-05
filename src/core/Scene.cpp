@@ -15,8 +15,7 @@ namespace MiniEngine
 	Scene::Scene(Engine* engine) :
 		mEngine(engine)
 	{
-		mActiveSkybox = {};
-		mActiveSkybox.skyboxType = Skybox::SkyboxType::Default;
+		mActiveSkybox = nullptr;
 	}
 
 	Entity* Scene::createEntity()
@@ -52,8 +51,7 @@ namespace MiniEngine
 		else
 		{
 			m.shader = *(builderResults->getMaterialInstance()->shader);
-			m.textures = builderResults->getMaterialInstance()->textureReference;
-			m.materialProperties = builderResults->getMaterialInstance()->materialProperties;
+			m.materialInstance = builderResults->getMaterialInstance();
 		}
 
 #ifdef USING_OPENGL
@@ -100,16 +98,15 @@ namespace MiniEngine
 		return &(mLightComponentDatabase.getLast());
 	}
 
-	Components::SkyboxComponent* Scene::createSkybox(const Skybox::Builder* builderResults, Entity* entity)
+	Components::SkyboxComponent Scene::createSkybox(const Skybox::Builder* builderResults, Entity* entity)
 	{
 		Components::SkyboxComponent s{};
 		s.mainTexture = builderResults->getTexture();
 		s.skyboxType = Skybox::SkyboxType::Skybox;
 
 		mEngine->getOpenGlDriver()->setupSkybox(&s);
-		mActiveSkybox = s;
 
-		return &mActiveSkybox;
+		return s;
 	}
 
 	void Scene::setCameraActive(const Components::CameraComponent* camera)
@@ -135,11 +132,6 @@ namespace MiniEngine
 
 		mEngine->getShaderRegistry()->bindGlobalBufferToAll("SceneBlock", 0);
 	}
-
-	void Scene::toggleSkyBox(bool enable)
-	{
-		// Add functionality 
-	}
 	
 	void Scene::addLight(const Components::LightComponent* light)
 	{
@@ -152,5 +144,10 @@ namespace MiniEngine
 			sizeof(sceneBlock->lightPos1), &(sceneBlock->lightPos1));
 
 		mEngine->getShaderRegistry()->bindGlobalBufferToAll("SceneBlock", 0);
+	}
+
+	void Scene::setSkyboxActive(Components::SkyboxComponent* skybox)
+	{
+		mActiveSkybox = skybox;
 	}
 }

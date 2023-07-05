@@ -24,8 +24,8 @@ int main(void)
 	auto cameraEntity2 = scene.createEntity();
 	auto mainLightEntity = scene.createEntity();
 
-	MiniEngine::Texture texture = engine.loadTexture("C:\\Users\\Owais\\Desktop\\img.png", MiniEngine::Texture::TextureType::Default);
-	MiniEngine::Texture texture2 = engine.loadTexture("C:\\Users\\Owais\\Desktop\\hdri.hdr", MiniEngine::Texture::TextureType::CubeMap);
+	MiniEngine::Texture texture = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\1.png", MiniEngine::Texture::TextureType::Default);
+	MiniEngine::Texture texture2 = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\hdri.hdr", MiniEngine::Texture::TextureType::CubeMap);
 
 	auto material = MiniEngine::Material::Creator()
 		.addTexture(MiniEngine::Material::TextureType::Diffuse, texture)
@@ -34,7 +34,7 @@ int main(void)
 		.create();
 
 	auto mesh = MiniEngine::Renderable::Builder()
-		.addModel("C:\\Users\\Owais\\Desktop\\dino2.glb")
+		.addModel("C:\\Users\\Arthur\\Desktop\\din.glb")
 		.addMaterialInstance(&material)
 		.build(&scene, meshEntity);
 
@@ -76,31 +76,33 @@ int main(void)
 	//	.build(&scene, meshEntity2);
 
 	auto camera = MiniEngine::Camera::Builder()
-		.setPosition({60, 60, 60})
+		.setPosition({3, 3, 0})
 		.setAspectRatio((float)params.screenWidth / (float)params.screenHeight)
 		.setNearFarPlane(0.1f, 1000.0f)
 		.setFOV(45)
 		.build(&scene, cameraEntity2);
 
 	auto light = MiniEngine::Light::Builder()
-		.setPosition({ 4.0f,3.0f,-1.0f })
+		.setPosition({ 0,0,0 })
 		.setIntensity(1.0f)
 		.build(&scene, mainLightEntity);
 
+	// todo, hides when x/z 0. Need to set forward vector etc.
 	scene.setCameraActive(camera);
 	
-	scene.addLight(light);
-	//scene.removeLight();
+	//scene.addLight(light);
+	scene.setSkyboxActive(&skyBox);
+	//scene.addLight(light);
 
-	engine.addSlider(&skyBox->rotation, 0.0f, 3.142f * 2);
+	engine.addSlider("Skybox", &(skyBox.rotation), 0.0f, 3.142f * 2);
+	engine.addSlider("Model", &(mesh->rotation.y), 0.0f, 360);
 
-	auto t = std::thread([&]()
-		{	
-			while (1)
-			{
-				//mesh->rotation.y = yRot * 360.0f;
-			}
-		});
+	engine.addSlider("Light-X", &(light->position.x), -10, 10, [&]() { scene.addLight(light); });
+	engine.addSlider("Light-Y", &(light->position.y), -10, 10, [&]() { scene.addLight(light); });
+	engine.addSlider("Light-Z", &(light->position.z), -10, 10, [&]() { scene.addLight(light); });
+
+	float r = material.materialProperties[(int)MiniEngine::Material::PropertyType::Roughness];
+	engine.addSlider("Roughness", &r, 0, 1, [&]() { material.materialProperties.set((int)MiniEngine::Material::PropertyType::Roughness, r); });
 
 	engine.execute(&scene); //move to separate thread
 }

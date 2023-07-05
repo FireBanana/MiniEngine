@@ -2,9 +2,10 @@
 
 #include <vector>
 #include "Component.h"
-#include "../core/utils/ComponentArray.h"
-#include "../core/Texture.h"
-#include "../core/Shader.h"
+#include "ComponentArray.h"
+#include "Texture.h"
+#include "Shader.h"
+#include "MaterialInstance.h"
 
 namespace MiniEngine::Components
 {
@@ -13,8 +14,7 @@ namespace MiniEngine::Components
 		std::vector<float>		   buffer;
 		std::vector<unsigned int>  indices;
 		std::vector<unsigned int>  attributes;
-		ComponentArray<Texture, 3> textures;
-		ComponentArray<float, 16>  materialProperties;
+		MaterialInstance*          materialInstance;
 		Shader					   shader;
 		Vector3					   worldPosition;
 		Vector3					   rotation;

@@ -42,7 +42,7 @@ namespace MiniEngine
 
 			inline const Texture getTexture() const { return mTexture; }
 
-			Components::SkyboxComponent* build(Scene* scene, Entity* entity);
+			Components::SkyboxComponent build(Scene* scene, Entity* entity);
 
 		private:
 

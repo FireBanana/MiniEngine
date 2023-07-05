@@ -33,11 +33,11 @@ namespace MiniEngine::Backend
 		auto& io = ImGui::GetIO();
 
 		// Render Sliders
-		for (auto& [v, min, max] : mSliderPanels)
+		for (auto& [name, v, min, max, cb] : mSliderPanels)
 		{
 			if (ImGui::Begin("Slider"))
 			{
-				ImGui::SliderFloat("float", v, min, max);
+				if (ImGui::SliderFloat(name, v, min, max) && cb != nullptr) cb();
 				ImGui::End();
 			}
 		}
@@ -45,8 +45,8 @@ namespace MiniEngine::Backend
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
-	void OpenGLImgui::createSliderPanel(float* value, float min, float max)
+	void OpenGLImgui::createSliderPanel(const char* name, float* value, float min, float max, std::function<void()> cb)
 	{
-		mSliderPanels.push_back({value, min, max});
+		mSliderPanels.push_back({name, value, min, max, cb});
 	}
 }

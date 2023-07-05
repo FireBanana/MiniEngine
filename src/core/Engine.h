@@ -2,6 +2,7 @@
 
 #include <GLFW/glfw3.h>
 #include <unordered_map>
+#include <functional>
 
 #include "types/EngineTypes.h"
 #include "Entity.h"
@@ -39,7 +40,7 @@ namespace MiniEngine
 		inline Backend::OpenGLDriver* getOpenGlDriver() const { return mGlPlatform.get()->getDriver(); }
 
 		// UI
-		void addSlider(float* value, float min, float max);
+		void addSlider(const char* name, float* value, float min, float max, std::function<void()> cb = nullptr);
 
 	private:
 

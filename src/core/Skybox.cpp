@@ -9,7 +9,7 @@ namespace MiniEngine
         return *this;
     }
 
-    Components::SkyboxComponent* Skybox::Builder::build(Scene* scene, Entity* entity)
+    Components::SkyboxComponent Skybox::Builder::build(Scene* scene, Entity* entity)
     {
         return scene->createSkybox(this, entity);
     }
