@@ -50,7 +50,7 @@ float Fd_Lambert()
     return 1.0 / PI;
 }
 
-vec3 BRDF(vec3 albedo, vec3 v, vec3 n, vec3 l, float a) 
+vec3 BRDF(vec3 albedo, vec3 v, vec3 n, vec3 l, float a, float metallic) 
 {
     vec3 h = normalize(v + l);
 
@@ -62,9 +62,10 @@ vec3 BRDF(vec3 albedo, vec3 v, vec3 n, vec3 l, float a)
 
     // perceptually linear roughness to roughness (see parameterization)
     float roughness = a * a;
+    vec3 f0 = 0.16 * roughness * (1.0 - metallic) + albedo * metallic;
 
     float D = D_GGX(NoH, a);
-    vec3  F = F_Schlick(vec3(1.), VoH);
+    vec3  F = F_Schlick(f0, VoH);
     float V = V_SmithGGXCorrelated(NoV, NoL, roughness);
 
     // specular BRDF
@@ -73,7 +74,7 @@ vec3 BRDF(vec3 albedo, vec3 v, vec3 n, vec3 l, float a)
     vec3 li = ( albedo / PI );
 
     // directional light
-    float illuminance = NoL * 2.; //intensity
+    float illuminance = NoL * lightIntensity1; //intensity
     return (Fr + li) * illuminance;
 }
 
@@ -90,7 +91,7 @@ void main()
     vec3 lightDir = normalize(lightPos1 - position);
     vec3 halfv = normalize( viewDir + lightDir );
 
-    vec3 c = BRDF(albedo, viewDir, normalize(normal), lightDir, roughness.x);
+    vec3 c = BRDF(albedo, viewDir, normalize(normal), lightDir, roughness.x, roughness.y);
 
     oAccum = vec4(c,1.0);
 }

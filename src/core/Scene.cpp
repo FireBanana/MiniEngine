@@ -136,12 +136,14 @@ namespace MiniEngine
 	void Scene::addLight(const Components::LightComponent* light)
 	{
 		auto sceneBlock = mEngine->getGlobalBufferRegistry()->getSceneBlockInstance();
-		sceneBlock->lightPos1 = light->position;//glm::vec3{ light->position.x, light->position.y, light->position.z };
+		sceneBlock->lightPos1 = light->position;
+		sceneBlock->lightIntensity1 = light->intensity;
 
 		mEngine->getGlobalBufferRegistry()->updateUniformData(
 			GlobalBufferRegistry::BlockType::SceneBlock,
 			offsetof(GlobalBufferRegistry::SceneBlock, GlobalBufferRegistry::SceneBlock::lightPos1),
-			sizeof(sceneBlock->lightPos1), &(sceneBlock->lightPos1));
+			sizeof(Vector3) + sizeof(float),
+			&(sceneBlock->lightPos1));
 
 		mEngine->getShaderRegistry()->bindGlobalBufferToAll("SceneBlock", 0);
 	}

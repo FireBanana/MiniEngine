@@ -45,7 +45,7 @@ namespace MiniEngine
 		{
 		public:
 
-			Creator() {};
+			Creator() {  };
 			Creator(const Creator&) = delete;
 			Creator operator=(const Creator&) = delete;
 			Creator(const Creator&&) = delete;

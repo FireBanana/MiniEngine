@@ -26,8 +26,6 @@ namespace MiniEngine
 
 			// Lights
 			Vector3 lightPos1;
-			float p2; //padding
-
 			float lightIntensity1;
 			float p3[3]; //padding
 

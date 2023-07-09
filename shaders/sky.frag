@@ -5,7 +5,6 @@ in vec3 fPos;
 uniform sampler2D _HdrMap;
 
 uniform layout(binding=0,rgba16f) writeonly image2D cubemapSlice;
-layout (location = 0) out vec4 oAccum;
 
 const vec2 invAtan = vec2(0.1591, 0.3183);
 
@@ -23,5 +22,4 @@ void main()
     vec3 color = texture(_HdrMap, uv).rgb;
 
     imageStore( cubemapSlice, ivec2(gl_FragCoord.xy), vec4(color, 1.));
-    oAccum = vec4(color,1);
 }

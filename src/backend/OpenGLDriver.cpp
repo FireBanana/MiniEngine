@@ -303,6 +303,7 @@ namespace MiniEngine::Backend
 
             setMat4(db[i].shader.getShaderProgram(), "_model", m);
             setFloat(db[i].shader.getShaderProgram(), "_baseRoughness", db[i].materialInstance->materialProperties[(int)MiniEngine::Material::PropertyType::Roughness]);
+            setFloat(db[i].shader.getShaderProgram(), "_baseMetallic", db[i].materialInstance->materialProperties[(int)MiniEngine::Material::PropertyType::Metallic]);
 
             glDrawElements(GL_TRIANGLES, static_cast<int>(db[i].indices.size()), GL_UNSIGNED_INT, 0);
         }

@@ -12,6 +12,7 @@ static constexpr char* SKYBOX_VERTEX_PATH = "../shaders/sky.vert";
 static constexpr char* SKYBOX_FRAGMENT_PATH = "../shaders/sky.frag";
 static constexpr char* SKYBOX_RENDER_VERTEX_PATH = "../shaders/sky_render.vert";
 static constexpr char* SKYBOX_RENDER_FRAGMENT_PATH = "../shaders/sky_render.frag";
+static constexpr char* ENV_CONVOLUTION_PATH = "../shaders/env_convolution.frag";
 
 namespace MiniEngine
 {

@@ -37,5 +37,5 @@ void main()
 	oDiffuse = texture(_Diffuse, fUv);
 	oPosition = vec4(normalize(fPosition), 0.0);
 	oNormal = vec4(v.x, v.y, v.z, 0.0);
-	oRoughness = vec4(_baseRoughness);
+	oRoughness = vec4(_baseRoughness, _baseMetallic, 0, 0);
 }
