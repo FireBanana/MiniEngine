@@ -18,6 +18,7 @@ namespace MiniEngine::Components
 #ifdef USING_OPENGL
 		unsigned int vaoId;
 		unsigned int environmentCubemapId;
+		unsigned int irradianceCubemapId;
 #endif
 	};
 }

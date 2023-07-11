@@ -21,6 +21,7 @@ namespace MiniEngine
 		mShaderRegistry->loadPbrShader();
 		mShaderRegistry->loadSkyboxShader();
 		mShaderRegistry->loadSkyboxRenderShader();
+		mShaderRegistry->loadSkyboxConvoluter();
 	}
 
 	void Engine::execute(Scene* scene)

@@ -224,6 +224,32 @@ namespace MiniEngine::Backend
             glDrawElements(GL_TRIANGLES, sizeof(skyboxIndices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
         }
 
+        // Convolute ===========================
+
+        glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &(skybox->irradianceCubemapId));
+        glTextureStorage2D(skybox->irradianceCubemapId, 1, GL_RGBA16F, 32, 32);
+
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getSkyboxConvoluter());
+
+        glBindTextureUnit(0, skybox->environmentCubemapId);
+        setMat4(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_projection", captureProjection);
+
+        glViewport(0, 0, 32, 32);
+
+        for (auto i = 0; i < 6; ++i)
+        {
+            setMat4(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_view", captureViews[i]);
+
+            glBindImageTexture(0, skybox->irradianceCubemapId, 0, GL_FALSE, i, GL_WRITE_ONLY, GL_RGBA16F);
+            glDrawElements(GL_TRIANGLES, sizeof(skyboxIndices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
+        }
+
         // Cleanup =============================
         
         glBindVertexArray(0);
@@ -352,7 +378,7 @@ namespace MiniEngine::Backend
             glBindVertexArray(skybox->vaoId);
             glEnable(GL_DEPTH_TEST);
 
-            glBindTextureUnit(0, skybox->environmentCubemapId);
+            glBindTextureUnit(0, skybox->irradianceCubemapId);
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         }
 

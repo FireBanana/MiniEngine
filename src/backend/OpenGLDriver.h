@@ -37,7 +37,6 @@ namespace Backend
 		void setupDebugInfo();
 
 		void setupSkybox(MiniEngine::Components::SkyboxComponent* skybox);
-		void setupEnvironmentConvolution(MiniEngine::Components::SkyboxComponent* skybox);
 		void setupMesh(MiniEngine::Components::RenderableComponent* component);
 
 		void draw(MiniEngine::Scene* scene);

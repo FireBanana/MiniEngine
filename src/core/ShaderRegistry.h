@@ -26,11 +26,13 @@ namespace MiniEngine
 		void loadPbrShader();
 		void loadSkyboxShader();
 		void loadSkyboxRenderShader();
+		void loadSkyboxConvoluter();
 
 		inline Shader* getDeferredShader() noexcept { return &mShaderTable[0]; }
 		inline Shader* getPbrShader() noexcept { return &mShaderTable[1]; }
 		inline Shader* getSkyboxShader() noexcept { return &mShaderTable[2]; }
 		inline Shader* getSkyboxRenderShader() noexcept { return &mShaderTable[3]; }
+		inline Shader* getSkyboxConvoluter() noexcept { return &mShaderTable[4]; }
 
 		void enable(Shader* shader);
 		void bindGlobalBufferToAll(const char* name, unsigned int bindIndex);

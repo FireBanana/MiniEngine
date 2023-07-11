@@ -6,12 +6,15 @@ in vec3 localPos;
 uniform samplerCube environmentMap;
 
 const float PI = 3.14159265359;
-layout (location = 0) out vec4 oAccum;
+
+uniform layout(binding=0,rgba16f) writeonly image2D cubemapSlice;
+
+in vec3 fPos;
 
 void main()
 {		
     // the sample direction equals the hemisphere's orientation 
-    vec3 normal = normalize(localPos);
+    vec3 normal = normalize(fPos);
   
     vec3 irradiance = vec3(0.0);
   
@@ -28,7 +31,7 @@ void main()
             // spherical to cartesian (in tangent space)
             vec3 tangentSample = vec3(sin(theta) * cos(phi),  sin(theta) * sin(phi), cos(theta));
             // tangent space to world
-            vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * N; 
+            vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * normal; 
 
             irradiance += texture(environmentMap, sampleVec).rgb * cos(theta) * sin(theta);
             nrSamples++;
@@ -36,5 +39,5 @@ void main()
     }
     irradiance = PI * irradiance * (1.0 / float(nrSamples));
   
-    FragColor = vec4(irradiance, 1.0);
+    imageStore( cubemapSlice, ivec2(gl_FragCoord.xy), vec4(irradiance, 1.));
 }
