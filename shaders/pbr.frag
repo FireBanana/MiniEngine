@@ -26,23 +26,33 @@ layout (location = 0) out vec4 oAccum;
 
 float D_GGX(float NoH, float a) 
 {
-    float a2 = a * a * a * a;
+    float a2 = a * a;
     float f = (NoH * a2 - NoH) * NoH + 1.0;
     return a2 / (PI * f * f);
 }
 
 vec3 F_Schlick(vec3 f0, float VoH) 
 {
-    return f0 + (1. - f0) * pow(2., ( -5.55473 * VoH - 6.98316) * VoH);
-    //return f0 + (vec3(1.0) - f0) * pow(1.0 - u, 5.0);
+    //return f0 + (1. - f0) * pow(2., ( -5.55473 * VoH - 6.98316) * VoH);
+    return f0 + (vec3(1.0) - f0) * pow(1.0 - VoH, 5.0);
 }
 
 float V_SmithGGXCorrelated(float NoV, float NoL, float a) 
 {
-    float k = (( a + 1. ) * ( a + 1. )) / 8.;
-    float g1 = ( NoV ) / ( NoV * ( 1. - k ) + k );
-    float g2 = ( NoL ) / ( NoL * ( 1. - k ) + k );
-    return g1 * g2;
+    // float k = (( a + 1. ) * ( a + 1. )) / 8.;
+    // float g1 = ( NoV ) / ( NoV * ( 1. - k ) + k );
+    // float g2 = ( NoL ) / ( NoL * ( 1. - k ) + k );
+    // return g1 * g2;
+
+    float a2 = a * a;
+    float GGXL = NoV * sqrt((-NoL * a2 + NoL) * NoL + a2);
+    float GGXV = NoL * sqrt((-NoV * a2 + NoV) * NoV + a2);
+    return 0.5 / (GGXV + GGXL);
+}
+
+float V_Kelemen(float LoH) //for clearcoat
+{
+    return 0.25 / (LoH * LoH);
 }
 
 float Fd_Lambert() 
@@ -53,6 +63,7 @@ float Fd_Lambert()
 vec3 BRDF(vec3 albedo, vec3 v, vec3 n, vec3 l, float a, float metallic) 
 {
     vec3 h = normalize(v + l);
+    vec3 diffuse = (1.0 - metallic) * albedo;
 
     float NoV = abs(dot(n, v)) + 1e-5;
     float NoL = clamp(dot(n, l), 0.0, 1.0);
@@ -64,18 +75,29 @@ vec3 BRDF(vec3 albedo, vec3 v, vec3 n, vec3 l, float a, float metallic)
     float roughness = a * a;
     vec3 f0 = 0.16 * roughness * (1.0 - metallic) + albedo * metallic;
 
-    float D = D_GGX(NoH, a);
-    vec3  F = F_Schlick(f0, VoH);
+    float D = D_GGX(NoH, roughness);
+    vec3  F = F_Schlick(f0, LoH);
     float V = V_SmithGGXCorrelated(NoV, NoL, roughness);
 
     // specular BRDF
-    vec3 Fr = ((D * V) * F) / (4 * NoV * NoL);
+    vec3 Fr = ((D * V) * F);
 
-    vec3 li = ( albedo / PI );
+    vec3 Fd = diffuse * Fd_Lambert();
+
+    // clear coat
+    float clearCoatRoughness = 0.5;
+    float clearCoatStrength = 0.1;
+    clearCoatRoughness = clamp( clearCoatRoughness, 0.089, 1.0 );
+    clearCoatRoughness = clearCoatRoughness * clearCoatRoughness;
+
+    float Dc = D_GGX(clearCoatRoughness, NoH);
+    float Vc = V_Kelemen(LoH);
+    float Fc = F_Schlick(vec3(0.04), LoH).x * clearCoatStrength;
+    float Frc = (Dc * Vc) * Fc;
 
     // directional light
-    float illuminance = NoL * lightIntensity1; //intensity
-    return (Fr + li) * illuminance;
+    float illuminance = NoL * 3.; //intensity
+    return ((Fd + Fr * (1.0 - Fc)) * (1.0 - Fc) + Frc) * illuminance;
 }
 
 void main()
