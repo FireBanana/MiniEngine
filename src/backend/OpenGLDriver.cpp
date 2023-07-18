@@ -91,19 +91,19 @@ namespace MiniEngine::Backend
         glCreateTextures(GL_TEXTURE_2D, 1, &mRoughnessBuffer);
         glCreateTextures(GL_TEXTURE_2D, 1, &mAccumBuffer);
 
-        glTextureStorage2D(mAccumBuffer, 1, GL_RGBA32F, mWidth, mHeight);
+        glTextureStorage2D(mAccumBuffer, 1, GL_RGBA16F, mWidth, mHeight);
         glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT0, mAccumBuffer, 0);
 
-        glTextureStorage2D(mColorBuffer, 1, GL_RGBA32F, mWidth, mHeight);
+        glTextureStorage2D(mColorBuffer, 1, GL_RGBA16F, mWidth, mHeight);
         glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT1, mColorBuffer, 0);
 
-        glTextureStorage2D(mPositionBuffer, 1, GL_RGBA32F, mWidth, mHeight);
+        glTextureStorage2D(mPositionBuffer, 1, GL_RGBA16F, mWidth, mHeight);
         glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT2, mPositionBuffer, 0);
 
-        glTextureStorage2D(mNormalBuffer, 1, GL_RGBA32F, mWidth, mHeight);
+        glTextureStorage2D(mNormalBuffer, 1, GL_RGBA16F, mWidth, mHeight);
         glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT3, mNormalBuffer, 0);
 
-        glTextureStorage2D(mRoughnessBuffer, 1, GL_RGBA32F, mWidth, mHeight);
+        glTextureStorage2D(mRoughnessBuffer, 1, GL_RGBA16F, mWidth, mHeight);
         glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT4, mRoughnessBuffer, 0);
 
         glNamedRenderbufferStorage(depth, GL_DEPTH24_STENCIL8, mWidth, mHeight);
@@ -344,12 +344,16 @@ namespace MiniEngine::Backend
         glBindTextureUnit(1, mPositionBuffer);
         glBindTextureUnit(2, mNormalBuffer);
         glBindTextureUnit(3, mRoughnessBuffer);
+        glBindTextureUnit(4, scene->getSkyBox()->irradianceCubemapId);
+        glBindTextureUnit(5, scene->getSkyBox()->environmentCubemapId);
 
         mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getPbrShader());
         SET_TEXTURE_ID("_Diffuse", 0);
         SET_TEXTURE_ID("_Position", 1);
         SET_TEXTURE_ID("_Normal", 2);
         SET_TEXTURE_ID("_Roughness", 3);
+        SET_TEXTURE_ID("_IrradianceMap", 4);
+        SET_TEXTURE_ID("_environmentMap", 5);
 
         glBindVertexArray(mScreenQuadVertexArray);
 
@@ -378,7 +382,7 @@ namespace MiniEngine::Backend
             glBindVertexArray(skybox->vaoId);
             glEnable(GL_DEPTH_TEST);
 
-            glBindTextureUnit(0, skybox->irradianceCubemapId);
+            glBindTextureUnit(0, skybox->environmentCubemapId);
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         }
 

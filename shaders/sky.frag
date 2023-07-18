@@ -21,5 +21,9 @@ void main()
     vec2 uv = sampleHdr(normalize(fPos));
     vec3 color = texture(_HdrMap, uv).rgb;
 
+    // Added to reduce artifacts
+    //color = color / (color + vec3(1.0));
+    //color = pow(color, vec3(1.0/2.2)); 
+
     imageStore( cubemapSlice, ivec2(gl_FragCoord.xy), vec4(color, 1.));
 }
