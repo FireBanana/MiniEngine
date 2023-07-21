@@ -33,7 +33,7 @@ namespace MiniEngine
 
 		void execute(Scene* scene);
 
-		Texture loadTexture(const char* path, Texture::TextureType type);
+		Texture loadTexture(const char* path, Texture::TextureType type, bool flipYAxis);
 
 		inline ShaderRegistry* getShaderRegistry() const { return mShaderRegistry.get(); }
 		inline GlobalBufferRegistry* getGlobalBufferRegistry() const { return mGlobalBufferRegistry.get(); }

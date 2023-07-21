@@ -29,9 +29,9 @@ namespace MiniEngine
 		mGlPlatform->execute(scene);
 	}
 
-	Texture Engine::loadTexture(const char* path, Texture::TextureType type)
+	Texture Engine::loadTexture(const char* path, Texture::TextureType type, bool flipYAxis)
 	{
-		auto results = MiniTools::ImageLoader::load(path, type == Texture::TextureType::CubeMap);
+		auto results = MiniTools::ImageLoader::load(path, type == Texture::TextureType::CubeMap, flipYAxis);
 
 		auto id = mGlPlatform.get()->getDriver()->createTexture(results.width, results.height, results.channels, results.data, type);
 

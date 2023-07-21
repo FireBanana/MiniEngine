@@ -44,6 +44,6 @@ namespace MiniTools
 	class ImageLoader
 	{
 	public:
-		static ImageLoaderResults load(const char* path, bool isFloat = false);
+		static ImageLoaderResults load(const char* path, bool isFloat = false, bool flipImage = false);
 	};
 }

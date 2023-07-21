@@ -24,8 +24,8 @@ int main(void)
 	auto cameraEntity2 = scene.createEntity();
 	auto mainLightEntity = scene.createEntity();
 
-	MiniEngine::Texture texture = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\red.png", MiniEngine::Texture::TextureType::Default);
-	MiniEngine::Texture texture2 = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\hdri.hdr", MiniEngine::Texture::TextureType::CubeMap);
+	MiniEngine::Texture texture = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\red.png", MiniEngine::Texture::TextureType::Default, false);
+	MiniEngine::Texture texture2 = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\hdri2.hdr", MiniEngine::Texture::TextureType::CubeMap, true);
 
 	auto material = MiniEngine::Material::Creator()
 		.addTexture(MiniEngine::Material::TextureType::Diffuse, texture)

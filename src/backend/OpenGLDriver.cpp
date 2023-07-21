@@ -185,7 +185,7 @@ namespace MiniEngine::Backend
         glNamedBufferData(
             ebo, sizeof(skyboxIndices), skyboxIndices, GL_STATIC_DRAW);
 
-        // Set-up cubemap =====================
+        // Set-up cubemap for irradiance convolution =====================
 
         glBindFramebuffer(GL_FRAMEBUFFER, mMainFrameBuffer);
         glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &(skybox->environmentCubemapId));
@@ -197,17 +197,17 @@ namespace MiniEngine::Backend
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        // Setup data ======================
+        // Draw env map ====================================================
 
         const glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
         const glm::mat4 captureViews[] =
         {
-           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, 1.0f,  0.0f)),
-           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, 1.0f,  0.0f)),
-           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  -1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
-           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
-           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, 1.0f,  0.0f)),
-           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, 1.0f,  0.0f))
+           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
+           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
+           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+           glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
         };
 
         mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getSkyboxShader());
@@ -224,7 +224,7 @@ namespace MiniEngine::Backend
             glDrawElements(GL_TRIANGLES, sizeof(skyboxIndices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
         }
 
-        // Convolute ===========================
+        // Convolute ========================================================
 
         glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &(skybox->irradianceCubemapId));
         glTextureStorage2D(skybox->irradianceCubemapId, 1, GL_RGBA16F, 32, 32);
@@ -250,7 +250,21 @@ namespace MiniEngine::Backend
             glDrawElements(GL_TRIANGLES, sizeof(skyboxIndices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
         }
 
-        // Cleanup =============================
+        // Generate PreFiltered Map==========================================
+
+        unsigned int pfMap;
+        glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &pfMap);
+        glTextureStorage2D(pfMap, 1, GL_RGB16F, 128, 128);
+
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glGenerateMipmap(GL_TEXTURE_CUBE_MAP); //here
+
+        // Cleanup ==========================================================
         
         glBindVertexArray(0);
         glViewport(0, 0, mWidth, mHeight);

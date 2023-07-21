@@ -122,6 +122,8 @@ vec3 BRDF(vec3 albedo, vec3 v, vec3 n, vec3 l, float a, float metallic)
     kDi *= 1.0 - metallic;
 
     vec3 irradiance = texture(_IrradianceMap, n).xyz;
+    irradiance = pow(irradiance, vec3(1.0/2.2)); 
+
     vec3 ambient = (kDi * irradiance) * albedo;
 
     color = color + ambient;
@@ -129,7 +131,10 @@ vec3 BRDF(vec3 albedo, vec3 v, vec3 n, vec3 l, float a, float metallic)
     color = color / (color + vec3(1.0));
     //color = pow(color, vec3(1.0/2.2)); 
 
-    return irradiance;
+    //irradiance = irradiance / (irradiance + vec3(1.0));
+    //irradiance = pow(irradiance, vec3(1.0/2.2)); 
+
+    return color;
 }
 
 void main()

@@ -148,10 +148,12 @@ namespace MiniTools
 		return results;
 	}
 	
-	ImageLoaderResults ImageLoader::load(const char* path, bool isFloat)
+	ImageLoaderResults ImageLoader::load(const char* path, bool isFloat, bool flipImage)
 	{
 		int w, h, c;
 		void* data;
+
+		stbi_set_flip_vertically_on_load(flipImage);
 
 		if(isFloat)
 			data = stbi_loadf(path, &w, &h, &c, 0);
