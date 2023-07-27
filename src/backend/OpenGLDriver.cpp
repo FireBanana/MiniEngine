@@ -190,12 +190,12 @@ namespace MiniEngine::Backend
         glBindFramebuffer(GL_FRAMEBUFFER, mMainFrameBuffer);
         glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &(skybox->environmentCubemapId));
         glTextureStorage2D(skybox->environmentCubemapId, 1, GL_RGBA16F, 512, 512);
-
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        
+        glTextureParameteri(skybox->environmentCubemapId, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(skybox->environmentCubemapId, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(skybox->environmentCubemapId, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(skybox->environmentCubemapId, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(skybox->environmentCubemapId, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         // Draw env map ====================================================
 
@@ -228,12 +228,12 @@ namespace MiniEngine::Backend
 
         glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &(skybox->irradianceCubemapId));
         glTextureStorage2D(skybox->irradianceCubemapId, 1, GL_RGBA16F, 32, 32);
-
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        
+        glTextureParameteri(skybox->irradianceCubemapId, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(skybox->irradianceCubemapId, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(skybox->irradianceCubemapId, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(skybox->irradianceCubemapId, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(skybox->irradianceCubemapId, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getSkyboxConvoluter());
 
@@ -250,19 +250,63 @@ namespace MiniEngine::Backend
             glDrawElements(GL_TRIANGLES, sizeof(skyboxIndices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
         }
 
-        // Generate PreFiltered Map==========================================
+        // Generate PreFiltered Map ==========================================
 
-        unsigned int pfMap;
-        glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &pfMap);
-        glTextureStorage2D(pfMap, 1, GL_RGB16F, 128, 128);
+        constexpr unsigned int maxMipLevels = 5;
 
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &skybox->prefilteredCubemapId);
+        glTextureStorage2D(skybox->prefilteredCubemapId, maxMipLevels, GL_RGBA16F, 128, 128);
 
-        glGenerateMipmap(GL_TEXTURE_CUBE_MAP); //here
+        glTextureParameteri(skybox->prefilteredCubemapId, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(skybox->prefilteredCubemapId, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(skybox->prefilteredCubemapId, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(skybox->prefilteredCubemapId, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTextureParameteri(skybox->prefilteredCubemapId, GL_TEXTURE_MAG_FILTER, GL_LINEAR);        
+
+        glGenerateTextureMipmap(skybox->prefilteredCubemapId);
+
+        mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getEnvPrefilterShader());
+        
+        glBindTextureUnit(0, skybox->environmentCubemapId);
+        setMat4(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_projection", captureProjection);
+
+        for (unsigned int level = 0; level < maxMipLevels; ++level)
+        {
+            unsigned int width = 128 * std::pow(0.5, level);
+            unsigned int height = 128 * std::pow(0.5, level);
+
+            glViewport(0, 0, width, height);
+
+            float roughness = (float)level / (float)(maxMipLevels - 1);
+            setFloat(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_roughness", roughness);
+
+            for (unsigned int i = 0; i < 6; ++i)
+            {
+                setMat4(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_view", captureViews[i]);
+
+                glBindImageTexture(0, skybox->prefilteredCubemapId, level, GL_FALSE, i, GL_WRITE_ONLY, GL_RGBA16F);
+                glDrawElements(GL_TRIANGLES, sizeof(skyboxIndices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
+            }
+
+        }
+
+        // Generate Scale-Bias Lookup =======================================
+
+        glCreateTextures(GL_TEXTURE_2D, 1, &skybox->precomputedBrdfId);
+        glTextureStorage2D(skybox->precomputedBrdfId, 1, GL_RG16F, 512, 512);
+
+        glTextureParameteri(skybox->precomputedBrdfId, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(skybox->precomputedBrdfId, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(skybox->precomputedBrdfId, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(skybox->precomputedBrdfId, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glViewport(0, 0, 512, 512);
+
+        mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getEnvPreComputeBrdfShader());
+        glBindVertexArray(mScreenQuadVertexArray);
+
+        glBindImageTexture(0, skybox->precomputedBrdfId, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG16F);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         // Cleanup ==========================================================
         
@@ -360,14 +404,18 @@ namespace MiniEngine::Backend
         glBindTextureUnit(3, mRoughnessBuffer);
         glBindTextureUnit(4, scene->getSkyBox()->irradianceCubemapId);
         glBindTextureUnit(5, scene->getSkyBox()->environmentCubemapId);
+        glBindTextureUnit(6, scene->getSkyBox()->prefilteredCubemapId);
+        glBindTextureUnit(7, scene->getSkyBox()->precomputedBrdfId);
 
         mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getPbrShader());
         SET_TEXTURE_ID("_Diffuse", 0);
         SET_TEXTURE_ID("_Position", 1);
         SET_TEXTURE_ID("_Normal", 2);
         SET_TEXTURE_ID("_Roughness", 3);
-        SET_TEXTURE_ID("_IrradianceMap", 4);
+        SET_TEXTURE_ID("_irradianceMap", 4);
         SET_TEXTURE_ID("_environmentMap", 5);
+        SET_TEXTURE_ID("_prefilteredMap", 6);
+        SET_TEXTURE_ID("_precomputedBrdf", 7);
 
         glBindVertexArray(mScreenQuadVertexArray);
 

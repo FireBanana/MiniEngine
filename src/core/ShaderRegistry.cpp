@@ -58,6 +58,24 @@ namespace MiniEngine
 		createShader(shader, mDriver);
 	}
 
+	void ShaderRegistry::loadEnvPrefilterShader()
+	{
+		auto vertexShader = mDriver->loadShader(SKYBOX_VERTEX_PATH, Backend::OpenGLDriver::ShaderType::VERTEX);
+		auto fragmentShader = mDriver->loadShader(ENV_PREFILTER_PATH, Backend::OpenGLDriver::ShaderType::FRAGMENT);
+		auto shader = mDriver->createShaderProgram(vertexShader, fragmentShader);
+
+		createShader(shader, mDriver);
+	}
+
+	void ShaderRegistry::loadEnvPreComputeBrdfShader()
+	{
+		auto vertexShader = mDriver->loadShader(LIGHTING_VERTEX_PATH, Backend::OpenGLDriver::ShaderType::VERTEX);
+		auto fragmentShader = mDriver->loadShader(ENV_PRECOMPUTE_BRDF_PATH, Backend::OpenGLDriver::ShaderType::FRAGMENT);
+		auto shader = mDriver->createShaderProgram(vertexShader, fragmentShader);
+
+		createShader(shader, mDriver);
+	}
+
 	void ShaderRegistry::enable(Shader* shader)
 	{
 		mDriver->useShaderProgram(shader->getShaderProgram());

@@ -19,6 +19,8 @@ namespace MiniEngine::Components
 		unsigned int vaoId;
 		unsigned int environmentCubemapId;
 		unsigned int irradianceCubemapId;
+		unsigned int prefilteredCubemapId;
+		unsigned int precomputedBrdfId;
 #endif
 	};
 }

@@ -22,8 +22,10 @@ uniform sampler2D _Position;
 uniform sampler2D _Normal;
 uniform sampler2D _Roughness;
 
-uniform samplerCube _IrradianceMap;
+uniform sampler2D _precomputedBrdf;
+uniform samplerCube _irradianceMap;
 uniform samplerCube _environmentMap;
+uniform samplerCube _prefilteredMap;
 
 layout (location = 0) out vec4 oAccum;
 
@@ -84,6 +86,7 @@ float Fd_Lambert()
 
 vec3 BRDF(vec3 albedo, vec3 v, vec3 n, vec3 l, float a, float metallic) 
 {
+    vec3 r = reflect(-v, n);
     vec3 h = normalize(v + l);
     vec3 diffuse = (1.0 - metallic) * albedo;
 
@@ -121,10 +124,15 @@ vec3 BRDF(vec3 albedo, vec3 v, vec3 n, vec3 l, float a, float metallic)
     vec3 kDi = 1.0 - kSi;
     kDi *= 1.0 - metallic;
 
-    vec3 irradiance = texture(_IrradianceMap, n).xyz;
+    vec3 irradiance = texture(_irradianceMap, n).xyz;
     irradiance = pow(irradiance, vec3(1.0/2.2)); 
+    vec3 diff = irradiance * albedo;
 
-    vec3 ambient = (kDi * irradiance) * albedo;
+    vec3 prefilteredColor = textureLod(_prefilteredMap, r, a * 4.0).rgb; // 4 is maximum LOD set currently
+    vec2 envBrdf = texture(_precomputedBrdf, vec2(NoV, roughness)).rg;
+    vec3 specular = prefilteredColor * (kSi * envBrdf.x + envBrdf.y);
+
+    vec3 ambient = (kDi * diff + specular) * 1.3;
 
     color = color + ambient;
 

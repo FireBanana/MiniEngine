@@ -22,6 +22,8 @@ namespace MiniEngine
 		mShaderRegistry->loadSkyboxShader();
 		mShaderRegistry->loadSkyboxRenderShader();
 		mShaderRegistry->loadSkyboxConvoluter();
+		mShaderRegistry->loadEnvPrefilterShader();
+		mShaderRegistry->loadEnvPreComputeBrdfShader();
 	}
 
 	void Engine::execute(Scene* scene)

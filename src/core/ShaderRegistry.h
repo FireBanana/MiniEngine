@@ -13,6 +13,8 @@ static constexpr char* SKYBOX_FRAGMENT_PATH = "../shaders/sky.frag";
 static constexpr char* SKYBOX_RENDER_VERTEX_PATH = "../shaders/sky_render.vert";
 static constexpr char* SKYBOX_RENDER_FRAGMENT_PATH = "../shaders/sky_render.frag";
 static constexpr char* ENV_CONVOLUTION_PATH = "../shaders/env_convolution.frag";
+static constexpr char* ENV_PREFILTER_PATH = "../shaders/prefilter.frag";
+static constexpr char* ENV_PRECOMPUTE_BRDF_PATH = "../shaders/precompbrdf.frag";
 
 namespace MiniEngine
 {
@@ -27,12 +29,16 @@ namespace MiniEngine
 		void loadSkyboxShader();
 		void loadSkyboxRenderShader();
 		void loadSkyboxConvoluter();
+		void loadEnvPrefilterShader();
+		void loadEnvPreComputeBrdfShader();
 
 		inline Shader* getDeferredShader() noexcept { return &mShaderTable[0]; }
 		inline Shader* getPbrShader() noexcept { return &mShaderTable[1]; }
 		inline Shader* getSkyboxShader() noexcept { return &mShaderTable[2]; }
 		inline Shader* getSkyboxRenderShader() noexcept { return &mShaderTable[3]; }
 		inline Shader* getSkyboxConvoluter() noexcept { return &mShaderTable[4]; }
+		inline Shader* getEnvPrefilterShader() noexcept { return &mShaderTable[5]; }
+		inline Shader* getEnvPreComputeBrdfShader() noexcept { return &mShaderTable[6]; }
 
 		void enable(Shader* shader);
 		void bindGlobalBufferToAll(const char* name, unsigned int bindIndex);
