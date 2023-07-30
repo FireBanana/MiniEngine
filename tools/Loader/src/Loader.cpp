@@ -24,6 +24,7 @@ namespace MiniTools
 			std::vector<float> vertexData;
 			std::vector<float> uvData;
 			std::vector<float> normalData;
+			std::vector<float> tangentData;
 
 			std::vector<unsigned int> indices;
 
@@ -31,6 +32,7 @@ namespace MiniTools
 
 			if (primitive.mode != TINYGLTF_MODE_TRIANGLES) throw;
 
+			// TODO: Cleanup ifs
 			// Get vertices
 			for (auto& attrib : primitive.attributes)
 			{
@@ -108,6 +110,36 @@ namespace MiniTools
 						);
 					}
 				}
+				else if (attrib.first == "TANGENT")
+				{
+					auto& accessor = model.accessors[attrib.second];
+					auto& bufferView = model.bufferViews[accessor.bufferView];
+					auto type = accessor.type;
+
+					auto byteStride = accessor.ByteStride(bufferView);
+					auto size = accessor.count;
+
+					auto& buffer = model.buffers[bufferView.buffer];
+
+					for (auto i = 0; i < size; ++i)
+					{
+						tangentData.push_back(
+							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset)])))
+						);
+
+						tangentData.push_back(
+							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float)])))
+						);
+
+						tangentData.push_back(
+							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float) * 2])))
+						);
+
+						tangentData.push_back(
+							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float) * 3])))
+						);
+					}
+				}
 			}
 
 			// Get indices
@@ -127,8 +159,9 @@ namespace MiniTools
 			auto it_vert = vertexData.begin();
 			auto it_uv = uvData.begin();
 			auto it_normal = normalData.begin();
+			auto it_tangent = tangentData.begin();
 
-			while (it_vert != vertexData.end() && it_uv != uvData.end() && it_normal != normalData.end())
+			while (it_vert != vertexData.end() && it_uv != uvData.end() && it_normal != normalData.end() && it_tangent != tangentData.end())
 			{
 				bufferData.push_back(*(it_vert++));
 				bufferData.push_back(*(it_vert++));
@@ -140,9 +173,14 @@ namespace MiniTools
 				bufferData.push_back(*(it_normal++));
 				bufferData.push_back(*(it_normal++));
 				bufferData.push_back(*(it_normal++));
+
+				bufferData.push_back(*(it_tangent++));
+				bufferData.push_back(*(it_tangent++));
+				bufferData.push_back(*(it_tangent++));
+				bufferData.push_back(*(it_tangent++));
 			}
 
-			results.models.push_back({ std::move(bufferData), std::move(indices), {3, 2, 3} });
+			results.models.push_back({ std::move(bufferData), std::move(indices), {3, 2, 3, 4} });
 		}
 
 		return results;

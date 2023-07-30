@@ -24,18 +24,20 @@ int main(void)
 	auto cameraEntity2 = scene.createEntity();
 	auto mainLightEntity = scene.createEntity();
 
-	MiniEngine::Texture texture = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\1.png", MiniEngine::Texture::TextureType::Default, false);
-	MiniEngine::Texture texture2 = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\hdri2.hdr", MiniEngine::Texture::TextureType::CubeMap, true);
+	MiniEngine::Texture texture = engine.loadTexture("C:\\Users\\Owais\\Desktop\\img.png", MiniEngine::Texture::TextureType::Default, false);
+	MiniEngine::Texture normal = engine.loadTexture("C:\\Users\\Owais\\Desktop\\2.png", MiniEngine::Texture::TextureType::Default, false);
+	MiniEngine::Texture texture2 = engine.loadTexture("C:\\Users\\Owais\\Desktop\\hdr.hdr", MiniEngine::Texture::TextureType::CubeMap, true);
 
 	auto material = MiniEngine::Material::Creator()
 		.addTexture(MiniEngine::Material::TextureType::Diffuse, texture)
+		.addTexture(MiniEngine::Material::TextureType::Normal, normal)
 		.addShader(engine.getShaderRegistry()->getDeferredShader())
 		.addMaterialProperty(MiniEngine::Material::PropertyType::Roughness, 0.15f)
 		.addMaterialProperty(MiniEngine::Material::PropertyType::Metallic, 1.f)
 		.create();
 
 	auto mesh = MiniEngine::Renderable::Builder()
-		.addModel("C:\\Users\\Arthur\\Desktop\\din.glb")
+		.addModel("C:\\Users\\Owais\\Desktop\\dinod.glb")
 		.addMaterialInstance(&material)
 		.build(&scene, meshEntity);
 
@@ -77,7 +79,7 @@ int main(void)
 	//	.build(&scene, meshEntity2);
 
 	auto camera = MiniEngine::Camera::Builder()
-		.setPosition({(float)sqrt(4), 0, (float)sqrt(4) })
+		.setPosition({(float)sqrt(50), 50, (float)sqrt(50) })
 		.setAspectRatio((float)params.screenWidth / (float)params.screenHeight)
 		.setNearFarPlane(0.1f, 1000.0f)
 		.setFOV(45)
@@ -106,8 +108,8 @@ int main(void)
 	float cameraRot = 0;
 	engine.addSlider("Camera-X", &(cameraRot), 0, 3.142f * 2, [&]() 
 		{ 
-			camera->position.x = 4 * cos(cameraRot);
-			camera->position.z = 4 * sin(cameraRot);
+			camera->position.x = 70 * cos(cameraRot);
+			camera->position.z = 70 * sin(cameraRot);
 			scene.setCameraActive(camera); 
 			skyBox.rotation = cameraRot;
 		});

@@ -88,6 +88,8 @@ vec3 BRDF(vec3 albedo, vec3 v, vec3 n, vec3 l, float a, float metallic)
 {
     vec3 r = reflect(-v, n);
     vec3 h = normalize(v + l);
+    
+    albedo = pow(albedo, vec3(2.2));
     vec3 diffuse = (1.0 - metallic) * albedo;
 
     float NoV = abs(dot(n, v)) + 1e-5;
@@ -125,22 +127,18 @@ vec3 BRDF(vec3 albedo, vec3 v, vec3 n, vec3 l, float a, float metallic)
     kDi *= 1.0 - metallic;
 
     vec3 irradiance = texture(_irradianceMap, n).xyz;
-    irradiance = pow(irradiance, vec3(1.0/2.2)); 
     vec3 diff = irradiance * albedo;
 
     vec3 prefilteredColor = textureLod(_prefilteredMap, r, a * 4.0).rgb; // 4 is maximum LOD set currently
     vec2 envBrdf = texture(_precomputedBrdf, vec2(NoV, roughness)).rg;
     vec3 specular = prefilteredColor * (kSi * envBrdf.x + envBrdf.y);
 
-    vec3 ambient = (kDi * diff + specular) * 1.3;
+    vec3 ambient = (kDi * diff + specular);
 
     color = color + ambient;
 
     color = color / (color + vec3(1.0));
-    //color = pow(color, vec3(1.0/2.2)); 
-
-    //irradiance = irradiance / (irradiance + vec3(1.0));
-    //irradiance = pow(irradiance, vec3(1.0/2.2)); 
+    color = pow(color, vec3(1.0/2.2)); 
 
     return color;
 }
@@ -151,7 +149,6 @@ void main()
     vec3 position = texture(_Position, oUv).xyz;
     vec3 normal = texture(_Normal, oUv).xyz;
     vec3 roughness = texture(_Roughness, oUv).xyz;
-    vec3 env = texture(_environmentMap, normal).xyz;
 
     //env = env / (env + vec3(1.0));
     //env = pow(env, vec3(1.0/2.2));

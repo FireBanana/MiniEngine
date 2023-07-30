@@ -13,9 +13,9 @@ namespace MiniEngine
 {
 	// =========================
 	// Texture References:
-	// Diffuse    - Location 1
-	// Normal     - Location 2
-	// Roughness  - Location 3
+	// Diffuse    - Location 0
+	// Normal     - Location 1
+	// Roughness  - Location 2
 	// =========================
 	class Material
 	{

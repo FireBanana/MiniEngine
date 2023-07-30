@@ -364,9 +364,8 @@ namespace MiniEngine::Backend
 
         mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getDeferredShader());
         SET_TEXTURE_ID("_Diffuse", 0);
-        SET_TEXTURE_ID("_Position", 1);
-        SET_TEXTURE_ID("_Normal", 2);
-        SET_TEXTURE_ID("_Roughness", 3);
+        SET_TEXTURE_ID("_Normal", 1);
+        SET_TEXTURE_ID("_Roughness", 2);
 
         for (int i = 0; i < db.size(); ++i)
         {

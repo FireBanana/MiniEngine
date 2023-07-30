@@ -37,6 +37,6 @@ void main()
         }
     }
     irradiance = PI * irradiance * (1.0 / float(nrSamples));
-  
+
     imageStore( cubemapSlice, ivec2(gl_FragCoord.xy), vec4(irradiance, 1.));
 }
