@@ -16,7 +16,7 @@ layout (std140, binding = 0) uniform SceneBlock
 in vec2 fUv;
 in vec3 fNormal;
 in vec3 fPosition;
-in vec4 fTangent;
+in vec3 fTangent;
 
 uniform sampler2D _Diffuse;
 uniform sampler2D _Normal;
@@ -30,15 +30,34 @@ layout (location = 2) out vec4 oPosition;
 layout (location = 3) out vec4 oNormal; 
 layout (location = 4) out vec4 oRoughness;
 
+// http://www.thetenthplanet.de/archives/1180
+mat3 cotangent_frame( vec3 N, vec3 p, vec2 uv ) 
+{
+	 // get edge vectors of the pixel triangle 
+	vec3 dp1 = dFdx( p );
+	vec3 dp2 = dFdy( p ); 
+	vec2 duv1 = dFdx( uv ); 
+	vec2 duv2 = dFdy( uv );
+	// solve the linear system 
+	vec3 dp2perp = cross( dp2, N );
+	vec3 dp1perp = cross( N, dp1 ); 
+	vec3 T = dp2perp * duv1.x + dp1perp * duv2.x; 
+	vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;   
+	// construct a scale-invariant frame 
+	float invmax = inversesqrt( max( dot(T,T), dot(B,B) ) ); 
+	return mat3( T * invmax, B * invmax, N ); 
+}
+
 void main()
 {
 	vec3 v = normalize(fNormal);
 	vec4 normalTexture = (texture(_Normal, fUv)) * 2.0 - 1.0;
+	mat3 m = cotangent_frame(v, fPosition, fUv);
 
-	vec3 bitangent = cross(fNormal, fTangent.xyz) * fTangent.w;
+	vec3 bitangent = cross(fNormal, fTangent);
 	mat3 tbn = mat3(fTangent, bitangent, fNormal);
 
-	oDiffuse = normalize(vec4(tbn * normalTexture.xyz, 0.));//texture(_Diffuse, fUv);
+	oDiffuse = texture(_Diffuse, fUv); //vec4(v * m,1.);
 	oPosition = vec4(normalize(fPosition), 0.0);
 	oNormal = normalize(vec4(v, 0.));
 	oRoughness = vec4(_baseRoughness, _baseMetallic, 0, 0);

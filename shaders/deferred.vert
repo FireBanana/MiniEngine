@@ -18,12 +18,12 @@ uniform mat4 _model;
 layout (location = 0) in vec3 iPos;
 layout (location = 1) in vec2 iUv;
 layout (location = 2) in vec3 iNormal;
-layout (location = 3) in vec4 iTangent;
+layout (location = 3) in vec3 iTangent;
 
 out vec2 fUv;
 out vec3 fNormal;
 out vec3 fPosition;
-out vec4 fTangent;
+out vec3 fTangent;
 
 void main()
 {
