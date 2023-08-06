@@ -8,7 +8,7 @@ layout (location = 0) out vec4 oAccum;
 
 void main()
 {
-    vec3 envColor = textureLod(environmentMap, localPos, 1.).rgb;
+    vec3 envColor = textureLod(environmentMap, localPos, 0.).rgb;
     
     envColor = envColor / (envColor + vec3(1.0));
     envColor = pow(envColor, vec3(1.0/2.2)); 
