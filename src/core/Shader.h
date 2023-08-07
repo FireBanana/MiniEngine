@@ -28,9 +28,9 @@ namespace MiniEngine
 
 	private:
 
-		unsigned int mShaderId;
+		unsigned int				 mShaderId;
 		const Backend::OpenGLDriver* mDriver;
 
-		unsigned int mUniformBufferIndex;
+		unsigned int				 mUniformBufferIndex;
 	};
 }

@@ -12,8 +12,8 @@
 int main(void)
 {
 	EngineInitParams params{};
-	params.screenWidth = 1200;
-	params.screenHeight = 800;
+	params.screenWidth = 1920;
+	params.screenHeight = 1080;
 	params.clearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
 	MiniEngine::Engine engine{ params };
 
@@ -24,9 +24,9 @@ int main(void)
 	auto cameraEntity2 = scene.createEntity();
 	auto mainLightEntity = scene.createEntity();
 
-	MiniEngine::Texture texture = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\1.png", MiniEngine::Texture::TextureType::Default, false);
+	MiniEngine::Texture texture = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\red.png", MiniEngine::Texture::TextureType::Default, false);
 	MiniEngine::Texture normal = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\normal.png", MiniEngine::Texture::TextureType::Default, false);
-	MiniEngine::Texture texture2 = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\hdri.hdr", MiniEngine::Texture::TextureType::CubeMap, true);
+	MiniEngine::Texture texture2 = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\hdri2.hdr", MiniEngine::Texture::TextureType::CubeMap, true);
 
 	auto material = MiniEngine::Material::Creator()
 		.addTexture(MiniEngine::Material::TextureType::Diffuse, texture)
@@ -37,7 +37,7 @@ int main(void)
 		.create();
 
 	auto mesh = MiniEngine::Renderable::Builder()
-		.addModel("C:\\Users\\Arthur\\Desktop\\din.glb")
+		.addModel("C:\\Users\\Arthur\\Desktop\\sphere.glb")
 		.addMaterialInstance(&material)
 		.build(&scene, meshEntity);
 
