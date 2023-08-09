@@ -4,6 +4,7 @@
 #include "RenderableComponent.h"
 #include "Shader.h"
 #include "Engine.h"
+#include "EngineConstants.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/glm.hpp>
@@ -57,7 +58,7 @@ void debugCallback(GLenum source, GLenum type, GLuint id,
 
 namespace MiniEngine::Backend
 {
-    void OpenGLDriver::setupGlWindowParams(const EngineInitParams& params, Engine* engine)
+    void OpenGLDriver::setupGlWindowParams(const MiniEngine::Types::EngineInitParams& params, Engine* engine)
     {
         mWidth = params.screenWidth;
         mHeight = params.screenHeight;
@@ -353,6 +354,25 @@ namespace MiniEngine::Backend
         glBindVertexArray(0);
     }
 
+    void OpenGLDriver::setupDefaultMaps()
+    {
+        GLuint attachments[] = { GL_COLOR_ATTACHMENT0 };
+        unsigned int fb;
+
+        glCreateFramebuffers(1, &fb);
+        glBindFramebuffer(GL_FRAMEBUFFER, fb);
+
+        glCreateTextures(GL_TEXTURE_2D, 1, &mDefaultMaps[(int)Types::TextureType::Normal]);
+        glTextureStorage2D(mDefaultMaps[(int)Types::TextureType::Normal], 1, GL_RGBA16F, 2, 2);
+        glNamedFramebufferTexture(fb, GL_COLOR_ATTACHMENT0, mDefaultMaps[(int)Types::TextureType::Normal], 0);
+        glNamedFramebufferDrawBuffers(fb, 1, attachments);
+
+        glClearColor(0.5f, 0.5f, 1.0f, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glDeleteFramebuffers(1, &fb);
+    }
+
     void OpenGLDriver::draw(Scene* scene)
     {
         const auto& db = scene->getRenderableComponentDatabase();
@@ -371,11 +391,17 @@ namespace MiniEngine::Backend
         {
             glBindVertexArray(db[i].vaoId);
 
-            for (int j = 0; j < db[i].materialInstance->textureReference.size(); ++j)
+            for (int j = 0; j < MAX_TEXTURE_TYPES; ++j)
             {
-                glBindTextureUnit(j, db[i].materialInstance->textureReference[j].getId());
-            }
+                auto mask = db[i].materialInstance->textureMask;
 
+                glBindTextureUnit(j, 
+                    ((mask >> j) & 0x1) == 1 ? 
+                    db[i].materialInstance->textureReference[j].getId() : 
+                    mDefaultMaps[j]
+                );
+            }
+            
             auto m = glm::mat4{ 1.0f };
 
             m = glm::rotate(m, glm::radians(db[i].rotation.x), glm::vec3{1, 0, 0});

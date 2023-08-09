@@ -1,8 +1,8 @@
-#include "core/Engine.h"
-#include "core/Renderable.h"
-#include "core/Material.h"
-#include "core/Scene.h"
-#include "core/Texture.h"
+#include "Engine.h"
+#include "Renderable.h"
+#include "Material.h"
+#include "Scene.h"
+#include "Texture.h"
 
 #include <thread>
 #include <iostream>
@@ -11,7 +11,7 @@
 
 int main(void)
 {
-	EngineInitParams params{};
+	MiniEngine::Types::EngineInitParams params{};
 	params.screenWidth = 1920;
 	params.screenHeight = 1080;
 	params.clearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -28,9 +28,12 @@ int main(void)
 	MiniEngine::Texture normal = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\normal.png", MiniEngine::Texture::TextureType::Default, false);
 	MiniEngine::Texture texture2 = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\hdri2.hdr", MiniEngine::Texture::TextureType::CubeMap, true);
 
+	//EnumExtension::_print_enum_name<MiniEngine::Types::TextureType, (MiniEngine::Types::TextureType)15>();
+	//EnumExtension::_print_enum_name<MiniEngine::Types::TextureType, (MiniEngine::Types::TextureType)1>();
+
 	auto material = MiniEngine::Material::Creator()
-		.addTexture(MiniEngine::Material::TextureType::Diffuse, texture)
-		.addTexture(MiniEngine::Material::TextureType::Normal, normal)
+		//.addTexture(MiniEngine::Types::TextureType::Diffuse, texture)
+		.addTexture(MiniEngine::Types::TextureType::Normal, normal)
 		.addShader(engine.getShaderRegistry()->getDeferredShader())
 		.addMaterialProperty(MiniEngine::Material::PropertyType::Roughness, 0.15f)
 		.addMaterialProperty(MiniEngine::Material::PropertyType::Metallic, 1.f)

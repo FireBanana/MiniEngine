@@ -9,7 +9,7 @@
 
 namespace MiniEngine
 {
-	Engine::Engine(const EngineInitParams& params)
+	Engine::Engine(const MiniEngine::Types::EngineInitParams& params)
 	{
 		mGlPlatform = std::make_unique<Backend::OpenGLPlatform>(params, this);
 		mShaderRegistry = std::make_unique<ShaderRegistry>(mGlPlatform->getDriver());

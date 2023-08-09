@@ -24,7 +24,7 @@ namespace MiniEngine
 	{
 	public:
 
-		Engine(const EngineInitParams& params);
+		Engine(const MiniEngine::Types::EngineInitParams & params);
 
 		Engine(Engine const&) = delete;
 		Engine(Engine&&) = delete;

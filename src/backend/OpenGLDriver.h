@@ -1,6 +1,7 @@
 #pragma once
 #include "EngineTypes.h"
 #include "Texture.h"
+#include "EngineConstants.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -31,13 +32,14 @@ namespace Backend
 			FRAGMENT = GL_FRAGMENT_SHADER
 		};
 
-		void setupGlWindowParams(const EngineInitParams& params, Engine* engine);
+		void setupGlWindowParams(const MiniEngine::Types::EngineInitParams& params, Engine* engine);
 		void setupFrameBuffer();
 		void setupScreenQuad();
 		void setupDebugInfo();
 
 		void setupSkybox(MiniEngine::Components::SkyboxComponent* skybox);
 		void setupMesh(MiniEngine::Components::RenderableComponent* component);
+		void setupDefaultMaps();
 
 		void draw(MiniEngine::Scene* scene);
 		void finalBlit();
@@ -46,7 +48,7 @@ namespace Backend
 		void endRenderpass();
 
 		unsigned int loadShader(const char* path, ShaderType type) const;
-		unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader) const; //create deleter
+		unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader) const; //todo: create deleter
 		void		 useShaderProgram(unsigned int program) const;
 
 		void registerUniformBlock(const char* blockName, const Shader* program, unsigned int layoutIndex) const;
@@ -70,6 +72,8 @@ namespace Backend
 		GLuint mNormalBuffer;
 		GLuint mRoughnessBuffer;
 		GLuint mScreenQuadVertexArray;
+
+		GLuint mDefaultMaps[MAX_TEXTURE_TYPES];
 
 		uint16_t mWidth;
 		uint16_t mHeight;

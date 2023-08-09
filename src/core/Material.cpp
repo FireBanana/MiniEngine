@@ -3,8 +3,9 @@
 
 namespace MiniEngine
 {
-	Material::Creator& Material::Creator::addTexture(TextureType textureType, Texture texture)
+	Material::Creator& Material::Creator::addTexture(MiniEngine::Types::TextureType textureType, Texture texture)
 	{
+		mTextureMask |= (0x1 << (int)textureType);
 		mTextureReference.set((int)textureType, texture);
 		return *this;
 	}
@@ -20,8 +21,14 @@ namespace MiniEngine
 		mMaterialProperties.set((int)propertyType, value);
 		return *this;
 	}
+
 	MaterialInstance Material::Creator::create()
 	{
-		return { mShader, std::move(mTextureReference), std::move(mMaterialProperties) };
+		return { mTextureMask, mShader, std::move(mTextureReference), std::move(mMaterialProperties) };
+	}
+
+	bool Material::Creator::isTextureSet(MiniEngine::Types::TextureType type)
+	{
+		return (mTextureMask >> (int)type) & 0x1;
 	}
 }

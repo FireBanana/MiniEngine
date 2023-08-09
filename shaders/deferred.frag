@@ -51,20 +51,12 @@ void main()
 {
 	vec3 v = normalize(fNormal);
 
-	#ifdef USE_NM
 	vec4 normalTexture = (texture(_Normal, fUv)) * 2.0 - 1.0;
-	#endif
 
 	mat3 m = cotangent_frame(v, fPosition, fUv);
 
 	oDiffuse = texture(_Diffuse, fUv);
 	oPosition = vec4(normalize(fPosition), 0.0);
-
-	#ifdef USE_NM
 	oNormal = vec4(m * normalTexture.xyz,0);
-	#else
-	oNormal = vec4(v,0);
-	#endif
-
 	oRoughness = vec4(_baseRoughness, _baseMetallic, 0, 0);
 }
