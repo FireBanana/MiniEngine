@@ -47,6 +47,7 @@ namespace MiniEngine
 		if (builderResults->getMaterialInstance() == nullptr)
 		{
 			m.shader = *(mEngine->getShaderRegistry()->getDeferredShader());
+			m.materialInstance = mEngine->getDefaultMaterial();
 		}
 		else
 		{

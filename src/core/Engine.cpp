@@ -5,8 +5,6 @@
 #include "Loader.h"
 #include <memory>
 
-#define BUFFER_OFFSET(i) ((char *)NULL + (i))
-
 namespace MiniEngine
 {
 	Engine::Engine(const MiniEngine::Types::EngineInitParams& params)
@@ -24,6 +22,8 @@ namespace MiniEngine
 		mShaderRegistry->loadSkyboxConvoluter();
 		mShaderRegistry->loadEnvPrefilterShader();
 		mShaderRegistry->loadEnvPreComputeBrdfShader();
+
+		createDefaultMaterial();
 	}
 
 	void Engine::execute(Scene* scene)
@@ -44,6 +44,16 @@ namespace MiniEngine
 	{
 		mGlPlatform->getUiInterface()->createSliderPanel(name, value, min, max, cb);
 	}
+
+	void Engine::createDefaultMaterial()
+	{
+		mDefaultMaterial = MiniEngine::Material::Creator()
+			.addShader(getShaderRegistry()->getDeferredShader())
+			.addMaterialProperty(MiniEngine::Material::PropertyType::Roughness, 0.15f)
+			.addMaterialProperty(MiniEngine::Material::PropertyType::Metallic, 1.f)
+			.create();
+	}
 }
+
 
 

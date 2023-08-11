@@ -38,6 +38,7 @@ namespace MiniEngine
 		inline ShaderRegistry* getShaderRegistry() const { return mShaderRegistry.get(); }
 		inline GlobalBufferRegistry* getGlobalBufferRegistry() const { return mGlobalBufferRegistry.get(); }
 		inline Backend::OpenGLDriver* getOpenGlDriver() const { return mGlPlatform.get()->getDriver(); }
+		inline MaterialInstance* getDefaultMaterial() { return &mDefaultMaterial; }
 
 		// UI
 		void addSlider(const char* name, float* value, float min, float max, std::function<void()> cb = nullptr);
@@ -47,5 +48,9 @@ namespace MiniEngine
 		std::unique_ptr<GlobalBufferRegistry> mGlobalBufferRegistry;
 		std::unique_ptr<Backend::OpenGLPlatform> mGlPlatform;
 		std::unique_ptr<ShaderRegistry> mShaderRegistry;
+
+		MaterialInstance mDefaultMaterial;
+	
+		void createDefaultMaterial();
 	};
 }

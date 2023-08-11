@@ -28,44 +28,41 @@ int main(void)
 	MiniEngine::Texture normal = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\normal.png", MiniEngine::Texture::TextureType::Default, false);
 	MiniEngine::Texture texture2 = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\hdri2.hdr", MiniEngine::Texture::TextureType::CubeMap, true);
 
-	//EnumExtension::_print_enum_name<MiniEngine::Types::TextureType, (MiniEngine::Types::TextureType)15>();
-	//EnumExtension::_print_enum_name<MiniEngine::Types::TextureType, (MiniEngine::Types::TextureType)1>();
-
 	auto material = MiniEngine::Material::Creator()
-		//.addTexture(MiniEngine::Types::TextureType::Diffuse, texture)
+		.addTexture(MiniEngine::Types::TextureType::Diffuse, texture)
 		.addTexture(MiniEngine::Types::TextureType::Normal, normal)
 		.addShader(engine.getShaderRegistry()->getDeferredShader())
 		.addMaterialProperty(MiniEngine::Material::PropertyType::Roughness, 0.15f)
 		.addMaterialProperty(MiniEngine::Material::PropertyType::Metallic, 1.f)
 		.create();
 
-	auto mesh = MiniEngine::Renderable::Builder()
-		.addModel("C:\\Users\\Arthur\\Desktop\\sphere.glb")
-		.addMaterialInstance(&material)
-		.build(&scene, meshEntity);
+	//auto mesh = MiniEngine::Renderable::Builder()
+	//	.addModel("C:\\Users\\Arthur\\Desktop\\sphere.glb")
+	//	.addMaterialInstance(&material)
+	//	.build(&scene, meshEntity);
 
 	auto skyBox = MiniEngine::Skybox::Builder()
 		.setTexture(texture2)
 		.build(&scene, skyBoxEntity);
 
-	//Renderable::Builder()
-	//	.addBufferData(
-	//		{
-	//			-0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-	//			-1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
-	//			0.0f, 1.0f, 0.0f,   1.0f, 1.0f,
-	//			1.0f, -0.0f, 0.0f,  1.0f, 0.0f
-	//		})
-	//	.addIndices(
-	//		{
-	//			0, 1, 2,
-	//			0, 2, 3
-	//		})
-	//	.addBufferAttributes({ 3, 2 })
-	//	.addMaterial(&material)
-	//	.build(&scene, meshEntity);
+	auto mesh = MiniEngine::Renderable::Builder()
+		.addBufferData(
+			{
+				-0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+				-1.0f, 0.0f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f, -1.0f,
+				0.0f, 1.0f, 0.0f,   1.0f, 1.0f, 0.0f, 0.0f, -1.0f,
+				1.0f, -0.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.0f, -1.0f
+			})
+		.addIndices(
+			{
+				0, 1, 2,
+				0, 2, 3
+			})
+		.addBufferAttributes({ 3, 2, 3 })
+		.addMaterialInstance(&material)
+		.build(&scene, meshEntity);
 
-	//Renderable::Builder()
+	//auto mesh = MiniEngine::Renderable::Builder()
 	//	.addBufferData(
 	//		{
 	//			-0.0f, -1.0f, -2.0f, 0.0f, 0.0f,
@@ -79,7 +76,7 @@ int main(void)
 	//			0, 2, 3
 	//		})
 	//	.addBufferAttributes({ 3, 2 })
-	//	.build(&scene, meshEntity2);
+	//	.build(&scene, meshEntity);
 
 	auto camera = MiniEngine::Camera::Builder()
 		.setPosition({(float)sqrt(5), 2, (float)sqrt(5) })

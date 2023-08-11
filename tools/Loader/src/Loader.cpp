@@ -25,7 +25,6 @@ namespace MiniTools
 			std::vector<float> vertexData;
 			std::vector<float> uvData;
 			std::vector<float> normalData;
-			std::vector<float> tangentData;
 
 			std::vector<unsigned int> indices;
 

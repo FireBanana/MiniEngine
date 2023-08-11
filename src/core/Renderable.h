@@ -27,7 +27,7 @@ namespace MiniEngine
 		{
 		public:
 
-			Builder() : mMaterialInstance(nullptr) { }
+			Builder() : mMaterialInstance(nullptr), mModelPath(nullptr) { }
 			Builder(const Builder&) = delete;
 			Builder operator=(const Builder&) = delete;
 			Builder(const Builder&&) = delete;
