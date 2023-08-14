@@ -24,43 +24,43 @@ int main(void)
 	auto cameraEntity2 = scene.createEntity();
 	auto mainLightEntity = scene.createEntity();
 
-	MiniEngine::Texture texture = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\red.png", MiniEngine::Texture::TextureType::Default, false);
-	MiniEngine::Texture normal = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\normal.png", MiniEngine::Texture::TextureType::Default, false);
-	MiniEngine::Texture texture2 = engine.loadTexture("C:\\Users\\Arthur\\Desktop\\hdri2.hdr", MiniEngine::Texture::TextureType::CubeMap, true);
+	MiniEngine::Texture texture = engine.loadTexture("C:\\Users\\Owais\\Desktop\\blue.png", MiniEngine::Texture::TextureType::Default, false);
+	MiniEngine::Texture normal = engine.loadTexture("C:\\Users\\Owais\\Desktop\\2.png", MiniEngine::Texture::TextureType::Default, false);
+	MiniEngine::Texture texture2 = engine.loadTexture("C:\\Users\\Owais\\Desktop\\hdri.hdr", MiniEngine::Texture::TextureType::CubeMap, true);
 
 	auto material = MiniEngine::Material::Creator()
 		.addTexture(MiniEngine::Types::TextureType::Diffuse, texture)
-		.addTexture(MiniEngine::Types::TextureType::Normal, normal)
+		//.addTexture(MiniEngine::Types::TextureType::Normal, normal)
 		.addShader(engine.getShaderRegistry()->getDeferredShader())
 		.addMaterialProperty(MiniEngine::Material::PropertyType::Roughness, 0.15f)
 		.addMaterialProperty(MiniEngine::Material::PropertyType::Metallic, 1.f)
 		.create();
 
-	//auto mesh = MiniEngine::Renderable::Builder()
-	//	.addModel("C:\\Users\\Arthur\\Desktop\\sphere.glb")
-	//	.addMaterialInstance(&material)
-	//	.build(&scene, meshEntity);
+	auto mesh = MiniEngine::Renderable::Builder()
+		.addModel("C:\\Users\\Owais\\Desktop\\sphere.glb")
+		.addMaterialInstance(&material)
+		.build(&scene, meshEntity);
 
 	auto skyBox = MiniEngine::Skybox::Builder()
 		.setTexture(texture2)
 		.build(&scene, skyBoxEntity);
 
-	auto mesh = MiniEngine::Renderable::Builder()
-		.addBufferData(
-			{
-				-0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
-				-1.0f, 0.0f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f, -1.0f,
-				0.0f, 1.0f, 0.0f,   1.0f, 1.0f, 0.0f, 0.0f, -1.0f,
-				1.0f, -0.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.0f, -1.0f
-			})
-		.addIndices(
-			{
-				0, 1, 2,
-				0, 2, 3
-			})
-		.addBufferAttributes({ 3, 2, 3 })
-		.addMaterialInstance(&material)
-		.build(&scene, meshEntity);
+	//auto mesh = MiniEngine::Renderable::Builder()
+	//	.addBufferData(
+	//		{
+	//			-1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+	//			-1.0f, 1.0f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f, -1.0f,
+	//			1.0f,  1.0f, 0.0f,  1.0f, 1.0f, 0.0f, 0.0f, -1.0f,
+	//			1.0f, -1.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.0f, -1.0f
+	//		})
+	//	.addIndices(
+	//		{
+	//			0, 1, 2,
+	//			0, 2, 3
+	//		})
+	//	.addBufferAttributes({ 3, 2, 3 })
+	//	.addMaterialInstance(&material)
+	//	.build(&scene, meshEntity);
 
 	//auto mesh = MiniEngine::Renderable::Builder()
 	//	.addBufferData(
@@ -79,7 +79,7 @@ int main(void)
 	//	.build(&scene, meshEntity);
 
 	auto camera = MiniEngine::Camera::Builder()
-		.setPosition({(float)sqrt(5), 2, (float)sqrt(5) })
+		.setPosition({3, 0, 3 })
 		.setAspectRatio((float)params.screenWidth / (float)params.screenHeight)
 		.setNearFarPlane(0.1f, 1000.0f)
 		.setFOV(45)

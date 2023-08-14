@@ -151,15 +151,14 @@ void main()
     vec3 normal = texture(_Normal, oUv).xyz;
     vec3 roughness = texture(_Roughness, oUv).xyz;
 
-    //env = env / (env + vec3(1.0));
-    //env = pow(env, vec3(1.0/2.2));
-
-    vec3 viewDirClipSpace = normalize(cameraPos - position);
+    vec3 viewDirWorldSpace = (cameraPos - position).rgb;
     
-    vec3 viewDir = normalize(viewDirClipSpace).xyz;
+    vec3 viewDir = normalize(viewDirWorldSpace);
     vec3 lightDir = normalize(lightPos1);
 
     vec3 c = BRDF(albedo, viewDir, normalize(normal), lightDir, roughness.x, roughness.y);
 
-    oAccum = vec4(c,1.0);
+    float k = clamp(dot(normal, viewDir),0. ,1.);
+
+    oAccum = vec4(c ,1.);//vec4(position,1.0);
 }

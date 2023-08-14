@@ -1,13 +1,14 @@
 cmake_minimum_required(VERSION 3.19)
 project(Loader)
 
-#set(TARGET model-loader)
-
 set(SRCS src/Loader.cpp)
 set(HDRS src/Loader.h)
 
-include_directories(${glm_SOURCE_DIR}/glm)
+add_library(Loader ${HDRS} ${SRCS})
 
-add_library(Loader STATIC ${HDRS} ${SRCS})
+target_include_directories(Loader PUBLIC ${CMAKE_SOURCE_DIR}/libs)
+target_include_directories(Loader PUBLIC ${CMAKE_SOURCE_DIR}/libs/glad/include)
+target_include_directories(Loader PUBLIC ${glm_SOURCE_DIR}/glm)
+target_include_directories(Loader PUBLIC ${CMAKE_SOURCE_DIR}/libs/glfw/include)
 
 #install(TARGETS ${TARGET} RUNTIME DESTINATION bin)

@@ -14,16 +14,7 @@ add_definitions(-DGLFW_INCLUDE_NONE)
 add_compile_definitions(DIR="${CMAKE_SOURCE_DIR}")
 add_compile_definitions(USING_OPENGL)
 
-#add_compile_definitions(TINYGLTF_IMPLEMENTATION)
-#add_compile_definitions(STB_IMAGE_IMPLEMENTATION)
-#add_compile_definitions(STB_IMAGE_WRITE_IMPLEMENTATION)
-
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-
-include_directories(libs)
-include_directories(libs/glad/include)
-include_directories(libs/glm/glm)
-include_directories(libs/glfw/include)
 
 file( GLOB LIB_SOURCES 
 	src/*.cpp
@@ -45,16 +36,30 @@ file( GLOB LIB_HEADERS
 	src/core/types/*.h
 	src/core/ui/*.h)
 
-add_executable( MiniEngine ${LIB_SOURCES} ${LIB_HEADERS} )
+add_library( MiniEngine ${LIB_SOURCES} ${LIB_HEADERS} )
 target_sources( MiniEngine PRIVATE ${CMAKE_SOURCE_DIR}/libs/glad/src/glad.c)
 
-target_include_directories(MiniEngine PRIVATE src/)
-target_include_directories(MiniEngine PRIVATE src/components)
-target_include_directories(MiniEngine PRIVATE src/systems)
-target_include_directories(MiniEngine PRIVATE src/backend)
-target_include_directories(MiniEngine PRIVATE src/core)
-target_include_directories(MiniEngine PRIVATE src/core/utils)
-target_include_directories(MiniEngine PRIVATE src/core/types)
+target_include_directories(MiniEngine PUBLIC libs)
+target_include_directories(MiniEngine PUBLIC libs/glad/include)
+target_include_directories(MiniEngine PUBLIC libs/glfw/include)
+
+# Add secondary tools
+
+add_subdirectory(tools/Loader)
+add_subdirectory(examples/default)
+
+target_include_directories(MiniEngine PUBLIC tools/Loader/src)
+target_link_libraries(MiniEngine Loader)
+
+#
+
+target_include_directories(MiniEngine PUBLIC src/)
+target_include_directories(MiniEngine PUBLIC src/components)
+target_include_directories(MiniEngine PUBLIC src/systems)
+target_include_directories(MiniEngine PUBLIC src/backend)
+target_include_directories(MiniEngine PUBLIC src/core)
+target_include_directories(MiniEngine PUBLIC src/core/utils)
+target_include_directories(MiniEngine PUBLIC src/core/types)
 
 if(MSVC)
   target_compile_options(MiniEngine PRIVATE /W4 /external:anglebrackets)
@@ -77,12 +82,6 @@ target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3d
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${LIB_SOURCES})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${LIB_HEADERS})
-
-# Add secondary tools
-
-add_subdirectory(tools/Loader)
-include_directories(tools/Loader/src)
-target_link_libraries(MiniEngine Loader)
 
 #install(TARGETS ${model-loader} RUNTIME DESTINATION bin)
 
@@ -126,6 +125,7 @@ add_library(IMGUI EXCLUDE_FROM_ALL
 	${imgui_SOURCE_DIR}/imgui_tables.cpp
 	${imgui_SOURCE_DIR}/imgui_widgets.cpp)
 
+target_include_directories(IMGUI PUBLIC libs/glfw/include)
 target_include_directories(IMGUI PUBLIC ${imgui_SOURCE_DIR}/backends)
 target_include_directories(IMGUI PUBLIC ${imgui_SOURCE_DIR}/)
 target_link_libraries(MiniEngine IMGUI)

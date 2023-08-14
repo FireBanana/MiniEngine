@@ -11,10 +11,14 @@ This engine is still in active development.
 - Basic IMGUI support
 
 <b>Planned Features:</b>
+- ECS system
+- Event Listening System
 - Shadows
 - Anti-aliasing, ambient occlusion, bloom
 - Point-based, area-based lights
-- Shader preprocessor support
+- Default texture parameter support in Builders
+- Global Illumination
+- Vulkan support
 <br></br>
 ---
 <br></br>
