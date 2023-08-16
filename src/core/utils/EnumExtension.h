@@ -65,7 +65,7 @@ namespace EnumExtension
 	template <typename E, E V>
 	constexpr void _print_func_name()
 	{
-		std::cout << __PRETTY_FUNCTION__ <<std::endl;
+		MiniEngine::Logger::print(__PRETTY_FUNCTION__);
 	}
 
 	template <typename E, E V>
@@ -91,6 +91,6 @@ namespace EnumExtension
 			if (name[i] == ',') found = true;
 		}
 
-		std::cout << res << std::endl;
+		MiniEngine::Logger::print(res.c_str());
 	}
 }

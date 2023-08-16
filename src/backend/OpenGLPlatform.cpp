@@ -1,5 +1,7 @@
 #include "OpenGLPlatform.h"
 #include "../core/Scene.h"
+#include "Logger.h"
+
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 #include <iostream>
@@ -17,7 +19,7 @@ namespace MiniEngine::Backend
     void OpenGLPlatform::createWindow(uint16_t width, uint16_t height)
     {
         if (!glfwInit())
-            std::cout << "Not inited";
+            MiniEngine::Logger::eprint("GLFW not initialized...");
 
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
@@ -28,14 +30,15 @@ namespace MiniEngine::Backend
         if (!mWindow)
         {
             glfwTerminate();
-            std::cout << "Create window failed";
+            MiniEngine::Logger::eprint("Create window failed");
         }
 
         glfwMakeContextCurrent(mWindow);
         glfwSwapInterval(1);
 
-        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-            std::cout << "Failed to initialize OpenGL context" << std::endl;
+        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) 
+        {
+            MiniEngine::Logger::eprint("Failed to initialize OpenGL context");
         }
     }
 

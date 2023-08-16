@@ -11,6 +11,7 @@ This engine is still in active development.
 - Basic IMGUI support
 
 <b>Planned Features:</b>
+- Roughness maps
 - ECS system
 - Event Listening System
 - Shadows

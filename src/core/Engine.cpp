@@ -3,12 +3,15 @@
 #include "Renderable.h"
 #include "Scene.h"
 #include "Loader.h"
+#include "Logger.h"
 #include <memory>
 
 namespace MiniEngine
 {
 	Engine::Engine(const MiniEngine::Types::EngineInitParams& params)
 	{
+		MiniEngine::Logger::print("Initializing engine...");
+
 		mGlPlatform = std::make_unique<Backend::OpenGLPlatform>(params, this);
 		mShaderRegistry = std::make_unique<ShaderRegistry>(mGlPlatform->getDriver());
 		mGlobalBufferRegistry = std::make_unique<GlobalBufferRegistry>(mGlPlatform->getDriver());

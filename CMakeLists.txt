@@ -99,6 +99,12 @@ FetchContent_Declare(
 	GIT_TAG v1.89.6
 )
 
+FetchContent_Declare(
+	spdlog
+	GIT_REPOSITORY https://github.com/gabime/spdlog
+	GIT_TAG v1.12.0
+)
+
 FetchContent_GetProperties(glm)
 if(NOT glm_POPULATED)
   FetchContent_Populate(glm)
@@ -110,11 +116,21 @@ if(NOT imgui_POPULATED)
   FetchContent_Populate(imgui)
 endif()
 
+FetchContent_GetProperties(spdlog)
+if(NOT spdlog_POPULATED)
+  FetchContent_Populate(spdlog)
+endif()
+
 target_include_directories(MiniEngine PUBLIC ${glm_SOURCE_DIR}/glm)
 target_link_libraries(MiniEngine glm)
 
 target_include_directories(MiniEngine PUBLIC ${imgui_SOURCE_DIR}/)
 target_include_directories(MiniEngine PUBLIC ${imgui_SOURCE_DIR}/backends)
+
+set(SPDLOG_BUILD_SHARED ON CACHE BOOL "Build spdlog shared lib")
+add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR})
+target_include_directories(MiniEngine PUBLIC ${spdlog_SOURCE_DIR}/include/)
+#target_link_libraries(MiniEngine spdlog)
 
 add_library(IMGUI EXCLUDE_FROM_ALL 
 	${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp 

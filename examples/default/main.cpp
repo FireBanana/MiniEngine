@@ -9,6 +9,8 @@
 #include <functional>
 #include <glm/glm.hpp>
 
+#define RESOLVE_PATH(path) DIR##path
+
 int main(void)
 {
 	MiniEngine::Types::EngineInitParams params{};
@@ -24,20 +26,20 @@ int main(void)
 	auto cameraEntity2 = scene.createEntity();
 	auto mainLightEntity = scene.createEntity();
 
-	MiniEngine::Texture texture = engine.loadTexture("C:\\Users\\Owais\\Desktop\\blue.png", MiniEngine::Texture::TextureType::Default, false);
-	MiniEngine::Texture normal = engine.loadTexture("C:\\Users\\Owais\\Desktop\\2.png", MiniEngine::Texture::TextureType::Default, false);
-	MiniEngine::Texture texture2 = engine.loadTexture("C:\\Users\\Owais\\Desktop\\hdri.hdr", MiniEngine::Texture::TextureType::CubeMap, true);
+	MiniEngine::Texture texture = engine.loadTexture(RESOLVE_PATH("/assets/color.jpg"), MiniEngine::Texture::TextureType::Default, false);
+	MiniEngine::Texture normal = engine.loadTexture(RESOLVE_PATH("/assets/normal.jpg"), MiniEngine::Texture::TextureType::Default, false);
+	MiniEngine::Texture texture2 = engine.loadTexture(RESOLVE_PATH("/assets/hdri.hdr"), MiniEngine::Texture::TextureType::CubeMap, true);
 
 	auto material = MiniEngine::Material::Creator()
 		.addTexture(MiniEngine::Types::TextureType::Diffuse, texture)
-		//.addTexture(MiniEngine::Types::TextureType::Normal, normal)
+		.addTexture(MiniEngine::Types::TextureType::Normal, normal)
 		.addShader(engine.getShaderRegistry()->getDeferredShader())
 		.addMaterialProperty(MiniEngine::Material::PropertyType::Roughness, 0.15f)
 		.addMaterialProperty(MiniEngine::Material::PropertyType::Metallic, 1.f)
 		.create();
 
 	auto mesh = MiniEngine::Renderable::Builder()
-		.addModel("C:\\Users\\Owais\\Desktop\\sphere.glb")
+		.addModel(RESOLVE_PATH("/assets/sphere.glb"))
 		.addMaterialInstance(&material)
 		.build(&scene, meshEntity);
 

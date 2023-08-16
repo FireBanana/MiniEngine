@@ -4,6 +4,8 @@
 #include <sstream>
 #include <iostream>
 
+#include "Logger.h"
+
 class FileHelper
 {
 public:
@@ -20,7 +22,7 @@ public:
 		}
 		catch (...)
 		{
-			std::cout << "Error occured while reading file";
+			MiniEngine::Logger::eprint("Error occured while reading file");
 			return "";
 		}
 	}

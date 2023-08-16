@@ -5,6 +5,7 @@
 #include "Shader.h"
 #include "Engine.h"
 #include "EngineConstants.h"
+#include "Logger.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/glm.hpp>
@@ -53,7 +54,7 @@ void debugCallback(GLenum source, GLenum type, GLuint id,
     }();
 
     if(severity != GL_DEBUG_SEVERITY_NOTIFICATION)
-        std::cout << src_str << ", " << type_str << ", " << severity_str << ", " << id << ": " << message << '\n';
+        MiniEngine::Logger::wprint("{}, {}, {}, {}, {}", src_str, type_str, severity_str, id, message);
 }
 
 namespace MiniEngine::Backend
@@ -114,7 +115,7 @@ namespace MiniEngine::Backend
 
         if (glCheckNamedFramebufferStatus(mMainFrameBuffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         {
-            std::cout << "Framebuffer not complete";
+            MiniEngine::Logger::print("Framebuffer not complete");
         }
     }
 
@@ -517,7 +518,7 @@ namespace MiniEngine::Backend
         {
             char log[512];
             glGetShaderInfoLog(shaderId, 512, nullptr, log);
-            std::cout << "Shader compilation error: " << log;
+            MiniEngine::Logger::eprint(" Shader compilation error: \n\n {}", log);
         }
 
         return shaderId;
@@ -632,7 +633,7 @@ namespace MiniEngine::Backend
         {
             char log[512];
             glGetProgramInfoLog(program, 512, nullptr, log);
-            std::cout << "Shader linking error: " << log;
+            MiniEngine::Logger::eprint(" Shader linking error : \n\n {}", log);
         }
 
         return program;
