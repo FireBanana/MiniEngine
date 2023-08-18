@@ -52,11 +52,14 @@ void main()
 	vec3 v = normalize(fNormal);
 
 	vec4 normalTexture = (texture(_Normal, fUv)) * 2.0 - 1.0;
+	vec4 roughnessTex = texture(_Roughness, fUv);
+	roughnessTex.x *= _baseRoughness;
+	roughnessTex.y *= _baseMetallic;
 
 	mat3 m = cotangent_frame(v, fPosition, fUv);
 
 	oDiffuse = texture(_Diffuse, fUv);
 	oPosition = vec4(fPosition, 0.0);
 	oNormal = vec4(m * normalTexture.xyz,0);
-	oRoughness = vec4(_baseRoughness, _baseMetallic, 0, 0);
+	oRoughness = roughnessTex;
 }

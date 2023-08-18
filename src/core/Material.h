@@ -41,7 +41,7 @@ namespace MiniEngine
 		{
 		public:
 
-			Creator() : mTextureMask(0) {  };
+			Creator();
 			Creator(const Creator&) = delete;
 			Creator operator=(const Creator&) = delete;
 			Creator(const Creator&&) = delete;

@@ -28,14 +28,16 @@ int main(void)
 
 	MiniEngine::Texture texture = engine.loadTexture(RESOLVE_PATH("/assets/color.jpg"), MiniEngine::Texture::TextureType::Default, false);
 	MiniEngine::Texture normal = engine.loadTexture(RESOLVE_PATH("/assets/normal.jpg"), MiniEngine::Texture::TextureType::Default, false);
+	MiniEngine::Texture roughness = engine.loadTexture(RESOLVE_PATH("/assets/roughness.jpg"), MiniEngine::Texture::TextureType::Default, false);
 	MiniEngine::Texture texture2 = engine.loadTexture(RESOLVE_PATH("/assets/hdri.hdr"), MiniEngine::Texture::TextureType::CubeMap, true);
 
 	auto material = MiniEngine::Material::Creator()
 		.addTexture(MiniEngine::Types::TextureType::Diffuse, texture)
 		.addTexture(MiniEngine::Types::TextureType::Normal, normal)
+		.addTexture(MiniEngine::Types::TextureType::Roughness, roughness)
 		.addShader(engine.getShaderRegistry()->getDeferredShader())
 		.addMaterialProperty(MiniEngine::Material::PropertyType::Roughness, 0.15f)
-		.addMaterialProperty(MiniEngine::Material::PropertyType::Metallic, 1.f)
+		.addMaterialProperty(MiniEngine::Material::PropertyType::Metallic, 0.f)
 		.create();
 
 	auto mesh = MiniEngine::Renderable::Builder()

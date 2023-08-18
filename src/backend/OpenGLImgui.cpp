@@ -32,10 +32,18 @@ namespace MiniEngine::Backend
 
 		auto& io = ImGui::GetIO();
 
+		#ifdef GRAPHICS_DEBUG
+		if (ImGui::Begin("_graph"))
+		{
+			ImGui::PlotLines("main_frame", mFrameTimeQueue.getArray(), 32, 0, nullptr, 1, 1, { 128, 128 });
+			ImGui::End();
+		}
+		#endif
+
 		// Render Sliders
 		for (auto& [name, v, min, max, cb] : mSliderPanels)
 		{
-			if (ImGui::Begin("Slider"))
+			if (ImGui::Begin("slider"))
 			{
 				if (ImGui::SliderFloat(name, v, min, max) && cb != nullptr) cb();
 				ImGui::End();
@@ -48,5 +56,10 @@ namespace MiniEngine::Backend
 	void OpenGLImgui::createSliderPanel(const char* name, float* value, float min, float max, std::function<void()> cb)
 	{
 		mSliderPanels.push_back({name, value, min, max, cb});
+	}
+	
+	void OpenGLImgui::pushFrameTimeData(float deltaTime)
+	{
+		mFrameTimeQueue.push_back(deltaTime);
 	}
 }

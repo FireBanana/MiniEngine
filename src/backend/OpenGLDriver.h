@@ -2,6 +2,7 @@
 #include "EngineTypes.h"
 #include "Texture.h"
 #include "EngineConstants.h"
+#include "OpenGLImgui.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -36,6 +37,7 @@ namespace Backend
 		void setupFrameBuffer();
 		void setupScreenQuad();
 		void setupDebugInfo();
+		void setupImguiInterface(OpenGLImgui* imguiInterface);
 
 		void setupSkybox(MiniEngine::Components::SkyboxComponent* skybox);
 		void setupMesh(MiniEngine::Components::RenderableComponent* component);
@@ -64,6 +66,7 @@ namespace Backend
 	private:
 
 		Engine* mEngine;
+		OpenGLImgui* mOpenGlImgui;
 
 		GLuint mMainFrameBuffer;
 		GLuint mAccumBuffer;
@@ -72,6 +75,7 @@ namespace Backend
 		GLuint mNormalBuffer;
 		GLuint mRoughnessBuffer;
 		GLuint mScreenQuadVertexArray;
+		GLuint mDefaultFrameQuery;
 
 		GLuint mDefaultMaps[MAX_TEXTURE_TYPES];
 

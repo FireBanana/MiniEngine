@@ -3,6 +3,9 @@
 
 #include "utils/ThreadSafeQueue.h"
 
+namespace MiniEngine
+{
+
 	class Job;
 
 	using JobFunc = void (*)(Job& job);
@@ -22,7 +25,7 @@
 	{
 	private:
 		uint32_t m_NumThreads = 0;
-		ThreadSafeQueue<std::function<void()>, 256> m_JobPool;
+		Utils::ThreadSafeQueue<std::function<void()>, 256> m_JobPool;
 		std::condition_variable m_WakeCondition;
 		std::mutex m_WakeMutex;
 		uint64_t m_CurrentLabel = 0;
@@ -41,3 +44,4 @@
 
 		void Poll();
 	};
+}

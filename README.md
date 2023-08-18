@@ -11,7 +11,7 @@ This engine is still in active development.
 - Basic IMGUI support
 
 <b>Planned Features:</b>
-- Roughness maps
+- Profiling stats per frame
 - ECS system
 - Event Listening System
 - Shadows

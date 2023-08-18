@@ -3,6 +3,13 @@
 
 namespace MiniEngine
 {
+	Material::Creator::Creator() : 
+		mTextureMask(0)
+	{
+		mMaterialProperties.set((int)PropertyType::Roughness, 0.0f);
+		mMaterialProperties.set((int)PropertyType::Metallic, 0.0f);
+	}
+
 	Material::Creator& Material::Creator::addTexture(MiniEngine::Types::TextureType textureType, Texture texture)
 	{
 		mTextureMask |= (0x1 << (int)textureType);

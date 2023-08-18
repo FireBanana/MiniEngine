@@ -13,6 +13,7 @@ set(CMAKE_CXX_STANDARD 17)
 add_definitions(-DGLFW_INCLUDE_NONE)
 add_compile_definitions(DIR="${CMAKE_SOURCE_DIR}")
 add_compile_definitions(USING_OPENGL)
+add_compile_definitions(GRAPHICS_DEBUG)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 

@@ -123,6 +123,13 @@ namespace MiniEngine::Backend
     {
         glEnable(GL_DEBUG_OUTPUT);
         glDebugMessageCallback(debugCallback, nullptr);
+
+        glCreateQueries(GL_TIME_ELAPSED, 1, &mDefaultFrameQuery);
+    }
+
+    void OpenGLDriver::setupImguiInterface(OpenGLImgui* imguiInterface)
+    {
+        mOpenGlImgui = imguiInterface;
     }
 
     void OpenGLDriver::setupSkybox(MiniEngine::Components::SkyboxComponent* skybox)
@@ -363,6 +370,14 @@ namespace MiniEngine::Backend
         glCreateFramebuffers(1, &fb);
         glBindFramebuffer(GL_FRAMEBUFFER, fb);
 
+        glCreateTextures(GL_TEXTURE_2D, 1, &mDefaultMaps[(int)Types::TextureType::Diffuse]);
+        glTextureStorage2D(mDefaultMaps[(int)Types::TextureType::Diffuse], 1, GL_RGBA16F, 2, 2);
+        glNamedFramebufferTexture(fb, GL_COLOR_ATTACHMENT0, mDefaultMaps[(int)Types::TextureType::Diffuse], 0);
+        glNamedFramebufferDrawBuffers(fb, 1, attachments);
+
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
         glCreateTextures(GL_TEXTURE_2D, 1, &mDefaultMaps[(int)Types::TextureType::Normal]);
         glTextureStorage2D(mDefaultMaps[(int)Types::TextureType::Normal], 1, GL_RGBA16F, 2, 2);
         glNamedFramebufferTexture(fb, GL_COLOR_ATTACHMENT0, mDefaultMaps[(int)Types::TextureType::Normal], 0);
@@ -371,11 +386,23 @@ namespace MiniEngine::Backend
         glClearColor(0.5f, 0.5f, 1.0f, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        glCreateTextures(GL_TEXTURE_2D, 1, &mDefaultMaps[(int)Types::TextureType::Roughness]);
+        glTextureStorage2D(mDefaultMaps[(int)Types::TextureType::Roughness], 1, GL_RGBA16F, 2, 2);
+        glNamedFramebufferTexture(fb, GL_COLOR_ATTACHMENT0, mDefaultMaps[(int)Types::TextureType::Roughness], 0);
+        glNamedFramebufferDrawBuffers(fb, 1, attachments);
+
+        glClearColor(1.0f, 1.0f, 0.0f, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
+
         glDeleteFramebuffers(1, &fb);
     }
 
     void OpenGLDriver::draw(Scene* scene)
     {
+        #ifdef GRAPHICS_DEBUG
+        glBeginQuery(GL_TIME_ELAPSED, mDefaultFrameQuery);
+        #endif
+
         const auto& db = scene->getRenderableComponentDatabase();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -474,6 +501,18 @@ namespace MiniEngine::Backend
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         }
 
+        #ifdef GRAPHICS_DEBUG
+        int done = 0;
+        GLint64 elapsedTime;
+        glEndQuery(GL_TIME_ELAPSED);
+
+        while (!done) glGetQueryObjectiv(mDefaultFrameQuery, GL_QUERY_RESULT_AVAILABLE, &done);
+
+        glGetQueryObjecti64v(mDefaultFrameQuery, GL_QUERY_RESULT, &elapsedTime);
+
+        mOpenGlImgui->pushFrameTimeData(elapsedTime / 1000000.0f);
+
+        #endif
     }
 
     void OpenGLDriver::finalBlit()

@@ -43,6 +43,15 @@ public:
 		mArray[index] = t;
 	}
 
+	void set(int index, T&& t)
+	{
+		assert(index >= 0 && index < S);
+
+		if (mPtr <= index) mPtr = index + 1;
+
+		mArray[index] = std::move(t);
+	}
+
 	const T& operator[](int index) const
 	{
 		assert(index >= 0 && index < mPtr);

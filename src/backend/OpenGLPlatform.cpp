@@ -12,8 +12,8 @@ namespace MiniEngine::Backend
         mEngine(engine)
     {
         createWindow(params.screenWidth, params.screenHeight);
-        createDriver(params);
         createImguiInterface();
+        createDriver(params);
     }
 
     void OpenGLPlatform::createWindow(uint16_t width, uint16_t height)
@@ -73,7 +73,9 @@ namespace MiniEngine::Backend
         mDriver->setupFrameBuffer();
         mDriver->setupScreenQuad();
         mDriver->setupDefaultMaps();
+        mDriver->setupImguiInterface(mImgui.get());
     }
+
     void OpenGLPlatform::createImguiInterface()
     {
         mImgui = std::make_unique<OpenGLImgui>();

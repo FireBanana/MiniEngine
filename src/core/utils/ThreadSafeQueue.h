@@ -3,6 +3,10 @@
 #pragma once
 #include <mutex>
 
+namespace MiniEngine
+{
+namespace Utils
+{
 
 	template<typename T, size_t capacity>
 	class ThreadSafeQueue
@@ -12,7 +16,7 @@
 		T data[capacity];
 		size_t head = 0;
 		size_t tail = 0;
-
+		
 		std::mutex lock;
 
 	public:
@@ -50,4 +54,23 @@
 			lock.unlock();
 			return result;
 		}
+
+		const T& peek(int index)
+		{
+			lock.lock();
+
+			auto v = data[index];
+
+			lock.unlock();
+
+			return v;
+		}
+
+		T* getArray()
+		{
+			return data;
+		}
 	};
+
+}
+}

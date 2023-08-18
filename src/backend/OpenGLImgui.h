@@ -6,6 +6,7 @@
 
 #include <functional>
 #include <vector>
+#include "ThreadSafeQueue.h"
 
 namespace MiniEngine
 {
@@ -23,6 +24,8 @@ namespace Backend
 
 		void createSliderPanel(const char* name, float* value, float min, float max, std::function<void()> cb);
 
+		void pushFrameTimeData(float deltaTime);
+
 	private:
 
 		std::vector< std::tuple< 
@@ -33,6 +36,9 @@ namespace Backend
 			std::function<void()> 
 			> > mSliderPanels;
 
+		#ifdef GRAPHICS_DEBUG
+		Utils::ThreadSafeQueue<float, 32> mFrameTimeQueue;
+		#endif
 	};
 }
 }
