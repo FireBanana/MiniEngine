@@ -33,9 +33,20 @@ namespace MiniEngine::Backend
 		auto& io = ImGui::GetIO();
 
 		#ifdef GRAPHICS_DEBUG
-		if (ImGui::Begin("_graph"))
+		if (ImGui::Begin("_graphs"))
 		{
-			ImGui::PlotLines("main_frame", mFrameTimeQueue.getArray(), 32, 0, nullptr, 1, 1, { 128, 128 });
+			char buffer[32];
+			std::sprintf(buffer, "%.2f ms", mFrameTimePoints[POINT_SIZE - 1]);
+
+			ImGui::PlotLines(
+				"Full Frame Time",
+				mFrameTimePoints,
+				POINT_SIZE,
+				0,
+				buffer,
+				1.0f, 2.0f,
+				{0, 50});
+
 			ImGui::End();
 		}
 		#endif
@@ -60,6 +71,18 @@ namespace MiniEngine::Backend
 	
 	void OpenGLImgui::pushFrameTimeData(float deltaTime)
 	{
-		mFrameTimeQueue.push_back(deltaTime);
+		static int pointer = 0;
+
+		if (pointer < POINT_SIZE)
+			mFrameTimePoints[pointer++] = deltaTime;
+		else
+		{
+			for (int i = 0; i < POINT_SIZE - 1; ++i)
+			{
+				mFrameTimePoints[i] = mFrameTimePoints[i + 1];
+			}
+
+			mFrameTimePoints[POINT_SIZE - 1] = deltaTime;
+		}
 	}
 }

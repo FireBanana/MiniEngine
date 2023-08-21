@@ -501,6 +501,13 @@ namespace MiniEngine::Backend
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         }
 
+        // fxaa pass ===============================
+        
+        SET_TEXTURE_ID("_Accum", 0);
+        glBindTextureUnit(0, mAccumBuffer);
+
+        // =========================================
+
         #ifdef GRAPHICS_DEBUG
         int done = 0;
         GLint64 elapsedTime;

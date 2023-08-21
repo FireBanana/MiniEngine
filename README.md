@@ -11,11 +11,12 @@ This engine is still in active development.
 - Basic IMGUI support
 
 <b>Planned Features:</b>
-- Profiling stats per frame
+- Profiling stats per frame (full frame time available)
 - ECS system
 - Event Listening System
 - Shadows
-- Anti-aliasing, ambient occlusion, bloom
+- Tonemapping via - https://github.com/h3r2tic/tony-mc-mapface
+- TAA and FXAA, ambient occlusion, bloom
 - Point-based, area-based lights
 - Default texture parameter support in Builders
 - Global Illumination

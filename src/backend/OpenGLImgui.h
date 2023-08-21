@@ -12,6 +12,7 @@ namespace MiniEngine
 {
 namespace Backend 
 {
+	constexpr int POINT_SIZE = 16;
 
 	class OpenGLImgui
 	{
@@ -37,7 +38,7 @@ namespace Backend
 			> > mSliderPanels;
 
 		#ifdef GRAPHICS_DEBUG
-		Utils::ThreadSafeQueue<float, 32> mFrameTimeQueue;
+		float mFrameTimePoints[POINT_SIZE];
 		#endif
 	};
 }
