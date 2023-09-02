@@ -8,7 +8,7 @@
 
 namespace MiniEngine
 {
-	Engine::Engine(const MiniEngine::Types::EngineInitParams& params)
+	Engine::Engine(MiniEngine::Types::EngineInitParams& params)
 	{
 		MiniEngine::Logger::print("Initializing engine...");
 
@@ -25,6 +25,7 @@ namespace MiniEngine
 		mShaderRegistry->loadSkyboxConvoluter();
 		mShaderRegistry->loadEnvPrefilterShader();
 		mShaderRegistry->loadEnvPreComputeBrdfShader();
+		mShaderRegistry->loadPostProcessShader();
 
 		createDefaultMaterial();
 	}
@@ -46,6 +47,11 @@ namespace MiniEngine
 	void Engine::addSlider(const char* name, float* value, float min, float max, std::function<void()> cb)
 	{
 		mGlPlatform->getUiInterface()->createSliderPanel(name, value, min, max, cb);
+	}
+
+	void Engine::addCheckbox(const char* name, bool& flag, std::function<void()> cb)
+	{
+		mGlPlatform->getUiInterface()->createBooleanPanel(name, flag, cb);
 	}
 
 	void Engine::createDefaultMaterial()

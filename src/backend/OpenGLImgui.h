@@ -24,6 +24,7 @@ namespace Backend
 		void draw();
 
 		void createSliderPanel(const char* name, float* value, float min, float max, std::function<void()> cb);
+		void createBooleanPanel(const char* name, bool& flag, std::function<void()> cb);
 
 		void pushFrameTimeData(float deltaTime);
 
@@ -36,6 +37,12 @@ namespace Backend
 			float,
 			std::function<void()> 
 			> > mSliderPanels;
+
+		std::vector< std::tuple<
+			const char*,
+			bool& ,
+			std::function<void()>
+			> > mCheckboxPanels;
 
 		#ifdef GRAPHICS_DEBUG
 		float mFrameTimePoints[POINT_SIZE];

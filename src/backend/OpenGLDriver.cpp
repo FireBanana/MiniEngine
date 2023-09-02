@@ -59,12 +59,13 @@ void debugCallback(GLenum source, GLenum type, GLuint id,
 
 namespace MiniEngine::Backend
 {
-    void OpenGLDriver::setupGlWindowParams(const MiniEngine::Types::EngineInitParams& params, Engine* engine)
+    void OpenGLDriver::setupGlWindowParams(MiniEngine::Types::EngineInitParams& params, Engine* engine)
     {
         mWidth = params.screenWidth;
         mHeight = params.screenHeight;
 
         mEngine = engine;
+        mParams = &params;
 
         glViewport(0, 0, mWidth, mHeight);
 
@@ -91,10 +92,24 @@ namespace MiniEngine::Backend
         glCreateTextures(GL_TEXTURE_2D, 1, &mPositionBuffer);
         glCreateTextures(GL_TEXTURE_2D, 1, &mNormalBuffer);
         glCreateTextures(GL_TEXTURE_2D, 1, &mRoughnessBuffer);
-        glCreateTextures(GL_TEXTURE_2D, 1, &mAccumBuffer);
+        glCreateTextures(GL_TEXTURE_2D, 1, &mAccumBuffer1);
+        glCreateTextures(GL_TEXTURE_2D, 1, &mAccumBuffer2);
 
-        glTextureStorage2D(mAccumBuffer, 1, GL_RGBA16F, mWidth, mHeight);
-        glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT0, mAccumBuffer, 0);
+        glTextureParameteri(mAccumBuffer1, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(mAccumBuffer1, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(mAccumBuffer1, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(mAccumBuffer1, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(mAccumBuffer1, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glTextureParameteri(mAccumBuffer2, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(mAccumBuffer2, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(mAccumBuffer2, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(mAccumBuffer2, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(mAccumBuffer2, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glTextureStorage2D(mAccumBuffer1, 1, GL_RGBA16F, mWidth, mHeight);
+        glTextureStorage2D(mAccumBuffer2, 1, GL_RGBA16F, mWidth, mHeight);
+        glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT0, mAccumBuffer1, 0);
 
         glTextureStorage2D(mColorBuffer, 1, GL_RGBA16F, mWidth, mHeight);
         glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT1, mColorBuffer, 0);
@@ -406,7 +421,7 @@ namespace MiniEngine::Backend
         const auto& db = scene->getRenderableComponentDatabase();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // geometry pass ==========================
+        // geometry pass ===================================
 
         glEnable(GL_DEPTH_TEST);
 
@@ -447,7 +462,7 @@ namespace MiniEngine::Backend
 
         auto mainPassSync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
-        // light pass ==========================
+        // light pass ======================================
 
         glDisable(GL_DEPTH_TEST);
 
@@ -478,7 +493,7 @@ namespace MiniEngine::Backend
 
         glDeleteSync(mainPassSync);
 
-        // enviroment pass ========================
+        // enviroment pass =================================
 
         const auto& skybox = scene->getSkyBox();
 
@@ -501,12 +516,25 @@ namespace MiniEngine::Backend
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         }
 
-        // fxaa pass ===============================
-        
-        SET_TEXTURE_ID("_Accum", 0);
-        glBindTextureUnit(0, mAccumBuffer);
+        // post-process pass ===============================
 
-        // =========================================
+        if (mParams->enablePostProcess)
+        {
+            std::swap(mAccumBuffer1, mAccumBuffer2);
+            glNamedFramebufferTexture(mMainFrameBuffer, GL_COLOR_ATTACHMENT0, mAccumBuffer2, 0);
+
+            mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getPostProcessShader());
+            SET_TEXTURE_ID("_Accum", 0);
+            glBindTextureUnit(0, mAccumBuffer2);
+
+            setFloat(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_width", 1.0f / mWidth);
+            setFloat(mEngine->getShaderRegistry()->getActiveShader()->getShaderProgram(), "_height", 1.0f / mHeight);
+
+            glBindVertexArray(mScreenQuadVertexArray);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        }
+
+        // ================================================
 
         #ifdef GRAPHICS_DEBUG
         int done = 0;

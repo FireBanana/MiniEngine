@@ -19,7 +19,7 @@ namespace MiniEngine
 		{
 		public:
 
-			OpenGLPlatform(const MiniEngine::Types::EngineInitParams& params, Engine* engine);
+			OpenGLPlatform(MiniEngine::Types::EngineInitParams& params, Engine* engine);
 			OpenGLPlatform(OpenGLPlatform&) = delete;
 			OpenGLPlatform(OpenGLPlatform&&) = delete;
 
@@ -37,7 +37,7 @@ namespace MiniEngine
 			Engine* mEngine;
 
 			void createWindow(uint16_t width, uint16_t height);
-			void createDriver(const MiniEngine::Types::EngineInitParams& params);
+			void createDriver(MiniEngine::Types::EngineInitParams& params);
 			void createImguiInterface();
 		};
 	}

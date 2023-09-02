@@ -1,51 +1,85 @@
-// ref http://blog.simonrodriguez.fr/articles/2016/07/implementing_fxaa.html
 #version 450 core
-
-#define EDGE_THRESHOLD_MIN = 0.0312
-#define EDGE_THRESHOLD_MAX = 0.125
 
 layout (location = 0) out vec4 oAccum;
 
 uniform sampler2D _Accum;
-in vec3 fPos;
+uniform float _width; //inverse width
+uniform float _height; //inverse height
 
-float rgb2luma(vec3 rgb)
+in vec2 oUv;
+
+#define FXAA_EDGE_THRESHOLD_MIN = 0.0625
+#define FXAA_EDGE_THRESHOLD = 0.125
+
+
+float FxaaLuma(vec3 rgb)
 {
-    return sqrt(dot(rgb, vec3(0.299, 0.587, 0.114)));
+    return rgb.y * (0.587/0.299) + rgb.x;
 }
 
 void main()
 {
-    vec3 centerColor = texture(_Accum, fPos).rgb;
+    // Local contrast check to early exit when contrast not over certain threshold
+    vec3 colorN = textureOffset( _Accum, oUv, ivec2(0, -1) ).rgb;
+    vec3 colorW = textureOffset( _Accum, oUv, ivec2(-1, 0) ).rgb;
+    vec3 colorM = textureOffset( _Accum, oUv, ivec2(0, 0) ).rgb;
+    vec3 colorE = textureOffset( _Accum, oUv, ivec2(1, 0) ).rgb;
+    vec3 colorS = textureOffset( _Accum, oUv, ivec2(0, 1) ).rgb;
 
-    float lumaCenter = rgb2luma(centerColor);
+    float lumaN = FxaaLuma(colorN);
+    float lumaW = FxaaLuma(colorW);
+    float lumaM = FxaaLuma(colorM);
+    float lumaE = FxaaLuma(colorE);
+    float lumaS = FxaaLuma(colorS);
 
-    float lumaDown  = rgb2luma( textureOffset(_Accum, fPos, ivec2(0,-1)).rgb );
-    float lumaUp    = rgb2luma( textureOffset(_Accum, fPos, ivec2(0,1)).rgb );
-    float lumaLeft  = rgb2luma( textureOffset(_Accum, fPos, ivec2(-1,0)).rgb );
-    float lumaRight = rgb2luma( textureOffset(_Accum, fPos, ivec2(1,0)).rgb );
+    float rangeMin = min( min(lumaN, lumaW), min(lumaS, lumaE) );
+    float rangeMax = max( max(lumaN, lumaW), max(lumaS, lumaE) );
+    float contrast = rangeMax - rangeMin;
 
-    float lumaMin = min( lumaCenter, min( min(lumaDown, lumaUp), min(lumaLeft, lumaRight) ) );
-    float lumaMax = max( lumaCenter, max( max(lumaDown, lumaUp), max(lumaLeft, lumaRight) ) );
-
-    float lumaRange = lumaMax - lumaMin;
-
-    if(lumaRange < max(EDGE_THRESHOLD_MIN, lumaMax * EDGE_THRESHOLD_MAX))
+    if(contrast < max(0.0625, rangeMax * 0.125)) // threshold, local constranst threshold
     {
-        oAccum = colorCenter;
+        oAccum = vec4(colorM, 1.);
         return;
     }
 
-    float lumaDownUp = lumaDown + lumaUp;
-    float lumaLeftRight = lumaLeft + lumaRight;
+    // Blending factor
+    vec3 colorNE = textureOffset( _Accum, oUv, ivec2(1, 1) ).rgb;
+    vec3 colorNW = textureOffset( _Accum, oUv, ivec2(-1, 1) ).rgb;
+    vec3 colorSE = textureOffset( _Accum, oUv, ivec2(1, -1) ).rgb;
+    vec3 colorSW = textureOffset( _Accum, oUv, ivec2(-1, -1) ).rgb;
 
-    float lumaDownLeft  = rgb2luma(textureOffset(_Accum, fPos, ivec2(-1,-1)).rgb);
-    float lumaUpRight   = rgb2luma(textureOffset(_Accum, fPos, ivec2(1,1)).rgb);
-    float lumaUpLeft    = rgb2luma(textureOffset(_Accum, fPos, ivec2(-1,1)).rgb);
-    float lumaDownRight = rgb2luma(textureOffset(_Accum, fPos, ivec2(1,-1)).rgb);
+    float lumaNE = FxaaLuma(colorNE);
+    float lumaNW = FxaaLuma(colorNW);
+    float lumaSE = FxaaLuma(colorSE);
+    float lumaSW = FxaaLuma(colorSW);
 
-    float edgeHorizontal = abs(-2.0 * lumaLeft + lumaLeftCorners) + abs(-2. * lumaCenter + lumaDownUp) * 2.0 + abs(-2.0 * lumaRight + lumaRightCorners);
-    float edgeVertical =   abs(-2.0 * lumaUp + lumaUpCorners) + abs(-2.0 * lumaCenter + lumaLeftRight) * 2.0  + abs(-2.0 * lumaDown + lumaDownCorners);
+    float averageLuminance = 2 * ( lumaN + lumaS + lumaE + lumaW ) + lumaNE + lumaNW + lumaSE + lumaSW;
+    averageLuminance *= 1.0 / 12.0;
+    averageLuminance = abs(averageLuminance - lumaM);
+    averageLuminance = clamp(averageLuminance / contrast, 0., 1.);
+    averageLuminance = smoothstep(0., 1., averageLuminance);
+    float blendFactor = averageLuminance * averageLuminance; // subpixel blending value here
 
-    bool isHorizontal = edgeHorizontal >= edgeVertical;
+    // Blend direction - Finding edges
+    float verticalContrast   = 2 * abs( lumaN + lumaS - 2*lumaM ) + abs( lumaNE + lumaSE - 2*lumaE ) + abs( lumaNW + lumaSW - 2*lumaW );
+    float horizontalContrast = 2 * abs( lumaE + lumaW - 2*lumaM ) + abs( lumaNE + lumaNW - 2*lumaN ) + abs( lumaSE + lumaSW - 2*lumaS );
+    bool isHorizontalEdge = verticalContrast >= horizontalContrast; 
+
+    vec2 stepSize = vec2(_width, _height);
+
+    float positiveLuma = isHorizontalEdge ? lumaN : lumaE;
+    float negativeLuma = isHorizontalEdge ? lumaS : lumaW;
+
+    float positiveGradient = abs(positiveLuma - lumaM);
+    float negativeGradient = abs(negativeLuma - lumaM);
+
+    if(positiveGradient < negativeGradient) stepSize *= -1;
+
+    // Blending
+    vec2 uv = oUv;
+
+    if(isHorizontalEdge) uv.y += stepSize.y * blendFactor;
+    else                 uv.x += stepSize.x * blendFactor;
+
+    oAccum = textureLod(_Accum, uv, 0.);
 }

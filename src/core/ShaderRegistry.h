@@ -16,7 +16,8 @@ static constexpr char* SKYBOX_RENDER_VERTEX_PATH   = RESOLVE_PATH("/shaders/sky_
 static constexpr char* SKYBOX_RENDER_FRAGMENT_PATH = RESOLVE_PATH("/shaders/sky_render.frag");
 static constexpr char* ENV_CONVOLUTION_PATH		   = RESOLVE_PATH("/shaders/env_convolution.frag");
 static constexpr char* ENV_PREFILTER_PATH		   = RESOLVE_PATH("/shaders/prefilter.frag");
-static constexpr char* ENV_PRECOMPUTE_BRDF_PATH	   = RESOLVE_PATH("/shaders/precompbrdf.frag");
+static constexpr char* ENV_PRECOMPUTE_BRDF_PATH    = RESOLVE_PATH("/shaders/precompbrdf.frag");
+static constexpr char* POST_PROCESS_FRAGMENT_PATH  = RESOLVE_PATH("/shaders/fxaa.frag");
 
 namespace MiniEngine
 {
@@ -33,6 +34,7 @@ namespace MiniEngine
 		void loadSkyboxConvoluter();
 		void loadEnvPrefilterShader();
 		void loadEnvPreComputeBrdfShader();
+		void loadPostProcessShader();
 
 		inline Shader* getDeferredShader()			noexcept { return &mShaderTable[0]; }
 		inline Shader* getPbrShader()				noexcept { return &mShaderTable[1]; }
@@ -41,6 +43,7 @@ namespace MiniEngine
 		inline Shader* getSkyboxConvoluter()		noexcept { return &mShaderTable[4]; }
 		inline Shader* getEnvPrefilterShader()		noexcept { return &mShaderTable[5]; }
 		inline Shader* getEnvPreComputeBrdfShader() noexcept { return &mShaderTable[6]; }
+		inline Shader* getPostProcessShader()		noexcept { return &mShaderTable[7]; }
 
 		void enable(Shader* shader);
 		void bindGlobalBufferToAll(const char* name, unsigned int bindIndex);

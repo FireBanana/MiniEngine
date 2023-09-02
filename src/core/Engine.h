@@ -24,7 +24,7 @@ namespace MiniEngine
 	{
 	public:
 
-		Engine(const MiniEngine::Types::EngineInitParams & params);
+		Engine(MiniEngine::Types::EngineInitParams& params);
 
 		Engine(Engine const&) = delete;
 		Engine(Engine&&) = delete;
@@ -42,6 +42,7 @@ namespace MiniEngine
 
 		// UI
 		void addSlider(const char* name, float* value, float min, float max, std::function<void()> cb = nullptr);
+		void addCheckbox(const char* name, bool& flag, std::function<void()> cb = nullptr);
 
 	private:
 

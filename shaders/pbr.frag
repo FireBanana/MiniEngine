@@ -158,7 +158,5 @@ void main()
 
     vec3 c = BRDF(albedo, viewDir, normalize(normal), lightDir, roughness.x, roughness.y);
 
-    float k = clamp(dot(normal, viewDir),0. ,1.);
-
-    oAccum = vec4(c ,1.);//vec4(position,1.0);
+    oAccum = vec4(c ,1.);
 }

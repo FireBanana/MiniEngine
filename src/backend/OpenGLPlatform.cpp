@@ -8,7 +8,7 @@
 
 namespace MiniEngine::Backend
 {
-    OpenGLPlatform::OpenGLPlatform(const MiniEngine::Types::EngineInitParams& params, Engine* engine) :
+    OpenGLPlatform::OpenGLPlatform(MiniEngine::Types::EngineInitParams& params, Engine* engine) :
         mEngine(engine)
     {
         createWindow(params.screenWidth, params.screenHeight);
@@ -64,7 +64,7 @@ namespace MiniEngine::Backend
         }
     }
 
-    void OpenGLPlatform::createDriver(const MiniEngine::Types::EngineInitParams & params)
+    void OpenGLPlatform::createDriver(MiniEngine::Types::EngineInitParams & params)
     {
         mDriver = std::make_unique<OpenGLDriver>();
 

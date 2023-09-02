@@ -17,6 +17,7 @@ int main(void)
 	params.screenWidth = 1920;
 	params.screenHeight = 1080;
 	params.clearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+	params.enablePostProcess = false;
 	MiniEngine::Engine engine{ params };
 
 	auto scene = MiniEngine::Scene{ &engine };
@@ -26,14 +27,14 @@ int main(void)
 	auto cameraEntity2 = scene.createEntity();
 	auto mainLightEntity = scene.createEntity();
 
-	MiniEngine::Texture texture = engine.loadTexture(RESOLVE_PATH("/assets/color.jpg"), MiniEngine::Texture::TextureType::Default, false);
-	MiniEngine::Texture normal = engine.loadTexture(RESOLVE_PATH("/assets/normal.jpg"), MiniEngine::Texture::TextureType::Default, false);
-	MiniEngine::Texture roughness = engine.loadTexture(RESOLVE_PATH("/assets/roughness.jpg"), MiniEngine::Texture::TextureType::Default, false);
+	MiniEngine::Texture texture = engine.loadTexture(RESOLVE_PATH("/assets/color2.jpg"), MiniEngine::Texture::TextureType::Default, false);
+	MiniEngine::Texture normal = engine.loadTexture(RESOLVE_PATH("/assets/normal2.jpg"), MiniEngine::Texture::TextureType::Default, false);
+	MiniEngine::Texture roughness = engine.loadTexture(RESOLVE_PATH("/assets/roughness2.jpg"), MiniEngine::Texture::TextureType::Default, false);
 	MiniEngine::Texture texture2 = engine.loadTexture(RESOLVE_PATH("/assets/hdri.hdr"), MiniEngine::Texture::TextureType::CubeMap, true);
 
 	auto material = MiniEngine::Material::Creator()
-		.addTexture(MiniEngine::Types::TextureType::Diffuse, texture)
-		.addTexture(MiniEngine::Types::TextureType::Normal, normal)
+		//.addTexture(MiniEngine::Types::TextureType::Diffuse, texture)
+		//.addTexture(MiniEngine::Types::TextureType::Normal, normal)
 		.addTexture(MiniEngine::Types::TextureType::Roughness, roughness)
 		.addShader(engine.getShaderRegistry()->getDeferredShader())
 		.addMaterialProperty(MiniEngine::Material::PropertyType::Roughness, 0.15f)
@@ -122,6 +123,7 @@ int main(void)
 	float g = material.materialProperties[(int)MiniEngine::Material::PropertyType::Metallic];
 	engine.addSlider("Roughness", &r, 0, 1, [&]() { material.materialProperties.set((int)MiniEngine::Material::PropertyType::Roughness, r); });
 	engine.addSlider("Metallic", &g, 0, 1, [&]() { material.materialProperties.set((int)MiniEngine::Material::PropertyType::Metallic, g); });
+	engine.addCheckbox("post-process", params.enablePostProcess);
 
 	engine.execute(&scene); //move to separate thread
 }

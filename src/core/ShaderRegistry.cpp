@@ -76,6 +76,15 @@ namespace MiniEngine
 		createShader(shader, mDriver);
 	}
 
+	void ShaderRegistry::loadPostProcessShader()
+	{
+		auto vertexShader = mDriver->loadShader(LIGHTING_VERTEX_PATH, Backend::OpenGLDriver::ShaderType::VERTEX);
+		auto fragmentShader = mDriver->loadShader(POST_PROCESS_FRAGMENT_PATH, Backend::OpenGLDriver::ShaderType::FRAGMENT);
+		auto shader = mDriver->createShaderProgram(vertexShader, fragmentShader);
+
+		createShader(shader, mDriver);
+	}
+
 	void ShaderRegistry::enable(Shader* shader)
 	{
 		mDriver->useShaderProgram(shader->getShaderProgram());

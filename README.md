@@ -26,5 +26,20 @@ This engine is still in active development.
 <br></br>
 ![img](assets/readme/miniengine-1.png)
 ![img](assets/readme/miniengine-2.png)
+<br></br>
+---
+<br></br>
+## Building instructions
 
-- Documentation in progress. Will be updated soon
+Currently only Windows (MSVC) is supported.
+
+> run build.bat
+
+Build files will be generated in a `build/` folder. This will build the sample `main.cpp` in the `examples/default/` folder to run an example similar to the screenshots posted above.
+
+
+
+## API Usage
+<i>Documentation is in progress. Will be updated at a later date.</i>
+
+Refer to `examples/default/main.cpp` to get an idea of the basic API usage.

@@ -24,6 +24,7 @@ namespace Types
 		uint16_t screenWidth;
 		uint16_t screenHeight;
 		Color clearColor;
+		bool enablePostProcess;
 	};
 
 	struct Vector3

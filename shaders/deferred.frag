@@ -52,6 +52,8 @@ void main()
 	vec3 v = normalize(fNormal);
 
 	vec4 normalTexture = (texture(_Normal, fUv)) * 2.0 - 1.0;
+	normalTexture.y = -normalTexture.y;
+
 	vec4 roughnessTex = texture(_Roughness, fUv);
 	roughnessTex.x *= _baseRoughness;
 	roughnessTex.y *= _baseMetallic;

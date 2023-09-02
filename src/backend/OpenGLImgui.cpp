@@ -54,9 +54,18 @@ namespace MiniEngine::Backend
 		// Render Sliders
 		for (auto& [name, v, min, max, cb] : mSliderPanels)
 		{
-			if (ImGui::Begin("slider"))
+			if (ImGui::Begin("Sliders"))
 			{
 				if (ImGui::SliderFloat(name, v, min, max) && cb != nullptr) cb();
+				ImGui::End();
+			}
+		}
+
+		for (auto& [name, flag, cb] : mCheckboxPanels)
+		{
+			if (ImGui::Begin("Checkboxes"))
+			{
+				if (ImGui::Checkbox(name, &flag) && cb != nullptr) cb();
 				ImGui::End();
 			}
 		}
@@ -67,6 +76,11 @@ namespace MiniEngine::Backend
 	void OpenGLImgui::createSliderPanel(const char* name, float* value, float min, float max, std::function<void()> cb)
 	{
 		mSliderPanels.push_back({name, value, min, max, cb});
+	}
+
+	void OpenGLImgui::createBooleanPanel(const char* name, bool& flag, std::function<void()> cb)
+	{
+		mCheckboxPanels.push_back({ name, flag, cb });
 	}
 	
 	void OpenGLImgui::pushFrameTimeData(float deltaTime)

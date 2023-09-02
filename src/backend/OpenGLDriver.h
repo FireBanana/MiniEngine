@@ -33,7 +33,7 @@ namespace Backend
 			FRAGMENT = GL_FRAGMENT_SHADER
 		};
 
-		void setupGlWindowParams(const MiniEngine::Types::EngineInitParams& params, Engine* engine);
+		void setupGlWindowParams(MiniEngine::Types::EngineInitParams& params, Engine* engine);
 		void setupFrameBuffer();
 		void setupScreenQuad();
 		void setupDebugInfo();
@@ -65,11 +65,14 @@ namespace Backend
 
 	private:
 
+		Types::EngineInitParams* mParams;
+
 		Engine* mEngine;
 		OpenGLImgui* mOpenGlImgui;
 
 		GLuint mMainFrameBuffer;
-		GLuint mAccumBuffer;
+		GLuint mAccumBuffer1;
+		GLuint mAccumBuffer2;
 		GLuint mColorBuffer;
 		GLuint mPositionBuffer;
 		GLuint mNormalBuffer;
