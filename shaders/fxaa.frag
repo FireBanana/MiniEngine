@@ -73,13 +73,86 @@ void main()
     float positiveGradient = abs(positiveLuma - lumaM);
     float negativeGradient = abs(negativeLuma - lumaM);
 
-    if(positiveGradient < negativeGradient) stepSize *= -1;
+    float oppositeLuma;
+    float oppositeGradient;
 
-    // Blending
+    if(positiveGradient < negativeGradient)
+    {
+        stepSize *= -1;
+        oppositeLuma = negativeLuma;
+        oppositeGradient = negativeGradient;
+    }
+    else
+    {
+        oppositeLuma = positiveLuma;
+        oppositeGradient = positiveGradient;
+    }
+
+    // Blending -- refactor
     vec2 uv = oUv;
 
     if(isHorizontalEdge) uv.y += stepSize.y * blendFactor;
     else                 uv.x += stepSize.x * blendFactor;
 
-    oAccum = textureLod(_Accum, uv, 0.);
+    //oAccum = textureLod(_Accum, uv, 0.);
+
+    float originalEdgeLuminance = (lumaM + oppositeLuma) * 0.5;
+    float gradientThreshold = oppositeGradient * 0.25;
+
+    vec2 edgeUv = oUv;
+    vec2 edgeStep;
+
+    if(isHorizontalEdge)
+    {
+        edgeUv.y += stepSize.y * 0.5;
+        edgeStep = vec2(0., stepSize.y);
+    }
+    else
+    {
+        edgeUv.x += stepSize.x * 0.5;
+        edgeStep = vec2(stepSize.x, 0.);
+    }
+
+    vec2 pUv = edgeUv + edgeStep;
+    vec2 nUv = edgeUv - edgeStep;
+
+    float pLuminanceDelta = FxaaLuma(texture(_Accum, pUv).rgb) - originalEdgeLuminance;
+    float nLuminanceDelta = FxaaLuma(texture(_Accum, nUv).rgb) - originalEdgeLuminance;
+
+    bool pAtEnd = abs(pLuminanceDelta) >= gradientThreshold;
+    bool nAtEnd = abs(nLuminanceDelta) >= gradientThreshold;
+
+    for(int i = 0; i < 9 && (!pAtEnd || !nAtEnd); ++i)
+    {
+        if(!pAtEnd)
+        {
+            pUv += edgeStep;
+            pLuminanceDelta = FxaaLuma(texture(_Accum, pUv).rgb) - originalEdgeLuminance;
+            pAtEnd = abs(pLuminanceDelta) >= gradientThreshold;
+        }
+        if(!nAtEnd)
+        {
+            nUv += edgeStep;
+            nLuminanceDelta = FxaaLuma(texture(_Accum, nUv).rgb) - originalEdgeLuminance;
+            pAtEnd = abs(nLuminanceDelta) >= gradientThreshold;
+        }
+    }
+
+    float pDistance;
+    float nDistance;
+
+    if(isHorizontalEdge)
+    {
+        pDistance = pUv.x - uv.x;
+        nDistance = uv.y - nUv.y;
+    }
+    else
+    {
+        pDistance = pUv.y - uv.y;
+        nDistance = uv.y - nUv.y;
+    }
+
+    float shortestDistance = pDistance <= nDistance ? pDistance : nDistance;
+
+    oAccum = vec4(shortestDistance * 10.);
 }
