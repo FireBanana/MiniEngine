@@ -9,6 +9,7 @@ This engine is still in active development.
 - Simple textual API
 - Normal mapping
 - Basic IMGUI support
+- FXAA
 
 <b>Planned Features:</b>
 - Profiling stats per frame (full frame time available)
@@ -16,7 +17,7 @@ This engine is still in active development.
 - Event Listening System
 - Shadows
 - Tonemapping via - https://github.com/h3r2tic/tony-mc-mapface
-- TAA and FXAA, ambient occlusion, bloom
+- TAA, ambient occlusion, bloom
 - Point-based, area-based lights
 - Default texture parameter support in Builders
 - Global Illumination

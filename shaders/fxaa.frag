@@ -88,14 +88,6 @@ void main()
         oppositeGradient = positiveGradient;
     }
 
-    // Blending -- refactor
-    vec2 uv = oUv;
-
-    if(isHorizontalEdge) uv.y += stepSize.y * blendFactor;
-    else                 uv.x += stepSize.x * blendFactor;
-
-    //oAccum = textureLod(_Accum, uv, 0.);
-
     float originalEdgeLuminance = (lumaM + oppositeLuma) * 0.5;
     float gradientThreshold = oppositeGradient * 0.25;
 
@@ -143,16 +135,38 @@ void main()
 
     if(isHorizontalEdge)
     {
-        pDistance = pUv.x - uv.x;
-        nDistance = uv.y - nUv.y;
+        pDistance = pUv.x - oUv.x;
+        nDistance = oUv.y - nUv.y;
     }
     else
     {
-        pDistance = pUv.y - uv.y;
-        nDistance = uv.y - nUv.y;
+        pDistance = pUv.y - oUv.y;
+        nDistance = oUv.y - nUv.y;
     }
 
-    float shortestDistance = pDistance <= nDistance ? pDistance : nDistance;
+    float shortestDistance;
+    float edgeBlendFactor;
+    bool endDelta;
+    bool originalDelta = lumaM - originalEdgeLuminance >= 0;
 
-    oAccum = vec4(shortestDistance * 10.);
+    if(pDistance <= nDistance)
+    {
+        shortestDistance = pDistance;
+        endDelta = pLuminanceDelta >= 0;
+    }
+    else
+    {
+        shortestDistance = nDistance;
+        endDelta = nLuminanceDelta >= 0;
+    }
+
+    edgeBlendFactor = endDelta != originalDelta ? 0.5 - shortestDistance / (pDistance + nDistance) : 0.;
+    float finalBlendFactor = max(edgeBlendFactor, blendFactor);
+
+    vec2 uv = oUv;
+
+    if(isHorizontalEdge) uv.y += stepSize.y * finalBlendFactor;
+    else                 uv.x += stepSize.x * finalBlendFactor;
+
+    oAccum = textureLod(_Accum, uv, 0.);
 }
