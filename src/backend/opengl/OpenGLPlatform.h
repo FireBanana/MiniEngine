@@ -3,6 +3,7 @@
 #include <memory>
 #include <GLFW/glfw3.h>
 
+#include "IPlatform.h"
 #include "OpenGLDriver.h"
 #include "OpenGLImgui.h"
 #include "Color.h"
@@ -15,7 +16,7 @@ namespace MiniEngine
 
 	namespace Backend
 	{
-		class OpenGLPlatform
+		class OpenGLPlatform : IPlatform
 		{
 		public:
 
@@ -23,10 +24,10 @@ namespace MiniEngine
 			OpenGLPlatform(OpenGLPlatform&) = delete;
 			OpenGLPlatform(OpenGLPlatform&&) = delete;
 
-			void makeCurrent();
-			void execute(Scene* scene);
+			void makeCurrent() override;
+			void execute(Scene* scene) override;
 
-			inline OpenGLDriver* getDriver() const { return mDriver.get(); }
+			inline OpenGLDriver* getDriver() const override { return mDriver.get(); }
 			inline OpenGLImgui* getUiInterface() const { return mImgui.get(); }
 
 		private:

@@ -10,9 +10,17 @@ set(CMAKE_RUNTIME_LIBRARY_DIRECTORY bin/)
 set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*")
 set(CMAKE_CXX_STANDARD 17)
 
+set(USING_OPENGL true)
+
 add_definitions(-DGLFW_INCLUDE_NONE)
 add_compile_definitions(DIR="${CMAKE_SOURCE_DIR}")
-add_compile_definitions(USING_OPENGL)
+
+if(USING_OPENGL)
+	add_compile_definitions(USING_OPENGL)
+else()
+	add_compile_definitions(USING_VULKAN)
+endif()
+
 add_compile_definitions(GRAPHICS_DEBUG)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -22,6 +30,8 @@ file( GLOB LIB_SOURCES
 	src/components/*.cpp
 	src/systems/*.cpp
 	src/backend/*.cpp
+	src/backend/vulkan/*.cpp
+	src/backend/opengl/*.cpp
 	src/core/*.cpp
 	src/core/utils/*.cpp
 	src/core/types/*.cpp
@@ -31,7 +41,9 @@ file( GLOB LIB_HEADERS
 	src/*.h
 	src/components/*.h
 	src/systems/*.h
-	src/backend/*.h 
+	src/backend/*.h
+	src/backend/vulkan/*.h
+	src/backend/opengl/*.h
 	src/core/*.h 
 	src/core/utils/*.h
 	src/core/types/*.h
@@ -43,6 +55,12 @@ target_sources( MiniEngine PRIVATE ${CMAKE_SOURCE_DIR}/libs/glad/src/glad.c)
 target_include_directories(MiniEngine PUBLIC libs)
 target_include_directories(MiniEngine PUBLIC libs/glad/include)
 target_include_directories(MiniEngine PUBLIC libs/glfw/include)
+
+# vulkan
+
+target_include_directories(MiniEngine PUBLIC $ENV{VULKAN_SDK}/include/)
+
+# ======
 
 # Add secondary tools
 
@@ -58,6 +76,8 @@ target_include_directories(MiniEngine PUBLIC src/)
 target_include_directories(MiniEngine PUBLIC src/components)
 target_include_directories(MiniEngine PUBLIC src/systems)
 target_include_directories(MiniEngine PUBLIC src/backend)
+target_include_directories(MiniEngine PUBLIC src/backend/vulkan)
+target_include_directories(MiniEngine PUBLIC src/backend/opengl)
 target_include_directories(MiniEngine PUBLIC src/core)
 target_include_directories(MiniEngine PUBLIC src/core/utils)
 target_include_directories(MiniEngine PUBLIC src/core/types)
@@ -106,6 +126,12 @@ FetchContent_Declare(
 	GIT_TAG v1.12.0
 )
 
+FetchContent_Declare(
+	volk
+	GIT_REPOSITORY https://github.com/zeux/volk
+	GIT_TAG sdk-1.3.261.1
+)
+
 FetchContent_GetProperties(glm)
 if(NOT glm_POPULATED)
   FetchContent_Populate(glm)
@@ -122,8 +148,15 @@ if(NOT spdlog_POPULATED)
   FetchContent_Populate(spdlog)
 endif()
 
+FetchContent_GetProperties(volk)
+if(NOT volk_POPULATED)
+  FetchContent_Populate(volk)
+endif()
+
 target_include_directories(MiniEngine PUBLIC ${glm_SOURCE_DIR}/glm)
 target_link_libraries(MiniEngine glm)
+
+target_include_directories(MiniEngine PUBLIC ${volk_SOURCE_DIR}/)
 
 target_include_directories(MiniEngine PUBLIC ${imgui_SOURCE_DIR}/)
 target_include_directories(MiniEngine PUBLIC ${imgui_SOURCE_DIR}/backends)

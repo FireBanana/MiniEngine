@@ -3,6 +3,7 @@
 #include "Texture.h"
 #include "EngineConstants.h"
 #include "OpenGLImgui.h"
+#include "IDriver.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -23,7 +24,7 @@ namespace Components
 namespace Backend
 {
 
-	class OpenGLDriver
+	class OpenGLDriver : IDriver
 	{
 	public:
 

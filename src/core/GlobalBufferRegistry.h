@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "../backend/OpenGLDriver.h"
+#include "OpenGLDriver.h"
 #include "types/EngineTypes.h"
 
 namespace MiniEngine

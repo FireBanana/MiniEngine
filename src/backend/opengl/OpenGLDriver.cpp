@@ -615,7 +615,7 @@ namespace MiniEngine::Backend
 
         glCreateBuffers(1, &uniformBufferId);
         glBindBuffer(GL_UNIFORM_BUFFER, uniformBufferId);
-        glBufferData(GL_UNIFORM_BUFFER, dataSize, nullptr, GL_STREAM_DRAW);
+        glNamedBufferStorage(uniformBufferId, dataSize, nullptr, GL_DYNAMIC_STORAGE_BIT);
         glBindBufferBase(GL_UNIFORM_BUFFER, bindIndex, uniformBufferId);
 
         return uniformBufferId;
