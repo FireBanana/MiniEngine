@@ -49,7 +49,7 @@ namespace EnumExtension
 	}
 
 	template<typename E, int... I>
-	constexpr int internalElementCount(std::integer_sequence<int, I...> unused)
+	constexpr int internalElementCount([[maybe_unused]] std::integer_sequence<int, I...> unused)
 	{
 		return countValid<E, (E)I...>();
 	}

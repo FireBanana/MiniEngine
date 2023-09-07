@@ -66,7 +66,7 @@ namespace MiniEngine
 
 		m.stride = stride;
 
-		mEngine->getOpenGlDriver()->setupMesh(&m);
+		mEngine->getGraphicsDriver()->setupMesh(&m);
 
 #endif // USING_OPENGL
 
@@ -105,7 +105,7 @@ namespace MiniEngine
 		s.mainTexture = builderResults->getTexture();
 		s.skyboxType = Skybox::SkyboxType::Skybox;
 
-		mEngine->getOpenGlDriver()->setupSkybox(&s);
+		mEngine->getGraphicsDriver()->setupSkybox(&s);
 
 		return s;
 	}

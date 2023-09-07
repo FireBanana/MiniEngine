@@ -3,6 +3,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "IImgui.h"
 
 #include <functional>
 #include <vector>
@@ -14,17 +15,17 @@ namespace Backend
 {
 	constexpr int POINT_SIZE = 16;
 
-	class OpenGLImgui
+	class OpenGLImgui : public IImgui
 	{
 	public:
 
 		OpenGLImgui();
 
-		void Initialize(GLFWwindow* window);
+		void initialize(GLFWwindow* window);
 		void draw();
 
-		void createSliderPanel(const char* name, float* value, float min, float max, std::function<void()> cb);
-		void createBooleanPanel(const char* name, bool& flag, std::function<void()> cb);
+		void createSliderPanel(const char* name, float* value, float min, float max, std::function<void()> cb) override;
+		void createBooleanPanel(const char* name, bool& flag, std::function<void()> cb) override;
 
 		void pushFrameTimeData(float deltaTime);
 

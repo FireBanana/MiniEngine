@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include "OpenGLDriver.h"
+#include "IDriver.h"
 #include "Shader.h"
 
 #define RESOLVE_PATH(path) DIR##path
@@ -25,7 +25,7 @@ namespace MiniEngine
 	{
 	public:
 
-		ShaderRegistry(const Backend::OpenGLDriver* driver);
+		ShaderRegistry(const Backend::IDriver* driver);
 
 		void loadDeferredShader();
 		void loadPbrShader();
@@ -53,9 +53,9 @@ namespace MiniEngine
 	private:
 
 		std::vector<Shader>			 mShaderTable;
-		const Backend::OpenGLDriver* mDriver;
+		const Backend::IDriver*		 mDriver;
 		Shader*						 mActiveShader;
 
-		void createShader(unsigned int program, const Backend::OpenGLDriver* driver);
+		void createShader(unsigned int program, const Backend::IDriver* driver);
 	};
 }

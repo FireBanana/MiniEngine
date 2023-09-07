@@ -2,7 +2,7 @@
 
 namespace MiniEngine
 {
-	GlobalBufferRegistry::GlobalBufferRegistry(const Backend::OpenGLDriver* driver)
+	GlobalBufferRegistry::GlobalBufferRegistry(const Backend::IDriver* driver)
 		: mDriver(driver)
 	{
 	}

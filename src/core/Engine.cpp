@@ -4,6 +4,8 @@
 #include "Scene.h"
 #include "Loader.h"
 #include "Logger.h"
+#include "OpenGLPlatform.h"
+#include "VulkanPlatform.h"
 #include <memory>
 
 namespace MiniEngine
@@ -12,9 +14,16 @@ namespace MiniEngine
 	{
 		MiniEngine::Logger::print("Initializing engine...");
 
-		mGlPlatform = std::make_unique<Backend::OpenGLPlatform>(params, this);
-		mShaderRegistry = std::make_unique<ShaderRegistry>(mGlPlatform->getDriver());
-		mGlobalBufferRegistry = std::make_unique<GlobalBufferRegistry>(mGlPlatform->getDriver());
+#ifdef USING_OPENGL
+		mGraphicsPlatform = std::make_unique<Backend::OpenGLPlatform>();
+#else
+		mGraphicsPlatform = std::make_unique<Backend::VulkanPlatform>();
+#endif
+		
+		mGraphicsPlatform->initialize(params, this);
+
+		mShaderRegistry = std::make_unique<ShaderRegistry>(mGraphicsPlatform->getDriver());
+		mGlobalBufferRegistry = std::make_unique<GlobalBufferRegistry>(mGraphicsPlatform->getDriver());
 
 		mGlobalBufferRegistry->createNewBinding(GlobalBufferRegistry::BlockType::SceneBlock, 0);
 
@@ -32,26 +41,26 @@ namespace MiniEngine
 
 	void Engine::execute(Scene* scene)
 	{
-		mGlPlatform->execute(scene);
+		mGraphicsPlatform->execute(scene);
 	}
 
 	Texture Engine::loadTexture(const char* path, Texture::TextureType type, bool flipYAxis)
 	{
 		auto results = MiniTools::ImageLoader::load(path, type == Texture::TextureType::CubeMap, flipYAxis);
 
-		auto id = mGlPlatform.get()->getDriver()->createTexture(results.width, results.height, results.channels, results.data, type);
+		auto id = mGraphicsPlatform.get()->getDriver()->createTexture(results.width, results.height, results.channels, results.data, type);
 
 		return { results.width, results.height, results.channels, id };
 	}
 
 	void Engine::addSlider(const char* name, float* value, float min, float max, std::function<void()> cb)
 	{
-		mGlPlatform->getUiInterface()->createSliderPanel(name, value, min, max, cb);
+		mGraphicsPlatform->getUiInterface()->createSliderPanel(name, value, min, max, cb);
 	}
 
 	void Engine::addCheckbox(const char* name, bool& flag, std::function<void()> cb)
 	{
-		mGlPlatform->getUiInterface()->createBooleanPanel(name, flag, cb);
+		mGraphicsPlatform->getUiInterface()->createBooleanPanel(name, flag, cb);
 	}
 
 	void Engine::createDefaultMaterial()

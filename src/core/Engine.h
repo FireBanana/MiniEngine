@@ -6,20 +6,17 @@
 
 #include "types/EngineTypes.h"
 #include "Entity.h"
-#include "OpenGLPlatform.h"
+#include "IDriver.h"
+#include "IPlatform.h"
 #include "RenderableComponent.h"
 #include "utils/Color.h"
 #include "Material.h"
 #include "Mesh.h"
 #include "GlobalBufferRegistry.h"
+#include "ShaderRegistry.h"
 
 namespace MiniEngine
 {
-	namespace
-	{
-		class OpenGLPlatform;
-	}
-
 	class Engine
 	{
 	public:
@@ -37,7 +34,7 @@ namespace MiniEngine
 
 		inline ShaderRegistry* getShaderRegistry() const { return mShaderRegistry.get(); }
 		inline GlobalBufferRegistry* getGlobalBufferRegistry() const { return mGlobalBufferRegistry.get(); }
-		inline Backend::OpenGLDriver* getOpenGlDriver() const { return mGlPlatform.get()->getDriver(); }
+		inline Backend::IDriver* getGraphicsDriver() const { return mGraphicsPlatform.get()->getDriver(); }
 		inline MaterialInstance* getDefaultMaterial() { return &mDefaultMaterial; }
 
 		// UI
@@ -47,7 +44,7 @@ namespace MiniEngine
 	private:
 
 		std::unique_ptr<GlobalBufferRegistry> mGlobalBufferRegistry;
-		std::unique_ptr<Backend::OpenGLPlatform> mGlPlatform;
+		std::unique_ptr<Backend::IPlatform> mGraphicsPlatform;
 		std::unique_ptr<ShaderRegistry> mShaderRegistry;
 
 		MaterialInstance mDefaultMaterial;

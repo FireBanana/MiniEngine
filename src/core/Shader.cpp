@@ -2,7 +2,7 @@
 
 namespace MiniEngine
 {
-	Shader::Shader(unsigned int program, const Backend::OpenGLDriver* driver) :
+	Shader::Shader(unsigned int program, const Backend::IDriver* driver) :
 		mShaderId(program), mDriver(driver)
 	{
 

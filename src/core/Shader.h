@@ -1,6 +1,6 @@
 #pragma once
 
-#include "OpenGLDriver.h"
+#include "IDriver.h"
 #include "EngineTypes.h"
 
 namespace MiniEngine
@@ -9,7 +9,7 @@ namespace MiniEngine
 	{
 	public:
 
-		Shader(unsigned int program, const Backend::OpenGLDriver* driver);
+		Shader(unsigned int program, const Backend::IDriver* driver);
 
 		Shader() {};
 		Shader(const Shader&) = default;
@@ -29,7 +29,7 @@ namespace MiniEngine
 	private:
 
 		unsigned int				 mShaderId;
-		const Backend::OpenGLDriver* mDriver;
+		const Backend::IDriver*		 mDriver;
 
 		unsigned int				 mUniformBufferIndex;
 	};

@@ -1,5 +1,5 @@
 #include "ShaderRegistry.h"
-#include "../backend/OpenGLDriver.h"
+#include "OpenGLDriver.h"
 #include <algorithm>
 
 #include <glm/glm.hpp>
@@ -7,7 +7,7 @@
 
 namespace MiniEngine
 {
-	ShaderRegistry::ShaderRegistry(const Backend::OpenGLDriver* driver)
+	ShaderRegistry::ShaderRegistry(const Backend::IDriver* driver)
 		: mDriver(driver), mShaderTable()
 	{
 
@@ -99,7 +99,7 @@ namespace MiniEngine
 		}
 	}
 
-	void ShaderRegistry::createShader(unsigned int program, const Backend::OpenGLDriver * driver)
+	void ShaderRegistry::createShader(unsigned int program, const Backend::IDriver* driver)
 	{
 		mShaderTable.push_back(Shader{ program, driver });
 	}

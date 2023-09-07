@@ -6,7 +6,7 @@ namespace MiniEngine::Backend
 	{
 	}
 
-	void OpenGLImgui::Initialize(GLFWwindow* window)
+	void OpenGLImgui::initialize(GLFWwindow* window)
 	{
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();

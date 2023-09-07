@@ -1,8 +1,9 @@
 #pragma once
 
 #include <vector>
+#include <unordered_map>
 
-#include "OpenGLDriver.h"
+#include "IDriver.h"
 #include "types/EngineTypes.h"
 
 namespace MiniEngine
@@ -36,7 +37,7 @@ namespace MiniEngine
 			float p5[3]; //padding
 		};
 
-		GlobalBufferRegistry(const Backend::OpenGLDriver* driver);
+		GlobalBufferRegistry(const Backend::IDriver* driver);
 
 		void createNewBinding(BlockType block, unsigned int bindIndex);
 		void updateUniformData(BlockType block, unsigned int offset, size_t size, void* data);
@@ -45,7 +46,7 @@ namespace MiniEngine
 
 	private:
 
-		const Backend::OpenGLDriver* mDriver;
+		const Backend::IDriver* mDriver;
 		std::unordered_map<BlockType, unsigned int> mBindingPoints;
 		SceneBlock mSceneBlockInstance;
 

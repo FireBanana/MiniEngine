@@ -16,19 +16,17 @@ namespace MiniEngine
 
 	namespace Backend
 	{
-		class OpenGLPlatform : IPlatform
+		class OpenGLPlatform : public IPlatform
 		{
 		public:
 
-			OpenGLPlatform(MiniEngine::Types::EngineInitParams& params, Engine* engine);
-			OpenGLPlatform(OpenGLPlatform&) = delete;
-			OpenGLPlatform(OpenGLPlatform&&) = delete;
+			void initialize(MiniEngine::Types::EngineInitParams& params, Engine* engine) override;
 
 			void makeCurrent() override;
 			void execute(Scene* scene) override;
 
 			inline OpenGLDriver* getDriver() const override { return mDriver.get(); }
-			inline OpenGLImgui* getUiInterface() const { return mImgui.get(); }
+			inline OpenGLImgui* getUiInterface() const override { return mImgui.get(); }
 
 		private:
 

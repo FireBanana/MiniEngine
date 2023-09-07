@@ -8,9 +8,10 @@
 
 namespace MiniEngine::Backend
 {
-    OpenGLPlatform::OpenGLPlatform(MiniEngine::Types::EngineInitParams& params, Engine* engine) :
-        mEngine(engine)
+    void OpenGLPlatform::initialize(MiniEngine::Types::EngineInitParams& params, Engine* engine)
     {
+        mEngine = engine;
+
         createWindow(params.screenWidth, params.screenHeight);
         createImguiInterface();
         createDriver(params);
@@ -79,6 +80,6 @@ namespace MiniEngine::Backend
     void OpenGLPlatform::createImguiInterface()
     {
         mImgui = std::make_unique<OpenGLImgui>();
-        mImgui->Initialize(mWindow);
+        mImgui->initialize(mWindow);
     }
 }
