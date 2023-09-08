@@ -1,11 +1,12 @@
 #pragma once
 
 #include <memory>
-#include <volk.h>
-#include <vulkan/vulkan.h>
+
+#include "VulkanHelper.h"
 #include <GLFW/glfw3.h>
 
 #include "VulkanDriver.h"
+#include "IPlatform.h"
 #include "EngineTypes.h"
 
 namespace MiniEngine
@@ -16,18 +17,17 @@ class Engine;
 
 namespace Backend
 {
-	class VulkanPlatform
+	class VulkanPlatform : public IPlatform
 	{
 	public:
 
-		VulkanPlatform(MiniEngine::Types::EngineInitParams& params, Engine* engine);
-		VulkanPlatform(VulkanPlatform&) = delete;
-		VulkanPlatform(VulkanPlatform&&) = delete;
+		void initialize(MiniEngine::Types::EngineInitParams& params, Engine* engine) override;
+		void makeCurrent() override;
+		void execute(Scene* scene) override;
+		IImgui* getUiInterface() const override;
+		void createImguiInterface() override;
 
-		void makeCurrent();
-		void execute(Scene* scene);
-
-		VulkanDriver* getDriver() const {  };
+		VulkanDriver* getDriver() const { return mDriver.get(); }
 
 	private:
 

@@ -1,5 +1,5 @@
 # MiniEngine
-### A small PBR Game Engine 
+### A PBR Rendering Framework
 
 This engine is still in active development.
 
@@ -12,6 +12,7 @@ This engine is still in active development.
 - FXAA
 
 <b>Planned Features:</b>
+- Vulkan support
 - Profiling stats per frame (full frame time available)
 - ECS system
 - Event Listening System
@@ -21,7 +22,7 @@ This engine is still in active development.
 - Point-based, area-based lights
 - Default texture parameter support in Builders
 - Global Illumination
-- Vulkan support
+
 <br></br>
 ---
 <br></br>

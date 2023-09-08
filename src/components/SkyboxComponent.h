@@ -15,12 +15,12 @@ namespace MiniEngine::Components
 		Texture			   mainTexture;
 		float			   rotation;
 
-#ifdef USING_OPENGL
+//#ifdef USING_OPENGL
 		unsigned int vaoId;
 		unsigned int environmentCubemapId;
 		unsigned int irradianceCubemapId;
 		unsigned int prefilteredCubemapId;
 		unsigned int precomputedBrdfId;
-#endif
+//#endif
 	};
 }

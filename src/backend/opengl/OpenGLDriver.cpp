@@ -470,10 +470,14 @@ namespace MiniEngine::Backend
         glBindTextureUnit(1, mPositionBuffer);
         glBindTextureUnit(2, mNormalBuffer);
         glBindTextureUnit(3, mRoughnessBuffer);
-        glBindTextureUnit(4, scene->getSkyBox()->irradianceCubemapId);
-        glBindTextureUnit(5, scene->getSkyBox()->environmentCubemapId);
-        glBindTextureUnit(6, scene->getSkyBox()->prefilteredCubemapId);
-        glBindTextureUnit(7, scene->getSkyBox()->precomputedBrdfId);
+
+        if (scene->getSkyBox() != nullptr)
+        {
+            glBindTextureUnit(4, scene->getSkyBox()->irradianceCubemapId);
+            glBindTextureUnit(5, scene->getSkyBox()->environmentCubemapId);
+            glBindTextureUnit(6, scene->getSkyBox()->prefilteredCubemapId);
+            glBindTextureUnit(7, scene->getSkyBox()->precomputedBrdfId);
+        }
 
         mEngine->getShaderRegistry()->enable(mEngine->getShaderRegistry()->getPbrShader());
         SET_TEXTURE_ID("_Diffuse", 0);

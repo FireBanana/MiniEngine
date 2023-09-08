@@ -10,7 +10,7 @@ set(CMAKE_RUNTIME_LIBRARY_DIRECTORY bin/)
 set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*")
 set(CMAKE_CXX_STANDARD 17)
 
-set(USING_OPENGL true)
+set(USING_OPENGL false)
 
 add_definitions(-DGLFW_INCLUDE_NONE)
 add_compile_definitions(DIR="${CMAKE_SOURCE_DIR}")
@@ -19,6 +19,7 @@ if(USING_OPENGL)
 	add_compile_definitions(USING_OPENGL)
 else()
 	add_compile_definitions(USING_VULKAN)
+	add_compile_definitions(VK_USE_PLATFORM_WIN32_KHR)
 endif()
 
 add_compile_definitions(GRAPHICS_DEBUG)
@@ -157,6 +158,7 @@ target_include_directories(MiniEngine PUBLIC ${glm_SOURCE_DIR}/glm)
 target_link_libraries(MiniEngine glm)
 
 target_include_directories(MiniEngine PUBLIC ${volk_SOURCE_DIR}/)
+target_sources( MiniEngine PRIVATE ${volk_SOURCE_DIR}/volk.c)
 
 target_include_directories(MiniEngine PUBLIC ${imgui_SOURCE_DIR}/)
 target_include_directories(MiniEngine PUBLIC ${imgui_SOURCE_DIR}/backends)

@@ -19,9 +19,9 @@ namespace MiniEngine::Components
 		Vector3					   worldPosition;
 		Vector3					   rotation;
 
-#ifdef USING_OPENGL
+//#ifdef USING_OPENGL
 		unsigned int			  vaoId;
 		unsigned int			  stride;
-#endif
+//#endif
 	};
 }

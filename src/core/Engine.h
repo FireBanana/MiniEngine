@@ -1,15 +1,14 @@
 #pragma once
 
-#include <GLFW/glfw3.h>
 #include <unordered_map>
 #include <functional>
 
-#include "types/EngineTypes.h"
+#include "EngineTypes.h"
 #include "Entity.h"
 #include "IDriver.h"
 #include "IPlatform.h"
 #include "RenderableComponent.h"
-#include "utils/Color.h"
+#include "Color.h"
 #include "Material.h"
 #include "Mesh.h"
 #include "GlobalBufferRegistry.h"
