@@ -25,11 +25,16 @@ namespace Backend
 
 		inline const VkInstance& getInstance() const { return mInstance; }
 
-		void initialize();
+		void initialize(MiniEngine::Types::EngineInitParams& params);
 
 		void createInstance(
 			const std::vector<const char*>& requireInstanceExtensions,
 			const std::vector<const char*>&& requiredLayers);
+
+		void generateDevice();
+		void generateSwapchain();
+
+		inline void updateSurface(VkSurfaceKHR s) { mSurface = s; }
 
 		unsigned int createTexture(int width, int height, int channels, void* data, Texture::TextureType type) override;
 		unsigned int createUniformBlock(size_t dataSize, unsigned int bindIndex) const override;
@@ -46,10 +51,24 @@ namespace Backend
 
 	private:
 
+		MiniEngine::Types::EngineInitParams mParams;
+
 		VkInstance mInstance;
+		VkPhysicalDevice mActiveGpu;
+		VkSurfaceKHR mSurface;
+		VkDevice mActiveDevice;
+		VkQueue mActiveDeviceQueue;
+		VkSwapchainKHR mActiveSwapchain;
+		int32_t mActiveQueue{ -1 };
 
 		void enumerateInstanceExtensionProperties();
 		void enumerateInstanceLayerProperties();
+		void enumerateDeviceExtensionProperties();
+		void getPhysicalDevice();
+		void getPhysicalDeviceQueueFamily();
+		void createDevice(const std::vector<const char*>&& requiredExtensions);
+		void createSwapchain();
+		void createSwapchainImageViews();
 
 	};
 }

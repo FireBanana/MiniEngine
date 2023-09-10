@@ -59,7 +59,7 @@ target_include_directories(MiniEngine PUBLIC libs/glfw/include)
 
 # vulkan
 
-target_include_directories(MiniEngine PUBLIC $ENV{VULKAN_SDK}/include/)
+target_include_directories(MiniEngine PUBLIC $ENV{VULKAN_SDK}/Include/)
 
 # ======
 

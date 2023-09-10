@@ -35,6 +35,7 @@ namespace Backend
 		GLFWwindow* mWindow;
 		VkSurfaceKHR mSurface;
 		Engine* mEngine;
+		MiniEngine::Types::EngineInitParams mParams;
 
 		void createWindow(uint16_t width, uint16_t height);
 		void createDriver(MiniEngine::Types::EngineInitParams& params);
