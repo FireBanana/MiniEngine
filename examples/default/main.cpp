@@ -1,26 +1,31 @@
-#include "Engine.h"
-#include "Renderable.h"
-#include "Material.h"
-#include "Scene.h"
-#include "Texture.h"
+//#include "Engine.h"
+//#include "Renderable.h"
+//#include "Material.h"
+//#include "Scene.h"
+//#include "Texture.h"
 
 #include <thread>
 #include <iostream>
 #include <functional>
-#include <glm/glm.hpp>
+
+#include <vulkan/vulkan.h>
+#include "GlslCompiler.h"
+//#include <glm/glm.hpp>
 
 #define RESOLVE_PATH(path) DIR##path
 
 int main(void)
 {
-	MiniEngine::Types::EngineInitParams params{};
-	params.screenWidth = 1920;
-	params.screenHeight = 1080;
-	params.clearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
-	params.enablePostProcess = false;
-	MiniEngine::Engine engine{ params };
+	VkDevice l;
+	MiniTools::GlslCompiler::loadShader("", VK_SHADER_STAGE_INTERSECTION_BIT_NV, l);
+	//MiniEngine::Types::EngineInitParams params{};
+	//params.screenWidth = 1920;
+	//params.screenHeight = 1080;
+	//params.clearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+	//params.enablePostProcess = false;
+	//MiniEngine::Engine engine{ params };
 
-	auto scene = MiniEngine::Scene{ &engine };
+	//auto scene = MiniEngine::Scene{ &engine };
 
 	//auto meshEntity = scene.createEntity();
 	//auto skyBoxEntity = scene.createEntity();
@@ -125,5 +130,5 @@ int main(void)
 	//engine.addSlider("Metallic", &g, 0, 1, [&]() { material.materialProperties.set((int)MiniEngine::Material::PropertyType::Metallic, g); });
 	//engine.addCheckbox("post-process", params.enablePostProcess);
 
-	engine.execute(&scene); //move to separate thread
+	//engine.execute(&scene); //move to separate thread
 }

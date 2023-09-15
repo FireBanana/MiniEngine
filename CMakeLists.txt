@@ -63,16 +63,6 @@ target_include_directories(MiniEngine PUBLIC $ENV{VULKAN_SDK}/Include/)
 
 # ======
 
-# Add secondary tools
-
-add_subdirectory(tools/Loader)
-add_subdirectory(examples/default)
-
-target_include_directories(MiniEngine PUBLIC tools/Loader/src)
-target_link_libraries(MiniEngine Loader)
-
-#
-
 target_include_directories(MiniEngine PUBLIC src/)
 target_include_directories(MiniEngine PUBLIC src/components)
 target_include_directories(MiniEngine PUBLIC src/systems)
@@ -133,6 +123,12 @@ FetchContent_Declare(
 	GIT_TAG sdk-1.3.261.1
 )
 
+FetchContent_Declare(
+	glslang
+	GIT_REPOSITORY https://github.com/KhronosGroup/glslang
+	GIT_TAG main
+)
+
 FetchContent_GetProperties(glm)
 if(NOT glm_POPULATED)
   FetchContent_Populate(glm)
@@ -152,6 +148,11 @@ endif()
 FetchContent_GetProperties(volk)
 if(NOT volk_POPULATED)
   FetchContent_Populate(volk)
+endif()
+
+FetchContent_GetProperties(glslang)
+if(NOT glslang_POPULATED)
+  FetchContent_Populate(glslang)
 endif()
 
 target_include_directories(MiniEngine PUBLIC ${glm_SOURCE_DIR}/glm)
@@ -181,3 +182,19 @@ target_include_directories(IMGUI PUBLIC libs/glfw/include)
 target_include_directories(IMGUI PUBLIC ${imgui_SOURCE_DIR}/backends)
 target_include_directories(IMGUI PUBLIC ${imgui_SOURCE_DIR}/)
 target_link_libraries(MiniEngine IMGUI)
+
+target_include_directories(MiniEngine PUBLIC ${glslang_SOURCE_DIR}/glslang)
+
+# Add secondary tools
+
+add_subdirectory(tools/Loader)
+add_subdirectory(tools/GlslCompiler)
+add_subdirectory(examples/default)
+
+target_include_directories(MiniEngine PUBLIC tools/Loader/src)
+target_include_directories(MiniEngine PUBLIC tools/GlslCompiler/src)
+
+target_link_libraries(MiniEngine Loader)
+target_link_libraries(MiniEngine GlslCompiler)
+
+# ======

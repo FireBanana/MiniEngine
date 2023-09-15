@@ -4,6 +4,8 @@
 #include "VulkanHelper.h"
 #include "IDriver.h"
 
+constexpr VkFormat PREFERRED_FORMAT = VK_FORMAT_R16G16B16A16_SFLOAT;
+
 namespace MiniEngine
 {
 class Scene;
@@ -33,6 +35,8 @@ namespace Backend
 
 		void generateDevice();
 		void generateSwapchain();
+		void generateRenderPass();
+		void generatePipeline();
 
 		inline void updateSurface(VkSurfaceKHR s) { mSurface = s; }
 
@@ -59,7 +63,12 @@ namespace Backend
 		VkDevice mActiveDevice;
 		VkQueue mActiveDeviceQueue;
 		VkSwapchainKHR mActiveSwapchain;
+		VkRenderPass mDefaultRenderpass;
+		VkPipelineLayout mDefaultPipelineLayout;
+		VkPipeline mDefaultPipeline;
 		int32_t mActiveQueue{ -1 };
+
+		std::vector<VkImageView> mSwapchainImageViews;
 
 		void enumerateInstanceExtensionProperties();
 		void enumerateInstanceLayerProperties();
@@ -69,7 +78,10 @@ namespace Backend
 		void createDevice(const std::vector<const char*>&& requiredExtensions);
 		void createSwapchain();
 		void createSwapchainImageViews();
+		void createRenderPass();
+		void createPipeline();
 
+		void loadShaderModule();
 	};
 }
 }

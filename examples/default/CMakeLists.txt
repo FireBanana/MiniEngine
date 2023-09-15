@@ -5,4 +5,4 @@ set(SRCS main.cpp)
 
 add_executable(example-default ${SRCS})
 
-target_link_libraries(example-default MiniEngine)
+target_link_libraries(example-default PUBLIC MiniEngine)
