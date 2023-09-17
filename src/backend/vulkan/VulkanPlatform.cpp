@@ -47,6 +47,7 @@ void MiniEngine::Backend::VulkanPlatform::createWindow(uint16_t width, uint16_t 
     mDriver->generateDevice();
     mDriver->generateSwapchain();
     mDriver->generateRenderPass();
+    mDriver->generatePipeline();
 
     glfwMakeContextCurrent(mWindow);
     glfwSwapInterval(1);

@@ -185,6 +185,15 @@ target_link_libraries(MiniEngine IMGUI)
 
 target_include_directories(MiniEngine PUBLIC ${glslang_SOURCE_DIR}/glslang)
 
+set(ENABLE_SPVREMAPPER OFF CACHE BOOL "")
+set(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "")
+set(ENABLE_HLSL OFF CACHE BOOL "")
+set(ENABLE_OPT OFF CACHE BOOL "enable opt")
+set(BUILD_TESTING OFF CACHE BOOL "")
+set(BUILD_EXTERNAL OFF CACHE BOOL "")
+add_subdirectory(${glslang_SOURCE_DIR} ${glslang_BINARY_DIR})
+target_link_libraries(MiniEngine glslang OSDependent SPIRV glslang-default-resource-limits)
+
 # Add secondary tools
 
 add_subdirectory(tools/Loader)

@@ -33,6 +33,7 @@ VkShaderModule MiniTools::GlslCompiler::loadShader(std::string path, VkShaderSta
 	if (!shader.parse(GetDefaultResources(), 100, false, messageFilter))
 	{
 		auto shaderLog = std::string(shader.getInfoLog()) + "\n" + std::string(shader.getInfoDebugLog());
+		MiniEngine::Logger::print(shaderLog);
 		throw;
 	}
 
@@ -42,6 +43,7 @@ VkShaderModule MiniTools::GlslCompiler::loadShader(std::string path, VkShaderSta
 	if (!program.link(messageFilter))
 	{
 		auto shaderLog = std::string(shader.getInfoLog()) + "\n" + std::string(shader.getInfoDebugLog());
+		MiniEngine::Logger::print(shaderLog);
 		throw;
 	}
 
