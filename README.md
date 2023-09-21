@@ -8,6 +8,7 @@ This engine is still in active development.
 - PBR support based on Unreal Engine 4's study, including environment-based lighting
 - Simple textual API
 - Normal mapping
+- Basic gltf (glb) loader
 - Basic IMGUI support
 - FXAA
 
