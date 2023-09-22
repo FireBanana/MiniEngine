@@ -18,7 +18,7 @@ int main(void)
 	MiniEngine::Types::EngineInitParams params{};
 	params.screenWidth = 1920;
 	params.screenHeight = 1080;
-	params.clearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+	params.clearColor = { 1.0f, 0.0f, 0.0f, 0.0f };
 	params.enablePostProcess = false;
 	MiniEngine::Engine engine{ params };
 

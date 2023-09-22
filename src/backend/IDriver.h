@@ -8,6 +8,7 @@
 namespace MiniEngine
 {
 	class Shader;
+	class Scene;
 
 namespace Components
 {
@@ -41,6 +42,10 @@ namespace Backend
 
 		virtual void setupMesh(MiniEngine::Components::RenderableComponent* component) = 0;
 		virtual void setupSkybox(MiniEngine::Components::SkyboxComponent* skybox) = 0;
+
+		virtual void beginRenderpass() = 0;
+		virtual void endRenderpass() = 0;
+		virtual void draw(MiniEngine::Scene* scene) = 0;
 
 		virtual unsigned int loadShader(const char* path, ShaderType type) const = 0;
 

@@ -41,8 +41,8 @@ namespace Backend
 		void draw(MiniEngine::Scene* scene);
 		void finalBlit();
 
-		void beginRenderpass();
-		void endRenderpass();
+		void beginRenderpass() override;
+		void endRenderpass() override;
 
 		unsigned int loadShader(const char* path, ShaderType type) const override;
 		unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader) const override; //todo: create deleter

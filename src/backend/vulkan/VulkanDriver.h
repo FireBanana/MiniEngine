@@ -25,6 +25,16 @@ namespace Backend
 	{
 	public:
 
+		struct PerFrameData
+		{
+			VkImageView imageView;
+			VkFence imageFence;
+			VkCommandPool imageCommandPool;
+			VkCommandBuffer imageCommandBuffer;
+			VkSemaphore releaseSemaphore;
+			VkSemaphore acquireSemaphore;
+		};
+
 		inline const VkInstance& getInstance() const { return mInstance; }
 
 		void initialize(MiniEngine::Types::EngineInitParams& params);
@@ -46,6 +56,9 @@ namespace Backend
 		void registerUniformBlock(const char* blockName, const Shader* program, unsigned int layoutIndex) const override;
 		void setupMesh(MiniEngine::Components::RenderableComponent* component) override;
 		void setupSkybox(MiniEngine::Components::SkyboxComponent* skybox) override;
+		void beginRenderpass() override;
+		void endRenderpass() override;
+		void draw(MiniEngine::Scene* scene) override;
 		unsigned int loadShader(const char* path, ShaderType type) const override;
 		unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader) const override;
 		void useShaderProgram(unsigned int program) const override;
@@ -66,9 +79,11 @@ namespace Backend
 		VkRenderPass mDefaultRenderpass;
 		VkPipelineLayout mDefaultPipelineLayout;
 		VkPipeline mDefaultPipeline;
+		VkFormat mCurrentSwapchainFormat;
 		int32_t mActiveQueue{ -1 };
 
-		std::vector<VkImageView> mSwapchainImageViews;
+		std::vector<PerFrameData> mSwapchainPerImageData;
+		std::vector<VkFramebuffer> mFramebuffers;
 
 		void enumerateInstanceExtensionProperties();
 		void enumerateInstanceLayerProperties();
@@ -80,8 +95,10 @@ namespace Backend
 		void createSwapchainImageViews();
 		void createRenderPass();
 		void createPipeline();
+		void createFramebuffer();
 
 		void loadShaderModule();
+		void acquireNextImage(uint32_t* image);
 	};
 }
 }

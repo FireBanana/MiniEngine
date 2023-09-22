@@ -49,6 +49,7 @@ void MiniEngine::Backend::VulkanDriver::generateDevice()
 void MiniEngine::Backend::VulkanDriver::generateSwapchain()
 {
 	createSwapchain();
+	createSwapchainImageViews();
 }
 
 void MiniEngine::Backend::VulkanDriver::generateRenderPass()
@@ -59,6 +60,7 @@ void MiniEngine::Backend::VulkanDriver::generateRenderPass()
 void MiniEngine::Backend::VulkanDriver::generatePipeline()
 {
 	createPipeline();
+	createFramebuffer();
 }
 
 void MiniEngine::Backend::VulkanDriver::createInstance(
@@ -193,12 +195,12 @@ void MiniEngine::Backend::VulkanDriver::getPhysicalDeviceQueueFamily()
 
 void MiniEngine::Backend::VulkanDriver::createDevice(const std::vector<const char*>&& requiredExtensions)
 {
-	auto qPriority = 1.0f;
+	const float qPriority[] = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
 
 	VkDeviceQueueCreateInfo queueInfo{ VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
 	queueInfo.queueFamilyIndex = mActiveQueue;
-	queueInfo.queueCount = 1;
-	queueInfo.pQueuePriorities = &qPriority;
+	queueInfo.queueCount = 5;
+	queueInfo.pQueuePriorities = qPriority;
 
 	VkDeviceCreateInfo deviceInfo{ VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
 	deviceInfo.queueCreateInfoCount = 1;
@@ -209,7 +211,13 @@ void MiniEngine::Backend::VulkanDriver::createDevice(const std::vector<const cha
 	VK_CHECK( vkCreateDevice(mActiveGpu, &deviceInfo, nullptr, &mActiveDevice) );
 	volkLoadDevice(mActiveDevice);
 
+	// Getting first queue only
 	vkGetDeviceQueue(mActiveDevice, mActiveQueue, 0, &mActiveDeviceQueue);
+
+	VkPhysicalDeviceProperties deviceProps;
+	vkGetPhysicalDeviceProperties(mActiveGpu, &deviceProps);
+
+	MiniEngine::Logger::print("Device Name: {}, Driver Version: {}", deviceProps.deviceName, deviceProps.driverVersion);
 }
 
 void MiniEngine::Backend::VulkanDriver::createSwapchain()
@@ -228,11 +236,13 @@ void MiniEngine::Backend::VulkanDriver::createSwapchain()
 
 	if (iter == supportedFormatList.end())
 	{
-		MiniEngine::Logger::eprint("{} not found as a supported format", PREFERRED_FORMAT);
-		throw;
+		iter = supportedFormatList.begin();
+		MiniEngine::Logger::eprint("{} not found as a supported format. Defaulting to {}", PREFERRED_FORMAT, (*iter).format);
 	}
 
 	auto format = *iter;
+
+	mCurrentSwapchainFormat = format.format;
 
 	VkExtent2D swapchainSize;
 
@@ -244,6 +254,8 @@ void MiniEngine::Backend::VulkanDriver::createSwapchain()
 	else
 	{
 		swapchainSize = surfaceProperties.currentExtent;
+		mParams.screenHeight = swapchainSize.height;
+		mParams.screenWidth = swapchainSize.width;
 	}
 
 	VkPresentModeKHR swapchainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
@@ -281,6 +293,8 @@ void MiniEngine::Backend::VulkanDriver::createSwapchainImageViews()
 	std::vector<VkImage> swapchainImages(imageCount);
 	VK_CHECK(vkGetSwapchainImagesKHR(mActiveDevice, mActiveSwapchain, &imageCount, swapchainImages.data()));
 
+	mSwapchainPerImageData = std::vector<PerFrameData>(imageCount, PerFrameData{});
+
 	// Initialize a command pool per swapchain image
 	for (uint32_t i = 0; i < imageCount; ++i)
 	{
@@ -302,6 +316,10 @@ void MiniEngine::Backend::VulkanDriver::createSwapchainImageViews()
 		cmdBuffInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		cmdBuffInfo.commandBufferCount = 1;
 		VK_CHECK( vkAllocateCommandBuffers(mActiveDevice, &cmdBuffInfo, &commandBuffer) );
+
+		mSwapchainPerImageData[i].imageFence = fence;
+		mSwapchainPerImageData[i].imageCommandPool = commandPool;
+		mSwapchainPerImageData[i].imageCommandBuffer = commandBuffer;
 	}
 
 	// Create and image we can render to
@@ -311,7 +329,7 @@ void MiniEngine::Backend::VulkanDriver::createSwapchainImageViews()
 
 		VkImageViewCreateInfo viewInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
 		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		viewInfo.format = PREFERRED_FORMAT;
+		viewInfo.format = mCurrentSwapchainFormat;
 		viewInfo.image = swapchainImages[i];
 		viewInfo.subresourceRange.levelCount = 1;
 		viewInfo.subresourceRange.layerCount = 1;
@@ -322,14 +340,14 @@ void MiniEngine::Backend::VulkanDriver::createSwapchainImageViews()
 		viewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
 
 		VK_CHECK( vkCreateImageView(mActiveDevice, &viewInfo, nullptr, &imageView) );
-		mSwapchainImageViews.push_back(imageView);
+		mSwapchainPerImageData[i].imageView = imageView;
 	}
 }
 
 void MiniEngine::Backend::VulkanDriver::createRenderPass()
 {
 	VkAttachmentDescription attachment = { 0 };
-	attachment.format = PREFERRED_FORMAT;
+	attachment.format = mCurrentSwapchainFormat;
 	attachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -408,7 +426,7 @@ void MiniEngine::Backend::VulkanDriver::createPipeline()
 	shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
 	shaderStages[0].module =
 		MiniTools::GlslCompiler::loadShader(
-			RESOLVE_PATH("/shaders/deferred.vert"),
+			RESOLVE_PATH("/shaders/temp.vert"),
 			VK_SHADER_STAGE_VERTEX_BIT,
 			mActiveDevice);
 
@@ -418,7 +436,7 @@ void MiniEngine::Backend::VulkanDriver::createPipeline()
 	shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	shaderStages[1].module = 
 		MiniTools::GlslCompiler::loadShader(
-			RESOLVE_PATH("/shaders/deferred.frag"),
+			RESOLVE_PATH("/shaders/temp.frag"),
 			VK_SHADER_STAGE_FRAGMENT_BIT,
 			mActiveDevice);
 
@@ -440,11 +458,140 @@ void MiniEngine::Backend::VulkanDriver::createPipeline()
 	pipelineInfo.layout = mDefaultPipelineLayout;
 
 	VK_CHECK( vkCreateGraphicsPipelines(mActiveDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &mDefaultPipeline) );
+
+	vkDestroyShaderModule(mActiveDevice, shaderStages[0].module, nullptr);
+	vkDestroyShaderModule(mActiveDevice, shaderStages[1].module, nullptr);
+}
+
+void MiniEngine::Backend::VulkanDriver::createFramebuffer()
+{
+	for (auto& image : mSwapchainPerImageData)
+	{
+		VkFramebufferCreateInfo fbInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
+		fbInfo.renderPass = mDefaultRenderpass;
+		fbInfo.attachmentCount = 1;
+		fbInfo.pAttachments = &(image.imageView);
+		fbInfo.width = mParams.screenWidth;
+		fbInfo.height = mParams.screenHeight;
+		fbInfo.layers = 1;
+
+		VkFramebuffer frameBuffer;
+		VK_CHECK( vkCreateFramebuffer(mActiveDevice, &fbInfo, nullptr, &frameBuffer) );
+
+		mFramebuffers.push_back(frameBuffer);
+	}
 }
 
 void MiniEngine::Backend::VulkanDriver::loadShaderModule()
 {
 
+}
+
+void MiniEngine::Backend::VulkanDriver::acquireNextImage(uint32_t* image)
+{
+	//TODO need multiple semaphores
+	VkSemaphore acquireSemaphore;
+	VkSemaphoreCreateInfo semaphoreInfo { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+	VK_CHECK( vkCreateSemaphore(mActiveDevice, &semaphoreInfo, nullptr, &acquireSemaphore) );
+
+	VkResult res = vkAcquireNextImageKHR(mActiveDevice, mActiveSwapchain, UINT64_MAX, acquireSemaphore, VK_NULL_HANDLE, image);
+
+	mSwapchainPerImageData[*image].acquireSemaphore = acquireSemaphore;
+
+	if (res != VK_SUCCESS)
+	{
+		MiniEngine::Logger::eprint("Image not acquired");
+		return;
+	}
+
+	if (mSwapchainPerImageData[*image].imageFence != VK_NULL_HANDLE)
+	{
+		vkWaitForFences(mActiveDevice, 1, &(mSwapchainPerImageData[*image].imageFence), true, UINT64_MAX);
+		vkResetFences(mActiveDevice, 1, &(mSwapchainPerImageData[*image].imageFence));
+	}
+
+	if (mSwapchainPerImageData[*image].imageCommandPool != VK_NULL_HANDLE)
+	{
+		vkResetCommandPool(mActiveDevice, mSwapchainPerImageData[*image].imageCommandPool, 0);
+	}	
+}
+
+// ==== Interface ====
+
+void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
+{
+	uint32_t imgIndex;
+	acquireNextImage(&imgIndex);
+
+	VkFramebuffer fb = mFramebuffers[imgIndex];
+	VkCommandBuffer cmd = mSwapchainPerImageData[imgIndex].imageCommandBuffer;
+
+	VkCommandBufferBeginInfo beginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	vkBeginCommandBuffer(cmd, &beginInfo);
+
+	VkClearValue clearValue;
+	auto color = mParams.clearColor;
+	clearValue.color = { { color.r(), color.g(), color.b(), color.a() } };
+
+	VkRenderPassBeginInfo rpBeginInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+	rpBeginInfo.renderPass = mDefaultRenderpass;
+	rpBeginInfo.framebuffer = fb;
+	rpBeginInfo.renderArea.extent.width = mParams.screenWidth;
+	rpBeginInfo.renderArea.extent.height = mParams.screenHeight;
+	rpBeginInfo.clearValueCount = 1;
+	rpBeginInfo.pClearValues = &clearValue;
+
+	vkCmdBeginRenderPass(cmd, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mDefaultPipeline); //need to bind once?
+
+	VkViewport vp{};
+	vp.width = mParams.screenWidth;
+	vp.height = mParams.screenHeight;
+	vp.minDepth = 0.0f;
+	vp.maxDepth = 1.0f;
+
+	vkCmdSetViewport(cmd, 0, 1, &vp);
+	
+	VkRect2D scissor{};
+	scissor.extent.width = mParams.screenWidth;
+	scissor.extent.height = mParams.screenHeight;
+
+	vkCmdSetScissor(cmd, 0, 1, &scissor);
+	vkCmdDraw(cmd, 3, 1, 0, 0);
+	vkCmdEndRenderPass(cmd);
+
+	VK_CHECK( vkEndCommandBuffer(cmd) );
+
+	if (mSwapchainPerImageData[imgIndex].releaseSemaphore == VK_NULL_HANDLE)
+	{
+		VkSemaphoreCreateInfo semInfo { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+		VK_CHECK( vkCreateSemaphore(mActiveDevice, &semInfo, nullptr, &mSwapchainPerImageData[imgIndex].releaseSemaphore) );
+	}
+
+	VkPipelineStageFlags waitStageFlags { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+	VkSubmitInfo submitInfo { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &cmd;
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = &mSwapchainPerImageData[imgIndex].acquireSemaphore;
+	submitInfo.pWaitDstStageMask = &waitStageFlags;
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = &mSwapchainPerImageData[imgIndex].releaseSemaphore;
+
+	VK_CHECK( vkQueueSubmit(mActiveDeviceQueue, 1, &submitInfo, mSwapchainPerImageData[imgIndex].imageFence) );
+
+	// Present
+	VkPresentInfoKHR presentInfo { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = &mActiveSwapchain;
+	presentInfo.pImageIndices = &imgIndex;
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = &mSwapchainPerImageData[imgIndex].releaseSemaphore;
+
+	vkQueuePresentKHR(mActiveDeviceQueue, &presentInfo);
 }
 
 unsigned int MiniEngine::Backend::VulkanDriver::createTexture(int width, int height, int channels, void* data, Texture::TextureType type)
@@ -470,6 +617,15 @@ void MiniEngine::Backend::VulkanDriver::setupMesh(MiniEngine::Components::Render
 }
 
 void MiniEngine::Backend::VulkanDriver::setupSkybox(MiniEngine::Components::SkyboxComponent* skybox)
+{
+}
+
+void MiniEngine::Backend::VulkanDriver::beginRenderpass()
+{
+
+}
+
+void MiniEngine::Backend::VulkanDriver::endRenderpass()
 {
 }
 

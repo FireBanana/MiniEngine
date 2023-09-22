@@ -5,7 +5,7 @@ void MiniEngine::Backend::VulkanPlatform::initialize(MiniEngine::Types::EngineIn
     mParams = params;
 
     createDriver(params);
-    createWindow(params.screenWidth, params.screenWidth);
+    createWindow(params.screenWidth, params.screenHeight);
 }
 
 void MiniEngine::Backend::VulkanPlatform::createWindow(uint16_t width, uint16_t height)
@@ -66,6 +66,8 @@ void MiniEngine::Backend::VulkanPlatform::execute(Scene* scene)
 {
     while (!glfwWindowShouldClose(mWindow)) //run separate thread
     {
+        mDriver->draw(scene);
+
         glfwSwapBuffers(mWindow);
         glfwPollEvents();
     }
