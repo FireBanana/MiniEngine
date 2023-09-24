@@ -1,14 +1,27 @@
 #version 450 core
 
-layout (location = 0) in vec3 iPos;
-layout (location = 1) in vec2 iUv;
+precision mediump float;
 
-layout (location = 0) out vec2 fUv;
-layout (location = 1) out vec3 fPosition;
+layout(location = 0) out vec3 out_color;
+
+vec2 triangle_positions[6] = vec2[](
+    vec2(0.5, -0.5),
+    vec2(0.5, 0.5),
+    vec2(-0.5, 0.5),
+	vec2(-0.5, 0.5),
+    vec2(-0.5, -0.5),
+	vec2(0.5, -0.5)
+);
+
+vec3 triangle_colors[3] = vec3[](
+    vec3(1.0, 1.0, 0.0),
+    vec3(0.0, 1.0, 0.0),
+    vec3(1.0, 0.0, 1.0)
+);
 
 void main()
 {
-	fUv = vec2(1.);//iUv;
-	fPosition = vec3(1.);//iPos;
-	gl_Position = vec4(1.);//vec4(iPos,1.);
+    gl_Position = vec4(triangle_positions[gl_VertexIndex], 0.5, 1.0);
+
+    out_color = triangle_colors[gl_VertexIndex % 3];
 }

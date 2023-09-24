@@ -195,11 +195,11 @@ void MiniEngine::Backend::VulkanDriver::getPhysicalDeviceQueueFamily()
 
 void MiniEngine::Backend::VulkanDriver::createDevice(const std::vector<const char*>&& requiredExtensions)
 {
-	const float qPriority[] = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+	const float qPriority[] = { 1.0f };
 
 	VkDeviceQueueCreateInfo queueInfo{ VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
 	queueInfo.queueFamilyIndex = mActiveQueue;
-	queueInfo.queueCount = 5;
+	queueInfo.queueCount = 1;
 	queueInfo.pQueuePriorities = qPriority;
 
 	VkDeviceCreateInfo deviceInfo{ VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
@@ -559,7 +559,7 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 	scissor.extent.height = mParams.screenHeight;
 
 	vkCmdSetScissor(cmd, 0, 1, &scissor);
-	vkCmdDraw(cmd, 3, 1, 0, 0);
+	vkCmdDraw(cmd, 3, 5, 0, 0);
 	vkCmdEndRenderPass(cmd);
 
 	VK_CHECK( vkEndCommandBuffer(cmd) );
