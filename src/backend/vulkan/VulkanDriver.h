@@ -47,6 +47,8 @@ namespace Backend
 		void generateSwapchain();
 		void generateRenderPass();
 		void generatePipeline();
+		
+		void generateGbuffer();
 
 		inline void updateSurface(VkSurfaceKHR s) { mSurface = s; }
 

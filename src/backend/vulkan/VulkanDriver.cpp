@@ -63,6 +63,69 @@ void MiniEngine::Backend::VulkanDriver::generatePipeline()
 	createFramebuffer();
 }
 
+void MiniEngine::Backend::VulkanDriver::generateGbuffer()
+{
+	VkImageCreateInfo colorImageInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+	colorImageInfo.imageType = VK_IMAGE_TYPE_1D;
+	colorImageInfo.format = mCurrentSwapchainFormat;
+	colorImageInfo.extent.width = mParams.screenWidth;
+	colorImageInfo.extent.height = mParams.screenHeight;
+	colorImageInfo.extent.depth = 1;
+	colorImageInfo.arrayLayers = 1;
+	colorImageInfo.mipLevels = 1;
+	colorImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	colorImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+	colorImageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+	VkImageCreateInfo normalImageInfo{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+	normalImageInfo.imageType = VK_IMAGE_TYPE_1D;
+	normalImageInfo.format = mCurrentSwapchainFormat;
+	normalImageInfo.extent.width = mParams.screenWidth;
+	normalImageInfo.extent.height = mParams.screenHeight;
+	normalImageInfo.extent.depth = 1;
+	normalImageInfo.arrayLayers = 1;
+	normalImageInfo.mipLevels = 1;
+	normalImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	normalImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+	normalImageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+	VkImageCreateInfo positionImageInfo{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+	positionImageInfo.imageType = VK_IMAGE_TYPE_1D;
+	positionImageInfo.format = mCurrentSwapchainFormat;
+	positionImageInfo.extent.width = mParams.screenWidth;
+	positionImageInfo.extent.height = mParams.screenHeight;
+	positionImageInfo.extent.depth = 1;
+	positionImageInfo.arrayLayers = 1;
+	positionImageInfo.mipLevels = 1;
+	positionImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	positionImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+	positionImageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+	VkImageCreateInfo roughnessImageInfo{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+	roughnessImageInfo.imageType = VK_IMAGE_TYPE_1D;
+	roughnessImageInfo.format = mCurrentSwapchainFormat;
+	roughnessImageInfo.extent.width = mParams.screenWidth;
+	roughnessImageInfo.extent.height = mParams.screenHeight;
+	roughnessImageInfo.extent.depth = 1;
+	roughnessImageInfo.arrayLayers = 1;
+	roughnessImageInfo.mipLevels = 1;
+	roughnessImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	roughnessImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+	roughnessImageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+	VkMemoryAllocateInfo colorAllocateInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO };
+	VkMemoryRequirements colorReqs;
+	VkImage colorImage;
+	VkDeviceMemory colorMemory;
+
+	VK_CHECK( vkCreateImage(mActiveDevice, &colorImageInfo, nullptr, &colorImage) );
+	vkGetImageMemoryRequirements(mActiveDevice, colorImage, &colorReqs);
+	colorAllocateInfo.allocationSize = colorReqs.size;
+	colorAllocateInfo.memoryTypeIndex = ;
+	VK_CHECK( vkAllocateMemory(mActiveDevice, &colorAllocateInfo, nullptr, &colorMemory) );
+	VK_CHECK( vkBindImageMemory(mActiveDevice, colorImage, colorMemory, 0) );
+}
+
 void MiniEngine::Backend::VulkanDriver::createInstance(
 	const std::vector<const char*>& requireInstanceExtensions,
 	const std::vector<const char*>&& requiredLayers)
