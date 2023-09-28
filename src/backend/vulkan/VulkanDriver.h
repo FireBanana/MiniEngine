@@ -84,8 +84,11 @@ namespace Backend
 		VkFormat mCurrentSwapchainFormat;
 		int32_t mActiveQueue{ -1 };
 
+		VkPhysicalDeviceMemoryProperties mGpuMemoryProperties;
+
+		VkFramebuffer mFramebuffer;
 		std::vector<PerFrameData> mSwapchainPerImageData;
-		std::vector<VkFramebuffer> mFramebuffers;
+		std::array<VkImageView, 5> mFrameBufferAttachments;
 
 		void enumerateInstanceExtensionProperties();
 		void enumerateInstanceLayerProperties();
@@ -98,6 +101,9 @@ namespace Backend
 		void createRenderPass();
 		void createPipeline();
 		void createFramebuffer();
+		void createFramebufferAttachmentSampler();
+
+		VkImageView createImageAttachment(VkFormat imageFormat, VkImageUsageFlags imageBits);
 
 		void loadShaderModule();
 		void acquireNextImage(uint32_t* image);

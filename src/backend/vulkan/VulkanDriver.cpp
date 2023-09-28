@@ -11,19 +11,19 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugUtilsCallback(
 {
 
 	if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
-		MiniEngine::Logger::print("MiniVkVerbose: {}", pCallbackData->pMessage);
+		MiniEngine::Logger::print("MiniVkVerbose: {}\n", pCallbackData->pMessage);
 	}
 	else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
-		MiniEngine::Logger::print("MiniVkInfo: {}", pCallbackData->pMessage);
+		MiniEngine::Logger::print("MiniVkInfo: {}\n", pCallbackData->pMessage);
 	}
 	else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-		MiniEngine::Logger::wprint("MiniVkWarning: {}", pCallbackData->pMessage);
+		MiniEngine::Logger::wprint("MiniVkWarning: {}\n", pCallbackData->pMessage);
 	}
 	else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-		MiniEngine::Logger::eprint("MiniVkError: {}", pCallbackData->pMessage);
+		MiniEngine::Logger::eprint("MiniVkError: {}\n", pCallbackData->pMessage);
 	}
 	else
-		MiniEngine::Logger::eprint("UnknownVkError: {}", pCallbackData->pMessage);
+		MiniEngine::Logger::eprint("UnknownVkError: {}\n", pCallbackData->pMessage);
 
 	return VK_FALSE;
 }
@@ -65,65 +65,19 @@ void MiniEngine::Backend::VulkanDriver::generatePipeline()
 
 void MiniEngine::Backend::VulkanDriver::generateGbuffer()
 {
-	VkImageCreateInfo colorImageInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
-	colorImageInfo.imageType = VK_IMAGE_TYPE_1D;
-	colorImageInfo.format = mCurrentSwapchainFormat;
-	colorImageInfo.extent.width = mParams.screenWidth;
-	colorImageInfo.extent.height = mParams.screenHeight;
-	colorImageInfo.extent.depth = 1;
-	colorImageInfo.arrayLayers = 1;
-	colorImageInfo.mipLevels = 1;
-	colorImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-	colorImageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	auto colorImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+	auto positionImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+	auto normalImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+	auto roughnessImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+	auto depthImageView = createImageAttachment(VK_FORMAT_D24_UNORM_S8_UINT, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
-	VkImageCreateInfo normalImageInfo{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
-	normalImageInfo.imageType = VK_IMAGE_TYPE_1D;
-	normalImageInfo.format = mCurrentSwapchainFormat;
-	normalImageInfo.extent.width = mParams.screenWidth;
-	normalImageInfo.extent.height = mParams.screenHeight;
-	normalImageInfo.extent.depth = 1;
-	normalImageInfo.arrayLayers = 1;
-	normalImageInfo.mipLevels = 1;
-	normalImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-	normalImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-	normalImageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	mFrameBufferAttachments[0] = colorImageView;
+	mFrameBufferAttachments[1] = positionImageView;
+	mFrameBufferAttachments[2] = normalImageView;
+	mFrameBufferAttachments[3] = roughnessImageView;
+	mFrameBufferAttachments[4] = depthImageView;
 
-	VkImageCreateInfo positionImageInfo{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
-	positionImageInfo.imageType = VK_IMAGE_TYPE_1D;
-	positionImageInfo.format = mCurrentSwapchainFormat;
-	positionImageInfo.extent.width = mParams.screenWidth;
-	positionImageInfo.extent.height = mParams.screenHeight;
-	positionImageInfo.extent.depth = 1;
-	positionImageInfo.arrayLayers = 1;
-	positionImageInfo.mipLevels = 1;
-	positionImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-	positionImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-	positionImageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-	VkImageCreateInfo roughnessImageInfo{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
-	roughnessImageInfo.imageType = VK_IMAGE_TYPE_1D;
-	roughnessImageInfo.format = mCurrentSwapchainFormat;
-	roughnessImageInfo.extent.width = mParams.screenWidth;
-	roughnessImageInfo.extent.height = mParams.screenHeight;
-	roughnessImageInfo.extent.depth = 1;
-	roughnessImageInfo.arrayLayers = 1;
-	roughnessImageInfo.mipLevels = 1;
-	roughnessImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-	roughnessImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-	roughnessImageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-	VkMemoryAllocateInfo colorAllocateInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO };
-	VkMemoryRequirements colorReqs;
-	VkImage colorImage;
-	VkDeviceMemory colorMemory;
-
-	VK_CHECK( vkCreateImage(mActiveDevice, &colorImageInfo, nullptr, &colorImage) );
-	vkGetImageMemoryRequirements(mActiveDevice, colorImage, &colorReqs);
-	colorAllocateInfo.allocationSize = colorReqs.size;
-	colorAllocateInfo.memoryTypeIndex = ;
-	VK_CHECK( vkAllocateMemory(mActiveDevice, &colorAllocateInfo, nullptr, &colorMemory) );
-	VK_CHECK( vkBindImageMemory(mActiveDevice, colorImage, colorMemory, 0) );
+	createFramebufferAttachmentSampler();
 }
 
 void MiniEngine::Backend::VulkanDriver::createInstance(
@@ -219,10 +173,12 @@ void MiniEngine::Backend::VulkanDriver::getPhysicalDevice()
 	if (gpuCount < 1) { MiniEngine::Logger::eprint("No Vulkan device found"); throw; }
 
 	std::vector<VkPhysicalDevice> gpuList(gpuCount);
-	VK_CHECK(vkEnumeratePhysicalDevices(mInstance, &gpuCount, gpuList.data()));
+	VK_CHECK( vkEnumeratePhysicalDevices(mInstance, &gpuCount, gpuList.data()) );
 
 	// Only taking the first GPU found
 	mActiveGpu = gpuList[0];
+
+	vkGetPhysicalDeviceMemoryProperties(mActiveGpu, &mGpuMemoryProperties);
 }
 
 void MiniEngine::Backend::VulkanDriver::getPhysicalDeviceQueueFamily()
@@ -300,7 +256,7 @@ void MiniEngine::Backend::VulkanDriver::createSwapchain()
 	if (iter == supportedFormatList.end())
 	{
 		iter = supportedFormatList.begin();
-		MiniEngine::Logger::eprint("{} not found as a supported format. Defaulting to {}", PREFERRED_FORMAT, (*iter).format);
+		MiniEngine::Logger::wprint("{} not found as a supported format. Defaulting to {}", PREFERRED_FORMAT, (*iter).format);
 	}
 
 	auto format = *iter;
@@ -409,43 +365,82 @@ void MiniEngine::Backend::VulkanDriver::createSwapchainImageViews()
 
 void MiniEngine::Backend::VulkanDriver::createRenderPass()
 {
-	VkAttachmentDescription attachment = { 0 };
-	attachment.format = mCurrentSwapchainFormat;
-	attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	std::array<VkAttachmentDescription, 5> attachmentDescs = {};
 
-	VkAttachmentReference colorRef = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+	for (uint32_t i = 0; i < attachmentDescs.size(); ++i)
+	{
+		attachmentDescs[i].samples = VK_SAMPLE_COUNT_1_BIT;
+		attachmentDescs[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachmentDescs[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		attachmentDescs[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachmentDescs[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachmentDescs[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-	VkSubpassDescription subpass = { 0 };
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &colorRef;
+		if (i == attachmentDescs.size() - 1) // Depth target
+		{
+			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			attachmentDescs[i].format = VK_FORMAT_D24_UNORM_S8_UINT;
+		}
+		else
+		{
+			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			attachmentDescs[i].format = mCurrentSwapchainFormat;
+		}
+	}
 
-	VkSubpassDependency dependency = { 0 };
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	std::array<VkAttachmentReference, attachmentDescs.size() - 1> colorReferences = {};
+	VkAttachmentReference depthReference = {};
+
+	colorReferences[0] = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+	colorReferences[1] = { 1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+	colorReferences[2] = { 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+	colorReferences[3] = { 3, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+
+	depthReference.attachment = 4;
+	depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription subpassDesc = {};
+	subpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpassDesc.colorAttachmentCount = colorReferences.size();
+	subpassDesc.pColorAttachments = colorReferences.data();
+	subpassDesc.pDepthStencilAttachment = &depthReference;
+
+	std::array<VkSubpassDependency, 1> subpassDeps;
+	subpassDeps[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+	subpassDeps[0].dstSubpass = 0;
+	subpassDeps[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	subpassDeps[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	subpassDeps[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+	subpassDeps[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	subpassDeps[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	VkRenderPassCreateInfo rpInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
-	rpInfo.attachmentCount = 1;
-	rpInfo.pAttachments = &attachment;
+	rpInfo.attachmentCount = attachmentDescs.size();
+	rpInfo.pAttachments = attachmentDescs.data();
 	rpInfo.subpassCount = 1;
-	rpInfo.pSubpasses = &subpass;
+	rpInfo.pSubpasses = &subpassDesc;
 	rpInfo.dependencyCount = 1;
-	rpInfo.pDependencies = &dependency;
+	rpInfo.pDependencies = subpassDeps.data();
 
 	VK_CHECK( vkCreateRenderPass(mActiveDevice, &rpInfo, nullptr, &mDefaultRenderpass) );
 }
 
 void MiniEngine::Backend::VulkanDriver::createPipeline()
 {
+	// Descriptor Sets ===============================
+
+	VkDescriptorSetLayout defaultLayout;
+	VkDescriptorSetLayoutCreateInfo descriptorSetInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
+	descriptorSetInfo.bindingCount = 0;
+	descriptorSetInfo.pBindings = nullptr;
+
+	VK_CHECK(vkCreateDescriptorSetLayout(mActiveDevice, &descriptorSetInfo, nullptr, &defaultLayout));
+
+	// ===============================================
+
 	VkPipelineLayoutCreateInfo layoutInfo { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
+	layoutInfo.setLayoutCount = 1;
+	layoutInfo.pSetLayouts = &defaultLayout;
 	VK_CHECK( vkCreatePipelineLayout(mActiveDevice, &layoutInfo, nullptr, &mDefaultPipelineLayout) );
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
@@ -528,21 +523,96 @@ void MiniEngine::Backend::VulkanDriver::createPipeline()
 
 void MiniEngine::Backend::VulkanDriver::createFramebuffer()
 {
-	for (auto& image : mSwapchainPerImageData)
+	VkFramebufferCreateInfo fbInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
+	fbInfo.renderPass = mDefaultRenderpass;
+	fbInfo.attachmentCount = mFrameBufferAttachments.size();
+	fbInfo.pAttachments = mFrameBufferAttachments.data();
+	fbInfo.width = mParams.screenWidth;
+	fbInfo.height = mParams.screenHeight;
+	fbInfo.layers = 1;
+
+	VkFramebuffer frameBuffer;
+	VK_CHECK( vkCreateFramebuffer(mActiveDevice, &fbInfo, nullptr, &frameBuffer) );
+}
+
+void MiniEngine::Backend::VulkanDriver::createFramebufferAttachmentSampler()
+{
+	VkSampler colorSampler;
+
+	VkSamplerCreateInfo samplerInfo { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+	samplerInfo.magFilter = VK_FILTER_NEAREST;
+	samplerInfo.minFilter = VK_FILTER_NEAREST;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerInfo.mipLodBias = 0.0f;
+	samplerInfo.maxAnisotropy = 1.0f;
+	samplerInfo.minLod = 0.0f;
+	samplerInfo.maxLod = 1.0f;
+	samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+
+	VK_CHECK( vkCreateSampler(mActiveDevice, &samplerInfo, nullptr, &colorSampler) );
+}
+
+VkImageView MiniEngine::Backend::VulkanDriver::createImageAttachment(VkFormat imageFormat, VkImageUsageFlags imageBits)
+{
+	VkImageCreateInfo attachmentImageInfo{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+	attachmentImageInfo.imageType = VK_IMAGE_TYPE_1D;
+	attachmentImageInfo.format = imageFormat;
+	attachmentImageInfo.extent.width = mParams.screenWidth;
+	attachmentImageInfo.extent.height = mParams.screenHeight;
+	attachmentImageInfo.extent.depth = 1;
+	attachmentImageInfo.arrayLayers = 1;
+	attachmentImageInfo.mipLevels = 1;
+	attachmentImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	attachmentImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+	attachmentImageInfo.usage = imageBits;
+
+	VkMemoryAllocateInfo attachmentAllocateInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO };
+	VkMemoryRequirements attachmentMemReqs;
+	VkImage attachmentImage;
+	VkImageView attachmentImageView;
+	VkDeviceMemory attachmentMemory;
+
+	VK_CHECK(vkCreateImage(mActiveDevice, &attachmentImageInfo, nullptr, &attachmentImage));
+	vkGetImageMemoryRequirements(mActiveDevice, attachmentImage, &attachmentMemReqs);
+
+	// Get memory info
+
+	uint32_t index = 0;
+	auto typeBits = attachmentMemReqs.memoryTypeBits;
+
+	for (; index < mGpuMemoryProperties.memoryTypeCount; ++index)
 	{
-		VkFramebufferCreateInfo fbInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
-		fbInfo.renderPass = mDefaultRenderpass;
-		fbInfo.attachmentCount = 1;
-		fbInfo.pAttachments = &(image.imageView);
-		fbInfo.width = mParams.screenWidth;
-		fbInfo.height = mParams.screenHeight;
-		fbInfo.layers = 1;
+		if ((typeBits & 1) == 1)
+		{
+			if ((mGpuMemoryProperties.memoryTypes[index].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+				== VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+				break;
+		}
 
-		VkFramebuffer frameBuffer;
-		VK_CHECK( vkCreateFramebuffer(mActiveDevice, &fbInfo, nullptr, &frameBuffer) );
-
-		mFramebuffers.push_back(frameBuffer);
+		typeBits >>= 1;
 	}
+
+	attachmentAllocateInfo.allocationSize = attachmentMemReqs.size;
+	attachmentAllocateInfo.memoryTypeIndex = index;
+	VK_CHECK(vkAllocateMemory(mActiveDevice, &attachmentAllocateInfo, nullptr, &attachmentMemory));
+	VK_CHECK(vkBindImageMemory(mActiveDevice, attachmentImage, attachmentMemory, 0));
+
+	VkImageViewCreateInfo colorImageViewInfo{ VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+	colorImageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	colorImageViewInfo.format = mCurrentSwapchainFormat;
+	colorImageViewInfo.subresourceRange = {};
+	colorImageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	colorImageViewInfo.subresourceRange.baseMipLevel = 0;
+	colorImageViewInfo.subresourceRange.levelCount = 1;
+	colorImageViewInfo.subresourceRange.baseArrayLayer = 0;
+	colorImageViewInfo.subresourceRange.layerCount = 0;
+	colorImageViewInfo.image = attachmentImage;
+	VK_CHECK(vkCreateImageView(mActiveDevice, &colorImageViewInfo, nullptr, &attachmentImageView));
+
+	return attachmentImageView;
 }
 
 void MiniEngine::Backend::VulkanDriver::loadShaderModule()
@@ -586,7 +656,6 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 	uint32_t imgIndex;
 	acquireNextImage(&imgIndex);
 
-	VkFramebuffer fb = mFramebuffers[imgIndex];
 	VkCommandBuffer cmd = mSwapchainPerImageData[imgIndex].imageCommandBuffer;
 
 	VkCommandBufferBeginInfo beginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
@@ -600,7 +669,7 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 
 	VkRenderPassBeginInfo rpBeginInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 	rpBeginInfo.renderPass = mDefaultRenderpass;
-	rpBeginInfo.framebuffer = fb;
+	rpBeginInfo.framebuffer = mFramebuffer;
 	rpBeginInfo.renderArea.extent.width = mParams.screenWidth;
 	rpBeginInfo.renderArea.extent.height = mParams.screenHeight;
 	rpBeginInfo.clearValueCount = 1;
