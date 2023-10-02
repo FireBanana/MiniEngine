@@ -82,6 +82,7 @@ namespace Backend
 		VkPipelineLayout mDefaultPipelineLayout;
 		VkPipeline mDefaultPipeline;
 		VkFormat mCurrentSwapchainFormat;
+		VkFormat mCurrentSwapchainDepthFormat;
 		int32_t mActiveQueue{ -1 };
 
 		VkPhysicalDeviceMemoryProperties mGpuMemoryProperties;
@@ -103,7 +104,7 @@ namespace Backend
 		void createFramebuffer();
 		void createFramebufferAttachmentSampler();
 
-		VkImageView createImageAttachment(VkFormat imageFormat, VkImageUsageFlags imageBits);
+		VkImageView createImageAttachment(VkFormat imageFormat, VkImageUsageFlags imageBits, VkImageAspectFlags imageViewAspectFlags);
 
 		void loadShaderModule();
 		void acquireNextImage(uint32_t* image);

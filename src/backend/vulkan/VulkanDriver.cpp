@@ -65,11 +65,11 @@ void MiniEngine::Backend::VulkanDriver::generatePipeline()
 
 void MiniEngine::Backend::VulkanDriver::generateGbuffer()
 {
-	auto colorImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-	auto positionImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-	auto normalImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-	auto roughnessImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-	auto depthImageView = createImageAttachment(VK_FORMAT_D24_UNORM_S8_UINT, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+	auto colorImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+	auto positionImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+	auto normalImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+	auto roughnessImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+	auto depthImageView = createImageAttachment(mCurrentSwapchainDepthFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT);
 
 	mFrameBufferAttachments[0] = colorImageView;
 	mFrameBufferAttachments[1] = positionImageView;
@@ -263,6 +263,23 @@ void MiniEngine::Backend::VulkanDriver::createSwapchain()
 
 	mCurrentSwapchainFormat = format.format;
 
+	// Choose desired depth as well
+	constexpr VkFormat depthList[] = {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT};
+
+	mCurrentSwapchainDepthFormat = depthList[0];
+
+	for(auto dFormat : depthList)
+	{ 
+		VkFormatProperties dProps;
+		vkGetPhysicalDeviceFormatProperties(mActiveGpu, dFormat, &dProps);
+		
+		if (dProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
+		{
+			mCurrentSwapchainDepthFormat = dFormat;
+			break;
+		}
+	}
+
 	VkExtent2D swapchainSize;
 
 	if (surfaceProperties.currentExtent.width == 0xFFFFFFFF)
@@ -379,7 +396,7 @@ void MiniEngine::Backend::VulkanDriver::createRenderPass()
 		if (i == attachmentDescs.size() - 1) // Depth target
 		{
 			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-			attachmentDescs[i].format = VK_FORMAT_D24_UNORM_S8_UINT;
+			attachmentDescs[i].format = mCurrentSwapchainDepthFormat;
 		}
 		else
 		{
@@ -453,12 +470,14 @@ void MiniEngine::Backend::VulkanDriver::createPipeline()
 	rasterInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	rasterInfo.lineWidth = 1.0f;
 
-	VkPipelineColorBlendAttachmentState blendState{};
-	blendState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	VkPipelineColorBlendAttachmentState colorBlendState{};
+	colorBlendState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+
+	VkPipelineColorBlendAttachmentState blendList[] = { colorBlendState, colorBlendState, colorBlendState, colorBlendState };
 
 	VkPipelineColorBlendStateCreateInfo colorBlendInfo { VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO };
-	colorBlendInfo.attachmentCount = 1;
-	colorBlendInfo.pAttachments = &blendState;
+	colorBlendInfo.attachmentCount = 4;
+	colorBlendInfo.pAttachments = blendList;
 
 	VkPipelineViewportStateCreateInfo viewportInfo { VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO };
 	viewportInfo.viewportCount = 1;
@@ -531,8 +550,7 @@ void MiniEngine::Backend::VulkanDriver::createFramebuffer()
 	fbInfo.height = mParams.screenHeight;
 	fbInfo.layers = 1;
 
-	VkFramebuffer frameBuffer;
-	VK_CHECK( vkCreateFramebuffer(mActiveDevice, &fbInfo, nullptr, &frameBuffer) );
+	VK_CHECK( vkCreateFramebuffer(mActiveDevice, &fbInfo, nullptr, &mFramebuffer) );
 }
 
 void MiniEngine::Backend::VulkanDriver::createFramebufferAttachmentSampler()
@@ -555,10 +573,10 @@ void MiniEngine::Backend::VulkanDriver::createFramebufferAttachmentSampler()
 	VK_CHECK( vkCreateSampler(mActiveDevice, &samplerInfo, nullptr, &colorSampler) );
 }
 
-VkImageView MiniEngine::Backend::VulkanDriver::createImageAttachment(VkFormat imageFormat, VkImageUsageFlags imageBits)
+VkImageView MiniEngine::Backend::VulkanDriver::createImageAttachment(VkFormat imageFormat, VkImageUsageFlags imageBits, VkImageAspectFlags imageViewAspectFlags)
 {
 	VkImageCreateInfo attachmentImageInfo{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
-	attachmentImageInfo.imageType = VK_IMAGE_TYPE_1D;
+	attachmentImageInfo.imageType = VK_IMAGE_TYPE_2D;
 	attachmentImageInfo.format = imageFormat;
 	attachmentImageInfo.extent.width = mParams.screenWidth;
 	attachmentImageInfo.extent.height = mParams.screenHeight;
@@ -569,7 +587,7 @@ VkImageView MiniEngine::Backend::VulkanDriver::createImageAttachment(VkFormat im
 	attachmentImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 	attachmentImageInfo.usage = imageBits;
 
-	VkMemoryAllocateInfo attachmentAllocateInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO };
+	VkMemoryAllocateInfo attachmentAllocateInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
 	VkMemoryRequirements attachmentMemReqs;
 	VkImage attachmentImage;
 	VkImageView attachmentImageView;
@@ -602,13 +620,13 @@ VkImageView MiniEngine::Backend::VulkanDriver::createImageAttachment(VkFormat im
 
 	VkImageViewCreateInfo colorImageViewInfo{ VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
 	colorImageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	colorImageViewInfo.format = mCurrentSwapchainFormat;
+	colorImageViewInfo.format = imageFormat;
 	colorImageViewInfo.subresourceRange = {};
-	colorImageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	colorImageViewInfo.subresourceRange.aspectMask = imageViewAspectFlags;
 	colorImageViewInfo.subresourceRange.baseMipLevel = 0;
 	colorImageViewInfo.subresourceRange.levelCount = 1;
 	colorImageViewInfo.subresourceRange.baseArrayLayer = 0;
-	colorImageViewInfo.subresourceRange.layerCount = 0;
+	colorImageViewInfo.subresourceRange.layerCount = 1;
 	colorImageViewInfo.image = attachmentImage;
 	VK_CHECK(vkCreateImageView(mActiveDevice, &colorImageViewInfo, nullptr, &attachmentImageView));
 
