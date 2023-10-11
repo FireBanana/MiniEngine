@@ -388,7 +388,7 @@ void MiniEngine::Backend::VulkanDriver::createRenderPass()
 	{
 		attachmentDescs[i].samples = VK_SAMPLE_COUNT_1_BIT;
 		attachmentDescs[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachmentDescs[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		attachmentDescs[i].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachmentDescs[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachmentDescs[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachmentDescs[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -423,12 +423,12 @@ void MiniEngine::Backend::VulkanDriver::createRenderPass()
 	subpassDesc.pDepthStencilAttachment = &depthReference;
 
 	std::array<VkSubpassDependency, 1> subpassDeps;
-	subpassDeps[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-	subpassDeps[0].dstSubpass = 0;
+	subpassDeps[0].srcSubpass = 0;
+	subpassDeps[0].dstSubpass = VK_SUBPASS_EXTERNAL;
 	subpassDeps[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	subpassDeps[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	subpassDeps[0].dstStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 	subpassDeps[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	subpassDeps[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	subpassDeps[0].dstAccessMask = 0;
 	subpassDeps[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	VkRenderPassCreateInfo rpInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
@@ -643,6 +643,7 @@ void MiniEngine::Backend::VulkanDriver::acquireNextImage(uint32_t* image)
 	//TODO need multiple semaphores
 	VkSemaphore acquireSemaphore;
 	VkSemaphoreCreateInfo semaphoreInfo { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+
 	VK_CHECK( vkCreateSemaphore(mActiveDevice, &semaphoreInfo, nullptr, &acquireSemaphore) );
 
 	VkResult res = vkAcquireNextImageKHR(mActiveDevice, mActiveSwapchain, UINT64_MAX, acquireSemaphore, VK_NULL_HANDLE, image);
@@ -681,17 +682,21 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 
 	vkBeginCommandBuffer(cmd, &beginInfo);
 
-	VkClearValue clearValue;
+	VkClearValue clearValue{};
 	auto color = mParams.clearColor;
 	clearValue.color = { { color.r(), color.g(), color.b(), color.a() } };
+	clearValue.depthStencil.depth = 0;
+	clearValue.depthStencil.stencil = 0;
+
+	VkClearValue clearValues[] = { clearValue, clearValue, clearValue, clearValue, clearValue };
 
 	VkRenderPassBeginInfo rpBeginInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 	rpBeginInfo.renderPass = mDefaultRenderpass;
 	rpBeginInfo.framebuffer = mFramebuffer;
 	rpBeginInfo.renderArea.extent.width = mParams.screenWidth;
 	rpBeginInfo.renderArea.extent.height = mParams.screenHeight;
-	rpBeginInfo.clearValueCount = 1;
-	rpBeginInfo.pClearValues = &clearValue;
+	rpBeginInfo.clearValueCount = 5;
+	rpBeginInfo.pClearValues = clearValues;
 
 	vkCmdBeginRenderPass(cmd, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mDefaultPipeline); //need to bind once?
