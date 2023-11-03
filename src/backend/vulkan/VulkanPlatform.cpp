@@ -1,4 +1,5 @@
 #include "VulkanPlatform.h"
+#include "VulkanRenderDoc.h"
 
 void MiniEngine::Backend::VulkanPlatform::initialize(MiniEngine::Types::EngineInitParams& params, Engine* engine)
 {
@@ -37,6 +38,8 @@ void MiniEngine::Backend::VulkanPlatform::createWindow(uint16_t width, uint16_t 
 #ifdef GRAPHICS_DEBUG
     extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     mDriver->createInstance(extensions, { "VK_LAYER_KHRONOS_validation" });
+
+    VulkanRenderDoc::initRenderDoc();
 #else
     mDriver->createInstance(extensions, { });
 #endif

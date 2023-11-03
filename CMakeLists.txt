@@ -9,6 +9,7 @@ set(CMAKE_RUNTIME_LIBRARY_DIRECTORY bin/)
 
 set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*")
 set(CMAKE_CXX_STANDARD 17)
+set(GRAPHICS_DEBUG ON)
 
 set(USING_OPENGL false)
 
@@ -22,7 +23,9 @@ else()
 	add_compile_definitions(VK_USE_PLATFORM_WIN32_KHR)
 endif()
 
-add_compile_definitions(GRAPHICS_DEBUG)
+if(GRAPHICS_DEBUG)
+	add_compile_definitions(GRAPHICS_DEBUG)
+endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -72,6 +75,10 @@ target_include_directories(MiniEngine PUBLIC src/backend/opengl)
 target_include_directories(MiniEngine PUBLIC src/core)
 target_include_directories(MiniEngine PUBLIC src/core/utils)
 target_include_directories(MiniEngine PUBLIC src/core/types)
+
+if(GRAPHICS_DEBUG)
+	target_include_directories(MiniEngine PUBLIC $ENV{RENDERDOC}/) # Make sure RenderDoc installation is added to env var(RENDERDOC)
+endif()
 
 if(MSVC)
   target_compile_options(MiniEngine PRIVATE /W4 /external:anglebrackets)

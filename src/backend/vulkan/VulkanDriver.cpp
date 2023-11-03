@@ -1,5 +1,6 @@
 #include "VulkanDriver.h"
 #include "GlslCompiler.h"
+#include "VulkanRenderDoc.h"
 
 #define RESOLVE_PATH(path) DIR##path
 
@@ -395,12 +396,12 @@ void MiniEngine::Backend::VulkanDriver::createRenderPass()
 
 		if (i == attachmentDescs.size() - 1) // Depth target
 		{
-			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;//VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			attachmentDescs[i].format = mCurrentSwapchainDepthFormat;
 		}
 		else
 		{
-			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;//VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 			attachmentDescs[i].format = mCurrentSwapchainFormat;
 		}
 	}
@@ -641,10 +642,11 @@ void MiniEngine::Backend::VulkanDriver::loadShaderModule()
 void MiniEngine::Backend::VulkanDriver::acquireNextImage(uint32_t* image)
 {
 	//TODO need multiple semaphores
-	VkSemaphore acquireSemaphore;
+	static VkSemaphore acquireSemaphore = VK_NULL_HANDLE;
 	VkSemaphoreCreateInfo semaphoreInfo { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
 
-	VK_CHECK( vkCreateSemaphore(mActiveDevice, &semaphoreInfo, nullptr, &acquireSemaphore) );
+	if (acquireSemaphore == VK_NULL_HANDLE)
+		VK_CHECK( vkCreateSemaphore(mActiveDevice, &semaphoreInfo, nullptr, &acquireSemaphore) );
 
 	VkResult res = vkAcquireNextImageKHR(mActiveDevice, mActiveSwapchain, UINT64_MAX, acquireSemaphore, VK_NULL_HANDLE, image);
 
@@ -665,7 +667,7 @@ void MiniEngine::Backend::VulkanDriver::acquireNextImage(uint32_t* image)
 	if (mSwapchainPerImageData[*image].imageCommandPool != VK_NULL_HANDLE)
 	{
 		vkResetCommandPool(mActiveDevice, mSwapchainPerImageData[*image].imageCommandPool, 0);
-	}	
+	}
 }
 
 // ==== Interface ====
