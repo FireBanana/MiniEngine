@@ -99,7 +99,7 @@ namespace Backend
 		void createDevice(const std::vector<const char*>&& requiredExtensions);
 		void createSwapchain();
 		void createSwapchainImageViews();
-		void createRenderPass();
+		void createGBufferRenderPass();
 		void createPipeline();
 		void createFramebuffer();
 		void createFramebufferAttachmentSampler();

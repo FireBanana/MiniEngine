@@ -55,7 +55,7 @@ void MiniEngine::Backend::VulkanDriver::generateSwapchain()
 
 void MiniEngine::Backend::VulkanDriver::generateRenderPass()
 {
-	createRenderPass();
+	createGBufferRenderPass();
 }
 
 void MiniEngine::Backend::VulkanDriver::generatePipeline()
@@ -72,7 +72,7 @@ void MiniEngine::Backend::VulkanDriver::generateGbuffer()
 	auto roughnessImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
 	auto depthImageView = createImageAttachment(mCurrentSwapchainDepthFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT);
 
-	mFrameBufferAttachments[0] = colorImageView;
+	mFrameBufferAttachments[0] = mSwapchainPerImageData[0].imageView;//colorImageView;
 	mFrameBufferAttachments[1] = positionImageView;
 	mFrameBufferAttachments[2] = normalImageView;
 	mFrameBufferAttachments[3] = roughnessImageView;
@@ -381,27 +381,32 @@ void MiniEngine::Backend::VulkanDriver::createSwapchainImageViews()
 	}
 }
 
-void MiniEngine::Backend::VulkanDriver::createRenderPass()
+void MiniEngine::Backend::VulkanDriver::createGBufferRenderPass()
 {
-	std::array<VkAttachmentDescription, 5> attachmentDescs = {};
+	std::array<VkAttachmentDescription, 6> attachmentDescs = {};
 
 	for (uint32_t i = 0; i < attachmentDescs.size(); ++i)
 	{
 		attachmentDescs[i].samples = VK_SAMPLE_COUNT_1_BIT;
 		attachmentDescs[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachmentDescs[i].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachmentDescs[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		attachmentDescs[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachmentDescs[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachmentDescs[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 		if (i == attachmentDescs.size() - 1) // Depth target
 		{
-			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;//VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			attachmentDescs[i].format = mCurrentSwapchainDepthFormat;
+		}
+		else if (i == 0) // Swapchain target
+		{
+			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+			attachmentDescs[i].format = mCurrentSwapchainFormat;
 		}
 		else
 		{
-			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;//VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 			attachmentDescs[i].format = mCurrentSwapchainFormat;
 		}
 	}
@@ -413,31 +418,51 @@ void MiniEngine::Backend::VulkanDriver::createRenderPass()
 	colorReferences[1] = { 1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 	colorReferences[2] = { 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 	colorReferences[3] = { 3, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+	colorReferences[4] = { 4, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 
-	depthReference.attachment = 4;
+	depthReference.attachment = 5;
 	depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-	VkSubpassDescription subpassDesc = {};
-	subpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpassDesc.colorAttachmentCount = colorReferences.size();
-	subpassDesc.pColorAttachments = colorReferences.data();
-	subpassDesc.pDepthStencilAttachment = &depthReference;
+	// ========= Subpasses ==========
 
-	std::array<VkSubpassDependency, 1> subpassDeps;
-	subpassDeps[0].srcSubpass = 0;
-	subpassDeps[0].dstSubpass = VK_SUBPASS_EXTERNAL;
+	std::array<VkSubpassDescription, 2> subpassDesc = {};
+	subpassDesc[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpassDesc[0].colorAttachmentCount = colorReferences.size();
+	subpassDesc[0].pColorAttachments = colorReferences.data();
+	subpassDesc[0].pDepthStencilAttachment = &depthReference;
+
+	subpassDesc[1].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpassDesc[1].colorAttachmentCount = 1;
+	subpassDesc[1].pColorAttachments = &colorReferences[0];
+	subpassDesc[1].pDepthStencilAttachment = &depthReference;
+	subpassDesc[1].inputAttachmentCount = 1;
+	subpassDesc[1].pInputAttachments = &colorReferences[1];
+	
+	// ==============================
+
+	std::array<VkSubpassDependency, 2> subpassDeps;
+	subpassDeps[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+	subpassDeps[0].dstSubpass = 0;
 	subpassDeps[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	subpassDeps[0].dstStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	subpassDeps[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	subpassDeps[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	subpassDeps[0].dstAccessMask = 0;
+	subpassDeps[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	subpassDeps[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	subpassDeps[1].srcSubpass = 0;
+	subpassDeps[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+	subpassDeps[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	subpassDeps[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	subpassDeps[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	subpassDeps[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+	subpassDeps[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	VkRenderPassCreateInfo rpInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
 	rpInfo.attachmentCount = attachmentDescs.size();
 	rpInfo.pAttachments = attachmentDescs.data();
-	rpInfo.subpassCount = 1;
-	rpInfo.pSubpasses = &subpassDesc;
-	rpInfo.dependencyCount = 1;
+	rpInfo.subpassCount = 2;
+	rpInfo.pSubpasses = subpassDesc.data();
+	rpInfo.dependencyCount = 2;
 	rpInfo.pDependencies = subpassDeps.data();
 
 	VK_CHECK( vkCreateRenderPass(mActiveDevice, &rpInfo, nullptr, &mDefaultRenderpass) );
