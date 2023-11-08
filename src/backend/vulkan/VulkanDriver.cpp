@@ -570,7 +570,7 @@ void MiniEngine::Backend::VulkanDriver::createPipeline()
 	pipelineInfo.pDynamicState = &dynamicInfo;
 
 	pipelineInfo.renderPass = mDefaultRenderpass;
-	pipelineInfo.subpass = 1;
+	pipelineInfo.subpass = 0;
 	pipelineInfo.layout = mDefaultPipelineLayout;
 
 	VK_CHECK( vkCreateGraphicsPipelines(mActiveDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &mDefaultPipeline) );
