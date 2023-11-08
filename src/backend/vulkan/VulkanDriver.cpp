@@ -66,17 +66,19 @@ void MiniEngine::Backend::VulkanDriver::generatePipeline()
 
 void MiniEngine::Backend::VulkanDriver::generateGbuffer()
 {
-	auto colorImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
-	auto positionImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
-	auto normalImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
-	auto roughnessImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
-	auto depthImageView = createImageAttachment(mCurrentSwapchainDepthFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT);
+	auto colorImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+	auto positionImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+	auto normalImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+	auto roughnessImageView = createImageAttachment(mCurrentSwapchainFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+	auto depthImageView = createImageAttachment(mCurrentSwapchainDepthFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT);
 
-	mFrameBufferAttachments[0] = mSwapchainPerImageData[0].imageView;//colorImageView;
-	mFrameBufferAttachments[1] = positionImageView;
-	mFrameBufferAttachments[2] = normalImageView;
-	mFrameBufferAttachments[3] = roughnessImageView;
-	mFrameBufferAttachments[4] = depthImageView;
+	// 0 is swapchain image
+	mFrameBufferAttachments[0] = mSwapchainPerImageData[0].imageView;
+	mFrameBufferAttachments[1] = colorImageView;
+	mFrameBufferAttachments[2] = positionImageView;
+	mFrameBufferAttachments[3] = normalImageView;
+	mFrameBufferAttachments[4] = roughnessImageView;
+	mFrameBufferAttachments[5] = depthImageView;
 
 	createFramebufferAttachmentSampler();
 }
@@ -423,7 +425,7 @@ void MiniEngine::Backend::VulkanDriver::createGBufferRenderPass()
 	depthReference.attachment = 5;
 	depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-	// ========= Subpasses ==========
+	// ============== Subpasses ===============
 
 	std::array<VkSubpassDescription, 2> subpassDesc = {};
 	subpassDesc[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -435,34 +437,44 @@ void MiniEngine::Backend::VulkanDriver::createGBufferRenderPass()
 	subpassDesc[1].colorAttachmentCount = 1;
 	subpassDesc[1].pColorAttachments = &colorReferences[0];
 	subpassDesc[1].pDepthStencilAttachment = &depthReference;
-	subpassDesc[1].inputAttachmentCount = 1;
+	subpassDesc[1].inputAttachmentCount = 4;
 	subpassDesc[1].pInputAttachments = &colorReferences[1];
 	
-	// ==============================
+	// ========= Subpass Dependencies ==========
 
-	std::array<VkSubpassDependency, 2> subpassDeps;
+	std::array<VkSubpassDependency, 3> subpassDeps;
+	// Making sure depth target written to before writing to it again
 	subpassDeps[0].srcSubpass = VK_SUBPASS_EXTERNAL;
 	subpassDeps[0].dstSubpass = 0;
-	subpassDeps[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	subpassDeps[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	subpassDeps[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	subpassDeps[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	subpassDeps[0].srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	subpassDeps[0].dstStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	subpassDeps[0].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+	subpassDeps[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	subpassDeps[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
+	// Transition input attachment from color to input read
 	subpassDeps[1].srcSubpass = 0;
-	subpassDeps[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+	subpassDeps[1].dstSubpass = 1;
 	subpassDeps[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	subpassDeps[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	subpassDeps[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	subpassDeps[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+	subpassDeps[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	subpassDeps[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	subpassDeps[1].dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
 	subpassDeps[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	subpassDeps[2].srcSubpass = 0;
+	subpassDeps[2].dstSubpass = VK_SUBPASS_EXTERNAL;
+	subpassDeps[2].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	subpassDeps[2].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	subpassDeps[2].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	subpassDeps[2].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+	subpassDeps[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	VkRenderPassCreateInfo rpInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
 	rpInfo.attachmentCount = attachmentDescs.size();
 	rpInfo.pAttachments = attachmentDescs.data();
-	rpInfo.subpassCount = 2;
+	rpInfo.subpassCount = subpassDesc.size();
 	rpInfo.pSubpasses = subpassDesc.data();
-	rpInfo.dependencyCount = 2;
+	rpInfo.dependencyCount = subpassDeps.size();
 	rpInfo.pDependencies = subpassDeps.data();
 
 	VK_CHECK( vkCreateRenderPass(mActiveDevice, &rpInfo, nullptr, &mDefaultRenderpass) );
@@ -499,10 +511,10 @@ void MiniEngine::Backend::VulkanDriver::createPipeline()
 	VkPipelineColorBlendAttachmentState colorBlendState{};
 	colorBlendState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
-	VkPipelineColorBlendAttachmentState blendList[] = { colorBlendState, colorBlendState, colorBlendState, colorBlendState };
+	VkPipelineColorBlendAttachmentState blendList[] = { colorBlendState, colorBlendState, colorBlendState, colorBlendState, colorBlendState };
 
 	VkPipelineColorBlendStateCreateInfo colorBlendInfo { VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO };
-	colorBlendInfo.attachmentCount = 4;
+	colorBlendInfo.attachmentCount = 5;
 	colorBlendInfo.pAttachments = blendList;
 
 	VkPipelineViewportStateCreateInfo viewportInfo { VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO };
@@ -558,6 +570,7 @@ void MiniEngine::Backend::VulkanDriver::createPipeline()
 	pipelineInfo.pDynamicState = &dynamicInfo;
 
 	pipelineInfo.renderPass = mDefaultRenderpass;
+	pipelineInfo.subpass = 1;
 	pipelineInfo.layout = mDefaultPipelineLayout;
 
 	VK_CHECK( vkCreateGraphicsPipelines(mActiveDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &mDefaultPipeline) );
@@ -702,6 +715,8 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 	uint32_t imgIndex;
 	acquireNextImage(&imgIndex);
 
+	mFrameBufferAttachments[0] = mSwapchainPerImageData[imgIndex].imageView;
+	
 	VkCommandBuffer cmd = mSwapchainPerImageData[imgIndex].imageCommandBuffer;
 
 	VkCommandBufferBeginInfo beginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
@@ -715,14 +730,14 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 	clearValue.depthStencil.depth = 0;
 	clearValue.depthStencil.stencil = 0;
 
-	VkClearValue clearValues[] = { clearValue, clearValue, clearValue, clearValue, clearValue };
+	VkClearValue clearValues[] = { clearValue, clearValue, clearValue, clearValue, clearValue, clearValue };
 
 	VkRenderPassBeginInfo rpBeginInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 	rpBeginInfo.renderPass = mDefaultRenderpass;
 	rpBeginInfo.framebuffer = mFramebuffer;
 	rpBeginInfo.renderArea.extent.width = mParams.screenWidth;
 	rpBeginInfo.renderArea.extent.height = mParams.screenHeight;
-	rpBeginInfo.clearValueCount = 5;
+	rpBeginInfo.clearValueCount = 6;
 	rpBeginInfo.pClearValues = clearValues;
 
 	vkCmdBeginRenderPass(cmd, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);

@@ -89,7 +89,7 @@ namespace Backend
 
 		VkFramebuffer mFramebuffer;
 		std::vector<PerFrameData> mSwapchainPerImageData;
-		std::array<VkImageView, 5> mFrameBufferAttachments;
+		std::array<VkImageView, 6> mFrameBufferAttachments;
 
 		void enumerateInstanceExtensionProperties();
 		void enumerateInstanceLayerProperties();
