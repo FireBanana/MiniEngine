@@ -55,12 +55,13 @@ void MiniEngine::Backend::VulkanDriver::generateSwapchain()
 
 void MiniEngine::Backend::VulkanDriver::generateRenderPass()
 {
-	createGBufferRenderPass();
+	createRenderPasses();
 }
 
-void MiniEngine::Backend::VulkanDriver::generatePipeline()
+void MiniEngine::Backend::VulkanDriver::generatePipelines()
 {
-	createPipeline();
+	createGBufferPipeline();
+	createLightingPipeline();
 	createFramebuffer();
 }
 
@@ -315,7 +316,7 @@ void MiniEngine::Backend::VulkanDriver::createSwapchain()
 	swapchainInfo.imageExtent.height = swapchainSize.height;
 	swapchainInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 	swapchainInfo.imageArrayLayers = 1;
-	swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
 	swapchainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	swapchainInfo.compositeAlpha = composite;
 	swapchainInfo.presentMode = swapchainPresentMode;
@@ -383,7 +384,7 @@ void MiniEngine::Backend::VulkanDriver::createSwapchainImageViews()
 	}
 }
 
-void MiniEngine::Backend::VulkanDriver::createGBufferRenderPass()
+void MiniEngine::Backend::VulkanDriver::createRenderPasses()
 {
 	std::array<VkAttachmentDescription, 6> attachmentDescs = {};
 
@@ -414,6 +415,8 @@ void MiniEngine::Backend::VulkanDriver::createGBufferRenderPass()
 	}
 
 	std::array<VkAttachmentReference, attachmentDescs.size() - 1> colorReferences = {};
+	std::array<VkAttachmentReference, attachmentDescs.size() - 1> inputReferences = {};
+
 	VkAttachmentReference depthReference = {};
 
 	colorReferences[0] = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
@@ -421,6 +424,12 @@ void MiniEngine::Backend::VulkanDriver::createGBufferRenderPass()
 	colorReferences[2] = { 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 	colorReferences[3] = { 3, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 	colorReferences[4] = { 4, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+
+	inputReferences[0] = { 0, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+	inputReferences[1] = { 1, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+	inputReferences[2] = { 2, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+	inputReferences[3] = { 3, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+	inputReferences[4] = { 4, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 
 	depthReference.attachment = 5;
 	depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -437,8 +446,8 @@ void MiniEngine::Backend::VulkanDriver::createGBufferRenderPass()
 	subpassDesc[1].colorAttachmentCount = 1;
 	subpassDesc[1].pColorAttachments = &colorReferences[0];
 	subpassDesc[1].pDepthStencilAttachment = &depthReference;
-	subpassDesc[1].inputAttachmentCount = 4;
-	subpassDesc[1].pInputAttachments = &colorReferences[1];
+	subpassDesc[1].inputAttachmentCount = 5;
+	subpassDesc[1].pInputAttachments = inputReferences.data();
 	
 	// ========= Subpass Dependencies ==========
 
@@ -480,7 +489,7 @@ void MiniEngine::Backend::VulkanDriver::createGBufferRenderPass()
 	VK_CHECK( vkCreateRenderPass(mActiveDevice, &rpInfo, nullptr, &mDefaultRenderpass) );
 }
 
-void MiniEngine::Backend::VulkanDriver::createPipeline()
+void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 {
 	// Descriptor Sets ===============================
 
@@ -494,9 +503,10 @@ void MiniEngine::Backend::VulkanDriver::createPipeline()
 	// ===============================================
 
 	VkPipelineLayoutCreateInfo layoutInfo { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
+	VkPipelineLayout pipelineLayout;
 	layoutInfo.setLayoutCount = 1;
 	layoutInfo.pSetLayouts = &defaultLayout;
-	VK_CHECK( vkCreatePipelineLayout(mActiveDevice, &layoutInfo, nullptr, &mDefaultPipelineLayout) );
+	VK_CHECK( vkCreatePipelineLayout(mActiveDevice, &layoutInfo, nullptr, &pipelineLayout) );
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
 
@@ -571,9 +581,109 @@ void MiniEngine::Backend::VulkanDriver::createPipeline()
 
 	pipelineInfo.renderPass = mDefaultRenderpass;
 	pipelineInfo.subpass = 0;
-	pipelineInfo.layout = mDefaultPipelineLayout;
+	pipelineInfo.layout = pipelineLayout;
 
-	VK_CHECK( vkCreateGraphicsPipelines(mActiveDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &mDefaultPipeline) );
+	VK_CHECK( vkCreateGraphicsPipelines(mActiveDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &mGbufferPipeline) );
+
+	vkDestroyShaderModule(mActiveDevice, shaderStages[0].module, nullptr);
+	vkDestroyShaderModule(mActiveDevice, shaderStages[1].module, nullptr);
+}
+
+void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
+{
+	// Descriptor Sets ===============================
+
+	VkDescriptorSetLayout defaultLayout;
+	VkDescriptorSetLayoutCreateInfo descriptorSetInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
+	descriptorSetInfo.bindingCount = 0;
+	descriptorSetInfo.pBindings = nullptr;
+
+	VK_CHECK(vkCreateDescriptorSetLayout(mActiveDevice, &descriptorSetInfo, nullptr, &defaultLayout));
+
+	// ===============================================
+
+	VkPipelineLayoutCreateInfo layoutInfo{ VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
+	VkPipelineLayout pipelineLayout;
+	layoutInfo.setLayoutCount = 1;
+	layoutInfo.pSetLayouts = &defaultLayout;
+	VK_CHECK(vkCreatePipelineLayout(mActiveDevice, &layoutInfo, nullptr, &pipelineLayout));
+
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo{ VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
+
+	VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{ VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO };
+	inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+	VkPipelineRasterizationStateCreateInfo rasterInfo{ VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO };
+	rasterInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+	rasterInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterInfo.lineWidth = 1.0f;
+
+	VkPipelineColorBlendAttachmentState colorBlendState{};
+	colorBlendState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+
+	VkPipelineColorBlendAttachmentState blendList[] = { colorBlendState };
+
+	VkPipelineColorBlendStateCreateInfo colorBlendInfo{ VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO };
+	colorBlendInfo.attachmentCount = 1;
+	colorBlendInfo.pAttachments = blendList;
+
+	VkPipelineViewportStateCreateInfo viewportInfo{ VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO };
+	viewportInfo.viewportCount = 1;
+	viewportInfo.scissorCount = 1;
+
+	VkPipelineDepthStencilStateCreateInfo depthStencilInfo{ VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO };
+	depthStencilInfo.depthTestEnable = true;
+	depthStencilInfo.depthWriteEnable = true;
+
+	VkPipelineMultisampleStateCreateInfo multiSampleInfo{ VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO };
+	multiSampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+	// Change to static
+	std::array<VkDynamicState, 2> dynamics { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+
+	VkPipelineDynamicStateCreateInfo dynamicInfo{ VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO };
+	dynamicInfo.pDynamicStates = dynamics.data();
+	dynamicInfo.dynamicStateCount = static_cast<uint32_t>(dynamics.size());
+
+	std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages{};
+
+	shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+	shaderStages[0].module =
+		MiniTools::GlslCompiler::loadShader(
+			RESOLVE_PATH("/shaders/temp.vert"),
+			VK_SHADER_STAGE_VERTEX_BIT,
+			mActiveDevice);
+
+	shaderStages[0].pName = "main";
+
+	shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	shaderStages[1].module =
+		MiniTools::GlslCompiler::loadShader(
+			RESOLVE_PATH("/shaders/temp.frag"),
+			VK_SHADER_STAGE_FRAGMENT_BIT,
+			mActiveDevice);
+
+	shaderStages[1].pName = "main";
+
+	VkGraphicsPipelineCreateInfo pipelineInfo{ VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
+	pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
+	pipelineInfo.pStages = shaderStages.data();
+	pipelineInfo.pVertexInputState = &vertexInputInfo;
+	pipelineInfo.pInputAssemblyState = &inputAssemblyInfo;
+	pipelineInfo.pRasterizationState = &rasterInfo;
+	pipelineInfo.pColorBlendState = &colorBlendInfo;
+	pipelineInfo.pMultisampleState = &multiSampleInfo;
+	pipelineInfo.pViewportState = &viewportInfo;
+	pipelineInfo.pDepthStencilState = &depthStencilInfo;
+	pipelineInfo.pDynamicState = &dynamicInfo;
+
+	pipelineInfo.renderPass = mDefaultRenderpass;
+	pipelineInfo.subpass = 1;
+	pipelineInfo.layout = pipelineLayout;
+
+	VK_CHECK(vkCreateGraphicsPipelines(mActiveDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &mLightingPipeline));
 
 	vkDestroyShaderModule(mActiveDevice, shaderStages[0].module, nullptr);
 	vkDestroyShaderModule(mActiveDevice, shaderStages[1].module, nullptr);
@@ -741,7 +851,7 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 	rpBeginInfo.pClearValues = clearValues;
 
 	vkCmdBeginRenderPass(cmd, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mDefaultPipeline); //need to bind once?
+	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mGbufferPipeline);
 
 	VkViewport vp{};
 	vp.width = mParams.screenWidth;
@@ -757,6 +867,10 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 
 	vkCmdSetScissor(cmd, 0, 1, &scissor);
 	vkCmdDraw(cmd, 3, 5, 0, 0);
+
+	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mLightingPipeline);
+	vkCmdDraw(cmd, 3, 5, 0, 0);
+
 	vkCmdEndRenderPass(cmd);
 
 	VK_CHECK( vkEndCommandBuffer(cmd) );

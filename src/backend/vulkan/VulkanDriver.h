@@ -46,7 +46,7 @@ namespace Backend
 		void generateDevice();
 		void generateSwapchain();
 		void generateRenderPass();
-		void generatePipeline();
+		void generatePipelines();
 		
 		void generateGbuffer();
 
@@ -79,8 +79,8 @@ namespace Backend
 		VkQueue mActiveDeviceQueue;
 		VkSwapchainKHR mActiveSwapchain;
 		VkRenderPass mDefaultRenderpass;
-		VkPipelineLayout mDefaultPipelineLayout;
-		VkPipeline mDefaultPipeline;
+		VkPipeline mGbufferPipeline;
+		VkPipeline mLightingPipeline;
 		VkFormat mCurrentSwapchainFormat;
 		VkFormat mCurrentSwapchainDepthFormat;
 		int32_t mActiveQueue{ -1 };
@@ -99,8 +99,9 @@ namespace Backend
 		void createDevice(const std::vector<const char*>&& requiredExtensions);
 		void createSwapchain();
 		void createSwapchainImageViews();
-		void createGBufferRenderPass();
-		void createPipeline();
+		void createRenderPasses();
+		void createGBufferPipeline();
+		void createLightingPipeline();
 		void createFramebuffer();
 		void createFramebufferAttachmentSampler();
 
