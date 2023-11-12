@@ -691,15 +691,28 @@ void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
 
 void MiniEngine::Backend::VulkanDriver::createFramebuffer()
 {
-	VkFramebufferCreateInfo fbInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
-	fbInfo.renderPass = mDefaultRenderpass;
-	fbInfo.attachmentCount = mFrameBufferAttachments.size();
-	fbInfo.pAttachments = mFrameBufferAttachments.data();
-	fbInfo.width = mParams.screenWidth;
-	fbInfo.height = mParams.screenHeight;
-	fbInfo.layers = 1;
+	for (auto i = 0; i < mSwapchainPerImageData.size(); ++i)
+	{
+		VkFramebuffer fBuffer;
 
-	VK_CHECK( vkCreateFramebuffer(mActiveDevice, &fbInfo, nullptr, &mFramebuffer) );
+		//copy attachments
+		std::vector<VkImageView> framebufferAttachments{mFrameBufferAttachments.size()};
+		std::copy(mFrameBufferAttachments.begin(), mFrameBufferAttachments.end(), framebufferAttachments.begin());
+
+		framebufferAttachments[0] = mSwapchainPerImageData[i].imageView;
+
+		VkFramebufferCreateInfo fbInfo{ VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
+		fbInfo.renderPass = mDefaultRenderpass;
+		fbInfo.attachmentCount = framebufferAttachments.size();
+		fbInfo.pAttachments = framebufferAttachments.data();
+		fbInfo.width = mParams.screenWidth;
+		fbInfo.height = mParams.screenHeight;
+		fbInfo.layers = 1;
+
+		VK_CHECK(vkCreateFramebuffer(mActiveDevice, &fbInfo, nullptr, &fBuffer));
+
+		mFramebuffers.push_back(fBuffer);
+	}
 }
 
 void MiniEngine::Backend::VulkanDriver::createFramebufferAttachmentSampler()
@@ -824,8 +837,6 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 {
 	uint32_t imgIndex;
 	acquireNextImage(&imgIndex);
-
-	mFrameBufferAttachments[0] = mSwapchainPerImageData[imgIndex].imageView;
 	
 	VkCommandBuffer cmd = mSwapchainPerImageData[imgIndex].imageCommandBuffer;
 
@@ -844,7 +855,7 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 
 	VkRenderPassBeginInfo rpBeginInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 	rpBeginInfo.renderPass = mDefaultRenderpass;
-	rpBeginInfo.framebuffer = mFramebuffer;
+	rpBeginInfo.framebuffer = mFramebuffers[imgIndex];
 	rpBeginInfo.renderArea.extent.width = mParams.screenWidth;
 	rpBeginInfo.renderArea.extent.height = mParams.screenHeight;
 	rpBeginInfo.clearValueCount = 6;
@@ -867,6 +878,8 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 
 	vkCmdSetScissor(cmd, 0, 1, &scissor);
 	vkCmdDraw(cmd, 3, 5, 0, 0);
+
+	vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
 
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mLightingPipeline);
 	vkCmdDraw(cmd, 3, 5, 0, 0);

@@ -87,8 +87,8 @@ namespace Backend
 
 		VkPhysicalDeviceMemoryProperties mGpuMemoryProperties;
 
-		VkFramebuffer mFramebuffer;
-		std::vector<PerFrameData> mSwapchainPerImageData;
+		std::vector<VkFramebuffer> mFramebuffers;
+		std::vector<PerFrameData>  mSwapchainPerImageData;
 		std::array<VkImageView, 6> mFrameBufferAttachments;
 
 		void enumerateInstanceExtensionProperties();
