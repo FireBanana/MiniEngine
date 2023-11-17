@@ -405,6 +405,7 @@ void MiniEngine::Backend::VulkanDriver::createRenderPasses()
 		else if (i == 0) // Swapchain target
 		{
 			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+			attachmentDescs[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 			attachmentDescs[i].format = mCurrentSwapchainFormat;
 		}
 		else
@@ -446,45 +447,53 @@ void MiniEngine::Backend::VulkanDriver::createRenderPasses()
 	subpassDesc[1].colorAttachmentCount = 1;
 	subpassDesc[1].pColorAttachments = &colorReferences[0];
 	subpassDesc[1].pDepthStencilAttachment = &depthReference;
-	subpassDesc[1].inputAttachmentCount = 5;
-	subpassDesc[1].pInputAttachments = inputReferences.data();
+	subpassDesc[1].inputAttachmentCount = 4;
+	subpassDesc[1].pInputAttachments = &inputReferences[1];
 	
 	// ========= Subpass Dependencies ==========
 
-	std::array<VkSubpassDependency, 3> subpassDeps;
-	// Making sure depth target written to before writing to it again
-	subpassDeps[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-	subpassDeps[0].dstSubpass = 0;
-	subpassDeps[0].srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-	subpassDeps[0].dstStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-	subpassDeps[0].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-	subpassDeps[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-	subpassDeps[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+	std::array<VkSubpassDependency, 4> dependencies;
+	// This makes sure that writes to the depth image are done before we try to write to it again
+	dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependencies[0].dstSubpass = 0;
+	dependencies[0].srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	dependencies[0].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	dependencies[0].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+	dependencies[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-	// Transition input attachment from color to input read
-	subpassDeps[1].srcSubpass = 0;
-	subpassDeps[1].dstSubpass = 1;
-	subpassDeps[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	subpassDeps[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	subpassDeps[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	subpassDeps[1].dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
-	subpassDeps[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+	dependencies[1].srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependencies[1].dstSubpass = 0;
+	dependencies[1].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[1].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[1].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[1].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-	subpassDeps[2].srcSubpass = 0;
-	subpassDeps[2].dstSubpass = VK_SUBPASS_EXTERNAL;
-	subpassDeps[2].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	subpassDeps[2].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	subpassDeps[2].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	subpassDeps[2].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	subpassDeps[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+	// This dependency transitions the input attachment from color attachment to input attachment read
+	dependencies[2].srcSubpass = 0;
+	dependencies[2].dstSubpass = 1;
+	dependencies[2].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[2].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	dependencies[2].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[2].dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+	dependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	dependencies[3].srcSubpass = 1;
+	dependencies[3].dstSubpass = VK_SUBPASS_EXTERNAL;
+	dependencies[3].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[3].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[3].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[3].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[3].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	VkRenderPassCreateInfo rpInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
 	rpInfo.attachmentCount = attachmentDescs.size();
 	rpInfo.pAttachments = attachmentDescs.data();
 	rpInfo.subpassCount = subpassDesc.size();
 	rpInfo.pSubpasses = subpassDesc.data();
-	rpInfo.dependencyCount = subpassDeps.size();
-	rpInfo.pDependencies = subpassDeps.data();
+	rpInfo.dependencyCount = dependencies.size();
+	rpInfo.pDependencies = dependencies.data();
 
 	VK_CHECK( vkCreateRenderPass(mActiveDevice, &rpInfo, nullptr, &mDefaultRenderpass) );
 }
@@ -534,6 +543,8 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 	VkPipelineDepthStencilStateCreateInfo depthStencilInfo { VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO };
 	depthStencilInfo.depthTestEnable = true;
 	depthStencilInfo.depthWriteEnable = true;
+	depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+	depthStencilInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
 
 	VkPipelineMultisampleStateCreateInfo multiSampleInfo { VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO };
 	multiSampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
@@ -632,8 +643,8 @@ void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
 	viewportInfo.scissorCount = 1;
 
 	VkPipelineDepthStencilStateCreateInfo depthStencilInfo{ VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO };
-	depthStencilInfo.depthTestEnable = true;
-	depthStencilInfo.depthWriteEnable = true;
+	depthStencilInfo.depthTestEnable = false;
+	depthStencilInfo.depthWriteEnable = false;
 
 	VkPipelineMultisampleStateCreateInfo multiSampleInfo{ VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO };
 	multiSampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
@@ -845,13 +856,13 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 
 	vkBeginCommandBuffer(cmd, &beginInfo);
 
-	VkClearValue clearValue{};
+	VkClearValue colorClearValue{}, depthClearValue{};
 	auto color = mParams.clearColor;
-	clearValue.color = { { color.r(), color.g(), color.b(), color.a() } };
-	clearValue.depthStencil.depth = 0;
-	clearValue.depthStencil.stencil = 0;
+	colorClearValue.color = { { color.r(), color.g(), color.b(), color.a() } };
 
-	VkClearValue clearValues[] = { clearValue, clearValue, clearValue, clearValue, clearValue, clearValue };
+	depthClearValue.depthStencil = { 1.0f, 0u };
+
+	VkClearValue clearValues[] = { colorClearValue, colorClearValue, colorClearValue, colorClearValue, colorClearValue, depthClearValue };
 
 	VkRenderPassBeginInfo rpBeginInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 	rpBeginInfo.renderPass = mDefaultRenderpass;
