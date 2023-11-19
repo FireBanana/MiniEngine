@@ -1,6 +1,7 @@
 #include "VulkanDriver.h"
 #include "GlslCompiler.h"
 #include "VulkanRenderDoc.h"
+#include "VulkanPipelineBuilder.h"
 
 #define RESOLVE_PATH(path) DIR##path
 
@@ -771,20 +772,7 @@ VkImageView MiniEngine::Backend::VulkanDriver::createImageAttachment(VkFormat im
 
 	// Get memory info
 
-	uint32_t index = 0;
-	auto typeBits = attachmentMemReqs.memoryTypeBits;
-
-	for (; index < mGpuMemoryProperties.memoryTypeCount; ++index)
-	{
-		if ((typeBits & 1) == 1)
-		{
-			if ((mGpuMemoryProperties.memoryTypes[index].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-				== VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-				break;
-		}
-
-		typeBits >>= 1;
-	}
+	uint32_t index = getMemoryTypeIndex(&attachmentMemReqs);
 
 	attachmentAllocateInfo.allocationSize = attachmentMemReqs.size;
 	attachmentAllocateInfo.memoryTypeIndex = index;
@@ -840,6 +828,26 @@ void MiniEngine::Backend::VulkanDriver::acquireNextImage(uint32_t* image)
 	{
 		vkResetCommandPool(mActiveDevice, mSwapchainPerImageData[*image].imageCommandPool, 0);
 	}
+}
+
+uint32_t MiniEngine::Backend::VulkanDriver::getMemoryTypeIndex(const VkMemoryRequirements* memReqs)
+{
+	uint32_t index = 0;
+	auto typeBits = memReqs->memoryTypeBits;
+
+	for (; index < mGpuMemoryProperties.memoryTypeCount; ++index)
+	{
+		if ((typeBits & 1) == 1)
+		{
+			if ((mGpuMemoryProperties.memoryTypes[index].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+				== VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+				break;
+		}
+
+		typeBits >>= 1;
+	}
+
+	return index;
 }
 
 // ==== Interface ====
@@ -931,6 +939,46 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 
 unsigned int MiniEngine::Backend::VulkanDriver::createTexture(int width, int height, int channels, void* data, Texture::TextureType type)
 {
+	VkImage image;
+	VkDeviceMemory mem;
+	VkImageView imageView;
+
+	VkImageCreateInfo createInfo{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+	createInfo.imageType = VK_IMAGE_TYPE_2D;
+	createInfo.extent.width = width;
+	createInfo.extent.height = height;
+	createInfo.extent.depth = 1;
+	createInfo.mipLevels = 1;
+	createInfo.arrayLayers = 1;
+	createInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+	createInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+	VK_CHECK( vkCreateImage(mActiveDevice, &createInfo, nullptr, &image) );
+
+	VkMemoryAllocateInfo memAllocInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
+	VkMemoryRequirements memReqs{};
+
+	vkGetImageMemoryRequirements(mActiveDevice, image, &memReqs);
+
+	memAllocInfo.allocationSize = memReqs.size;
+	memAllocInfo.memoryTypeIndex = getMemoryTypeIndex(&memReqs);
+
+	VK_CHECK( vkAllocateMemory(mActiveDevice, &memAllocInfo, nullptr, &mem) );
+	VK_CHECK( vkBindImageMemory(mActiveDevice, image, mem, 0) );
+
+	// Image view
+	VkImageViewCreateInfo imageViewInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+	imageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	imageViewInfo.format = mCurrentSwapchainFormat;
+	imageViewInfo.subresourceRange = {};
+	imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageViewInfo.subresourceRange.levelCount = 1;
+	imageViewInfo.subresourceRange.layerCount = 1;
+	imageViewInfo.image = image;
+
+	VK_CHECK( vkCreateImageView(mActiveDevice, &imageViewInfo, nullptr, &imageView) );
+
 	return 0;
 }
 

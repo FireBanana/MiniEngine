@@ -109,6 +109,7 @@ namespace Backend
 
 		void loadShaderModule();
 		void acquireNextImage(uint32_t* image);
+		uint32_t getMemoryTypeIndex(const VkMemoryRequirements* memReqs);
 	};
 }
 }
