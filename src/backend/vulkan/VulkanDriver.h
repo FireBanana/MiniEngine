@@ -3,6 +3,7 @@
 #include <vector>
 #include "VulkanHelper.h"
 #include "IDriver.h"
+#include "VulkanPipelineBuilder.h"
 
 constexpr VkFormat PREFERRED_FORMAT = VK_FORMAT_R16G16B16A16_SFLOAT;
 
@@ -72,6 +73,8 @@ namespace Backend
 
 		MiniEngine::Types::EngineInitParams mParams;
 
+		std::unique_ptr<VulkanPipelineBuilder> mPipelineBuilder;
+
 		VkInstance mInstance;
 		VkPhysicalDevice mActiveGpu;
 		VkSurfaceKHR mSurface;
@@ -84,7 +87,6 @@ namespace Backend
 		VkFormat mCurrentSwapchainFormat;
 		VkFormat mCurrentSwapchainDepthFormat;
 		int32_t mActiveQueue{ -1 };
-
 		VkPhysicalDeviceMemoryProperties mGpuMemoryProperties;
 
 		std::vector<VkFramebuffer> mFramebuffers;

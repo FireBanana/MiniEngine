@@ -61,6 +61,8 @@ void MiniEngine::Backend::VulkanDriver::generateRenderPass()
 
 void MiniEngine::Backend::VulkanDriver::generatePipelines()
 {
+	mPipelineBuilder = std::make_unique<VulkanPipelineBuilder>(mActiveDevice);
+
 	createGBufferPipeline();
 	createLightingPipeline();
 	createFramebuffer();
@@ -501,32 +503,13 @@ void MiniEngine::Backend::VulkanDriver::createRenderPasses()
 
 void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 {
-	// Descriptor Sets ===============================
-
-	VkDescriptorSetLayout defaultLayout;
-	VkDescriptorSetLayoutCreateInfo descriptorSetInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
-	descriptorSetInfo.bindingCount = 0;
-	descriptorSetInfo.pBindings = nullptr;
-
-	VK_CHECK(vkCreateDescriptorSetLayout(mActiveDevice, &descriptorSetInfo, nullptr, &defaultLayout));
-
-	// ===============================================
-
-	VkPipelineLayoutCreateInfo layoutInfo { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
-	VkPipelineLayout pipelineLayout;
-	layoutInfo.setLayoutCount = 1;
-	layoutInfo.pSetLayouts = &defaultLayout;
-	VK_CHECK( vkCreatePipelineLayout(mActiveDevice, &layoutInfo, nullptr, &pipelineLayout) );
-
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
-
-	VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo { VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO };
-	inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
-	VkPipelineRasterizationStateCreateInfo rasterInfo { VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO };
-	rasterInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
-	rasterInfo.lineWidth = 1.0f;
+	auto pipelineLayout = mPipelineBuilder->createEmptyPipelineLayout();
+	auto vertexInputInfo = mPipelineBuilder->createEmptyPipelineVertexInputState();
+	auto inputAssemblyInfo = mPipelineBuilder->createDefaultInputAssemblyState();
+	auto rasterInfo = mPipelineBuilder->createDefaultRasterState();
+	auto viewportInfo = mPipelineBuilder->createDefaultPipelineViewportState();
+	auto multiSampleInfo = mPipelineBuilder->createDefaultPipelineMultisampleState();
+	auto shaderStages = mPipelineBuilder->createDefaultVertFragShaderStage(RESOLVE_PATH("/shaders/temp.vert"), RESOLVE_PATH("/shaders/temp.frag"));
 
 	VkPipelineColorBlendAttachmentState colorBlendState{};
 	colorBlendState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -537,18 +520,11 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 	colorBlendInfo.attachmentCount = 5;
 	colorBlendInfo.pAttachments = blendList;
 
-	VkPipelineViewportStateCreateInfo viewportInfo { VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO };
-	viewportInfo.viewportCount = 1;
-	viewportInfo.scissorCount = 1;
-
 	VkPipelineDepthStencilStateCreateInfo depthStencilInfo { VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO };
 	depthStencilInfo.depthTestEnable = true;
 	depthStencilInfo.depthWriteEnable = true;
 	depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 	depthStencilInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
-
-	VkPipelineMultisampleStateCreateInfo multiSampleInfo { VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO };
-	multiSampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
 	// Change to static
 	std::array<VkDynamicState, 2> dynamics { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
@@ -556,28 +532,6 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 	VkPipelineDynamicStateCreateInfo dynamicInfo { VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO };
 	dynamicInfo.pDynamicStates = dynamics.data();
 	dynamicInfo.dynamicStateCount = static_cast<uint32_t>(dynamics.size());
-
-	std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages{};
-
-	shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	shaderStages[0].module =
-		MiniTools::GlslCompiler::loadShader(
-			RESOLVE_PATH("/shaders/temp.vert"),
-			VK_SHADER_STAGE_VERTEX_BIT,
-			mActiveDevice);
-
-	shaderStages[0].pName = "main";
-
-	shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	shaderStages[1].module = 
-		MiniTools::GlslCompiler::loadShader(
-			RESOLVE_PATH("/shaders/temp.frag"),
-			VK_SHADER_STAGE_FRAGMENT_BIT,
-			mActiveDevice);
-
-	shaderStages[1].pName = "main";
 
 	VkGraphicsPipelineCreateInfo pipelineInfo { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
 	pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
@@ -603,52 +557,18 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 
 void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
 {
-	// Descriptor Sets ===============================
-
-	VkDescriptorSetLayout defaultLayout;
-	VkDescriptorSetLayoutCreateInfo descriptorSetInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
-	descriptorSetInfo.bindingCount = 0;
-	descriptorSetInfo.pBindings = nullptr;
-
-	VK_CHECK(vkCreateDescriptorSetLayout(mActiveDevice, &descriptorSetInfo, nullptr, &defaultLayout));
-
-	// ===============================================
-
-	VkPipelineLayoutCreateInfo layoutInfo{ VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
-	VkPipelineLayout pipelineLayout;
-	layoutInfo.setLayoutCount = 1;
-	layoutInfo.pSetLayouts = &defaultLayout;
-	VK_CHECK(vkCreatePipelineLayout(mActiveDevice, &layoutInfo, nullptr, &pipelineLayout));
-
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo{ VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
-
-	VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{ VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO };
-	inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
-	VkPipelineRasterizationStateCreateInfo rasterInfo{ VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO };
-	rasterInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
-	rasterInfo.lineWidth = 1.0f;
-
-	VkPipelineColorBlendAttachmentState colorBlendState{};
-	colorBlendState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-
-	VkPipelineColorBlendAttachmentState blendList[] = { colorBlendState };
-
-	VkPipelineColorBlendStateCreateInfo colorBlendInfo{ VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO };
-	colorBlendInfo.attachmentCount = 1;
-	colorBlendInfo.pAttachments = blendList;
-
-	VkPipelineViewportStateCreateInfo viewportInfo{ VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO };
-	viewportInfo.viewportCount = 1;
-	viewportInfo.scissorCount = 1;
+	auto pipelineLayout = mPipelineBuilder->createEmptyPipelineLayout();
+	auto vertexInputInfo = mPipelineBuilder->createEmptyPipelineVertexInputState();
+	auto inputAssemblyInfo = mPipelineBuilder->createDefaultInputAssemblyState();
+	auto rasterInfo = mPipelineBuilder->createDefaultRasterState();
+	auto colorBlendInfo = mPipelineBuilder->createDefaultPipelineColorBlendState();
+	auto viewportInfo = mPipelineBuilder->createDefaultPipelineViewportState();
+	auto multiSampleInfo = mPipelineBuilder->createDefaultPipelineMultisampleState();
+	auto shaderStages = mPipelineBuilder->createDefaultVertFragShaderStage(RESOLVE_PATH("/shaders/temp.vert"), RESOLVE_PATH("/shaders/temp.frag"));
 
 	VkPipelineDepthStencilStateCreateInfo depthStencilInfo{ VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO };
 	depthStencilInfo.depthTestEnable = false;
 	depthStencilInfo.depthWriteEnable = false;
-
-	VkPipelineMultisampleStateCreateInfo multiSampleInfo{ VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO };
-	multiSampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
 	// Change to static
 	std::array<VkDynamicState, 2> dynamics { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
@@ -656,28 +576,6 @@ void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
 	VkPipelineDynamicStateCreateInfo dynamicInfo{ VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO };
 	dynamicInfo.pDynamicStates = dynamics.data();
 	dynamicInfo.dynamicStateCount = static_cast<uint32_t>(dynamics.size());
-
-	std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages{};
-
-	shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	shaderStages[0].module =
-		MiniTools::GlslCompiler::loadShader(
-			RESOLVE_PATH("/shaders/temp.vert"),
-			VK_SHADER_STAGE_VERTEX_BIT,
-			mActiveDevice);
-
-	shaderStages[0].pName = "main";
-
-	shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	shaderStages[1].module =
-		MiniTools::GlslCompiler::loadShader(
-			RESOLVE_PATH("/shaders/temp.frag"),
-			VK_SHADER_STAGE_FRAGMENT_BIT,
-			mActiveDevice);
-
-	shaderStages[1].pName = "main";
 
 	VkGraphicsPipelineCreateInfo pipelineInfo{ VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
 	pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
@@ -979,7 +877,7 @@ unsigned int MiniEngine::Backend::VulkanDriver::createTexture(int width, int hei
 
 	VK_CHECK( vkCreateImageView(mActiveDevice, &imageViewInfo, nullptr, &imageView) );
 
-	return 0;
+	return 0; //todo: fix
 }
 
 unsigned int MiniEngine::Backend::VulkanDriver::createUniformBlock(size_t dataSize, unsigned int bindIndex) const
