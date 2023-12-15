@@ -1,9 +1,14 @@
 #pragma once
 
-namespace MiniEngine::Components
+namespace MiniEngine
+{
+	class Entity;
+
+namespace Components
 {
 	struct Component
 	{
 		Entity* entityHandle;
 	};
+}
 }

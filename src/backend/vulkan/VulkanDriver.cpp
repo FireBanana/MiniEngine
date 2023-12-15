@@ -56,16 +56,19 @@ void MiniEngine::Backend::VulkanDriver::generateSwapchain()
 
 void MiniEngine::Backend::VulkanDriver::generateRenderPass()
 {
-	createRenderPasses();
+	createRenderPasses();	
 }
 
 void MiniEngine::Backend::VulkanDriver::generatePipelines()
 {
-	mPipelineBuilder = std::make_unique<VulkanPipelineBuilder>(mActiveDevice);
+	mPipelineBuilder = std::make_unique<VulkanPipelineBuilder>(mActiveDevice, mGpuMemoryProperties);
+	
+	mPipelineBuilder->instantiateTriangleBuffer();
 
 	createGBufferPipeline();
 	createLightingPipeline();
 	createFramebuffer();
+	recordCommandBuffers();
 }
 
 void MiniEngine::Backend::VulkanDriver::generateGbuffer()
@@ -504,12 +507,16 @@ void MiniEngine::Backend::VulkanDriver::createRenderPasses()
 void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 {
 	auto pipelineLayout = mPipelineBuilder->createEmptyPipelineLayout();
-	auto vertexInputInfo = mPipelineBuilder->createEmptyPipelineVertexInputState();
+	auto vertexInputInfo = mPipelineBuilder->createTriangleVertexInputState();
 	auto inputAssemblyInfo = mPipelineBuilder->createDefaultInputAssemblyState();
 	auto rasterInfo = mPipelineBuilder->createDefaultRasterState();
 	auto viewportInfo = mPipelineBuilder->createDefaultPipelineViewportState();
 	auto multiSampleInfo = mPipelineBuilder->createDefaultPipelineMultisampleState();
 	auto shaderStages = mPipelineBuilder->createDefaultVertFragShaderStage(RESOLVE_PATH("/shaders/temp.vert"), RESOLVE_PATH("/shaders/temp.frag"));
+
+	// address of array changes so need to assign in scope
+	vertexInputInfo.data.pVertexAttributeDescriptions = vertexInputInfo.vertexAttributeDescription.data();
+	vertexInputInfo.data.pVertexBindingDescriptions = vertexInputInfo.vertexBindingDescriptions.data();
 
 	VkPipelineColorBlendAttachmentState colorBlendState{};
 	colorBlendState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -536,7 +543,7 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 	VkGraphicsPipelineCreateInfo pipelineInfo { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
 	pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
 	pipelineInfo.pStages = shaderStages.data();
-	pipelineInfo.pVertexInputState = &vertexInputInfo;
+	pipelineInfo.pVertexInputState = &(vertexInputInfo.data);
 	pipelineInfo.pInputAssemblyState = &inputAssemblyInfo;
 	pipelineInfo.pRasterizationState = &rasterInfo;
 	pipelineInfo.pColorBlendState = &colorBlendInfo;
@@ -558,13 +565,17 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
 {
 	auto pipelineLayout = mPipelineBuilder->createEmptyPipelineLayout();
-	auto vertexInputInfo = mPipelineBuilder->createEmptyPipelineVertexInputState();
+	auto vertexInputInfo = mPipelineBuilder->createTriangleVertexInputState();
 	auto inputAssemblyInfo = mPipelineBuilder->createDefaultInputAssemblyState();
 	auto rasterInfo = mPipelineBuilder->createDefaultRasterState();
 	auto colorBlendInfo = mPipelineBuilder->createDefaultPipelineColorBlendState();
 	auto viewportInfo = mPipelineBuilder->createDefaultPipelineViewportState();
 	auto multiSampleInfo = mPipelineBuilder->createDefaultPipelineMultisampleState();
 	auto shaderStages = mPipelineBuilder->createDefaultVertFragShaderStage(RESOLVE_PATH("/shaders/temp.vert"), RESOLVE_PATH("/shaders/temp.frag"));
+
+	// address of array changes so need to assign in scope
+	vertexInputInfo.data.pVertexAttributeDescriptions = vertexInputInfo.vertexAttributeDescription.data();
+	vertexInputInfo.data.pVertexBindingDescriptions = vertexInputInfo.vertexBindingDescriptions.data();
 
 	VkPipelineDepthStencilStateCreateInfo depthStencilInfo{ VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO };
 	depthStencilInfo.depthTestEnable = false;
@@ -580,7 +591,7 @@ void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
 	VkGraphicsPipelineCreateInfo pipelineInfo{ VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
 	pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
 	pipelineInfo.pStages = shaderStages.data();
-	pipelineInfo.pVertexInputState = &vertexInputInfo;
+	pipelineInfo.pVertexInputState = &vertexInputInfo.data;
 	pipelineInfo.pInputAssemblyState = &inputAssemblyInfo;
 	pipelineInfo.pRasterizationState = &rasterInfo;
 	pipelineInfo.pColorBlendState = &colorBlendInfo;
@@ -643,6 +654,65 @@ void MiniEngine::Backend::VulkanDriver::createFramebufferAttachmentSampler()
 	samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
 	VK_CHECK( vkCreateSampler(mActiveDevice, &samplerInfo, nullptr, &colorSampler) );
+}
+
+void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
+{
+	VkCommandBufferBeginInfo beginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+
+	for (auto i = 0; i < mSwapchainPerImageData.size(); ++i)
+	{
+		auto& cmd = mSwapchainPerImageData[i].imageCommandBuffer;
+
+		vkBeginCommandBuffer(cmd, &beginInfo);
+
+		VkClearValue colorClearValue{}, depthClearValue{};
+		auto color = mParams.clearColor;
+		colorClearValue.color = { { color.r(), color.g(), color.b(), color.a() } };
+
+		depthClearValue.depthStencil = { 1.0f, 0u };
+
+		VkClearValue clearValues[] = { colorClearValue, colorClearValue, colorClearValue, colorClearValue, colorClearValue, depthClearValue };
+
+		VkRenderPassBeginInfo rpBeginInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+		rpBeginInfo.renderPass = mDefaultRenderpass;
+		rpBeginInfo.framebuffer = mFramebuffers[i];
+		rpBeginInfo.renderArea.extent.width = mParams.screenWidth;
+		rpBeginInfo.renderArea.extent.height = mParams.screenHeight;
+		rpBeginInfo.clearValueCount = 6;
+		rpBeginInfo.pClearValues = clearValues;
+
+		vkCmdBeginRenderPass(cmd, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mGbufferPipeline);
+
+		VkViewport vp{};
+		vp.width = mParams.screenWidth;
+		vp.height = mParams.screenHeight;
+		vp.minDepth = 0.0f;
+		vp.maxDepth = 1.0f;
+
+		vkCmdSetViewport(cmd, 0, 1, &vp);
+
+		VkRect2D scissor{};
+		scissor.extent.width = mParams.screenWidth;
+		scissor.extent.height = mParams.screenHeight;
+
+		auto tBuffer = mPipelineBuilder->getDefaultTriangleBuffer();
+		VkDeviceSize offsets[1] = { 0 };
+		vkCmdBindVertexBuffers(cmd, 0, 1, &tBuffer, offsets);
+
+		vkCmdSetScissor(cmd, 0, 1, &scissor);
+		vkCmdDraw(cmd, 3, 5, 0, 0);
+
+		vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
+
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mLightingPipeline);
+		vkCmdDraw(cmd, 3, 5, 0, 0);
+
+		vkCmdEndRenderPass(cmd);
+
+		VK_CHECK(vkEndCommandBuffer(cmd));
+	}
 }
 
 VkImageView MiniEngine::Backend::VulkanDriver::createImageAttachment(VkFormat imageFormat, VkImageUsageFlags imageBits, VkImageAspectFlags imageViewAspectFlags)
@@ -722,9 +792,15 @@ void MiniEngine::Backend::VulkanDriver::acquireNextImage(uint32_t* image)
 		vkResetFences(mActiveDevice, 1, &(mSwapchainPerImageData[*image].imageFence));
 	}
 
-	if (mSwapchainPerImageData[*image].imageCommandPool != VK_NULL_HANDLE)
+	//if (mSwapchainPerImageData[*image].imageCommandPool != VK_NULL_HANDLE)
+	//{
+	//	vkResetCommandPool(mActiveDevice, mSwapchainPerImageData[*image].imageCommandPool, 0);
+	//}
+
+	if (mSwapchainPerImageData[*image].releaseSemaphore == VK_NULL_HANDLE)
 	{
-		vkResetCommandPool(mActiveDevice, mSwapchainPerImageData[*image].imageCommandPool, 0);
+		VkSemaphoreCreateInfo semInfo{ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+		VK_CHECK(vkCreateSemaphore(mActiveDevice, &semInfo, nullptr, &mSwapchainPerImageData[*image].releaseSemaphore));
 	}
 }
 
@@ -755,61 +831,7 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 	uint32_t imgIndex;
 	acquireNextImage(&imgIndex);
 	
-	VkCommandBuffer cmd = mSwapchainPerImageData[imgIndex].imageCommandBuffer;
-
-	VkCommandBufferBeginInfo beginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-	vkBeginCommandBuffer(cmd, &beginInfo);
-
-	VkClearValue colorClearValue{}, depthClearValue{};
-	auto color = mParams.clearColor;
-	colorClearValue.color = { { color.r(), color.g(), color.b(), color.a() } };
-
-	depthClearValue.depthStencil = { 1.0f, 0u };
-
-	VkClearValue clearValues[] = { colorClearValue, colorClearValue, colorClearValue, colorClearValue, colorClearValue, depthClearValue };
-
-	VkRenderPassBeginInfo rpBeginInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
-	rpBeginInfo.renderPass = mDefaultRenderpass;
-	rpBeginInfo.framebuffer = mFramebuffers[imgIndex];
-	rpBeginInfo.renderArea.extent.width = mParams.screenWidth;
-	rpBeginInfo.renderArea.extent.height = mParams.screenHeight;
-	rpBeginInfo.clearValueCount = 6;
-	rpBeginInfo.pClearValues = clearValues;
-
-	vkCmdBeginRenderPass(cmd, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mGbufferPipeline);
-
-	VkViewport vp{};
-	vp.width = mParams.screenWidth;
-	vp.height = mParams.screenHeight;
-	vp.minDepth = 0.0f;
-	vp.maxDepth = 1.0f;
-
-	vkCmdSetViewport(cmd, 0, 1, &vp);
-	
-	VkRect2D scissor{};
-	scissor.extent.width = mParams.screenWidth;
-	scissor.extent.height = mParams.screenHeight;
-
-	vkCmdSetScissor(cmd, 0, 1, &scissor);
-	vkCmdDraw(cmd, 3, 5, 0, 0);
-
-	vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
-
-	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mLightingPipeline);
-	vkCmdDraw(cmd, 3, 5, 0, 0);
-
-	vkCmdEndRenderPass(cmd);
-
-	VK_CHECK( vkEndCommandBuffer(cmd) );
-
-	if (mSwapchainPerImageData[imgIndex].releaseSemaphore == VK_NULL_HANDLE)
-	{
-		VkSemaphoreCreateInfo semInfo { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
-		VK_CHECK( vkCreateSemaphore(mActiveDevice, &semInfo, nullptr, &mSwapchainPerImageData[imgIndex].releaseSemaphore) );
-	}
+	auto& cmd = mSwapchainPerImageData[imgIndex].imageCommandBuffer;	
 
 	VkPipelineStageFlags waitStageFlags { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 

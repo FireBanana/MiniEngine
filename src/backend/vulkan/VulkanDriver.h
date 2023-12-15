@@ -106,6 +106,7 @@ namespace Backend
 		void createLightingPipeline();
 		void createFramebuffer();
 		void createFramebufferAttachmentSampler();
+		void recordCommandBuffers();
 
 		VkImageView createImageAttachment(VkFormat imageFormat, VkImageUsageFlags imageBits, VkImageAspectFlags imageViewAspectFlags);
 
