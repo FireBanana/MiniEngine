@@ -9,9 +9,9 @@ MiniEngine::Backend::VulkanPipelineBuilder::VulkanPipelineBuilder(VkDevice devic
 	mDefaultTriangleRenderableComponent.buffer =
 	{
 		//vertex     color
-		 0.5, -0.5,  1.0, 1.0, 0.0,
-		 0.5,  0.5,  0.0, 1.0, 0.0,
-		-0.5,  0.5,  1.0, 0.0, 1.0
+		  0.5, -0.5,  0.0, 1.0, 0.0,
+		  0.5,  0.5,  1.0, 1.0, 1.0,
+		  -0.5, 0.5,  1.0, 1.0, 1.0
 	};
 
 	mDefaultTriangleRenderableComponent.indices =
@@ -48,7 +48,7 @@ MiniEngine::Backend::VertexStateData<B, A> MiniEngine::Backend::VulkanPipelineBu
 	std::array<VkVertexInputBindingDescription, B> vertexBindingDescriptions{};
 	vertexBindingDescriptions[0] = {};
 	vertexBindingDescriptions[0].binding = 0;
-	vertexBindingDescriptions[0].stride = sizeof(float) * mDefaultTriangleRenderableComponent.buffer.size();
+	vertexBindingDescriptions[0].stride = sizeof(float) * 5;
 	vertexBindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 	std::array<VkVertexInputAttributeDescription, A> vertexAttributeDescription{};

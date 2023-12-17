@@ -702,12 +702,13 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 		vkCmdBindVertexBuffers(cmd, 0, 1, &tBuffer, offsets);
 
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
-		vkCmdDraw(cmd, 3, 5, 0, 0);
+		vkCmdDraw(cmd, 3, 6, 0, 0);
 
 		vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
 
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mLightingPipeline);
-		vkCmdDraw(cmd, 3, 5, 0, 0);
+
+		vkCmdDraw(cmd, 3, 6, 0, 0);
 
 		vkCmdEndRenderPass(cmd);
 
