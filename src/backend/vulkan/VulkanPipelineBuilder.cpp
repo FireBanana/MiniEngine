@@ -2,6 +2,8 @@
 #include "GlslCompiler.h"
 #include "RenderableComponent.h"
 
+#include <numeric>
+
 MiniEngine::Backend::VulkanPipelineBuilder::VulkanPipelineBuilder(VkDevice device, VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties)
 	: mActiveDevice(device), mPhysicalDeviceMemoryProperties(physicalDeviceMemoryProperties)
 {
@@ -9,15 +11,15 @@ MiniEngine::Backend::VulkanPipelineBuilder::VulkanPipelineBuilder(VkDevice devic
 	mDefaultTriangleRenderableComponent.buffer =
 	{
 		//vertex     color
-		  0.5, -0.5,  0.0, 1.0, 0.0,
-		  0.5,  0.5,  1.0, 1.0, 1.0,
-		  -0.5, 0.5,  1.0, 1.0, 1.0
+		  0.5, -0.5,  1.0, 0.0, 0.0,
+		  0.5,  0.5,  0.0, 1.0, 0.0,
+		  -0.5, 0.5,  0.0, 0.0, 1.0
 	};
 
-	mDefaultTriangleRenderableComponent.indices =
-	{
-		0, 1, 2
-	};
+	mDefaultTriangleRenderableComponent.indices = { 0, 1, 2 };
+
+	mDefaultTriangleRenderableComponent.attributes.push_back(2);
+	mDefaultTriangleRenderableComponent.attributes.push_back(3);
 }
 
 VkPipelineLayout MiniEngine::Backend::VulkanPipelineBuilder::createEmptyPipelineLayout()
@@ -39,35 +41,36 @@ VkPipelineLayout MiniEngine::Backend::VulkanPipelineBuilder::createDefaultPipeli
 	return pipelineLayout;
 }
 
-template<size_t B, size_t A>
-MiniEngine::Backend::VertexStateData<B, A> MiniEngine::Backend::VulkanPipelineBuilder::createCustomVertexInputState()
+MiniEngine::Backend::VertexStateData MiniEngine::Backend::VulkanPipelineBuilder::createCustomVertexInputState(Components::RenderableComponent* component)
 {
-	// Todo: attributes will need to be changed
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{ VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
 
-	std::array<VkVertexInputBindingDescription, B> vertexBindingDescriptions{};
+	std::vector<VkVertexInputBindingDescription> vertexBindingDescriptions{1};
 	vertexBindingDescriptions[0] = {};
 	vertexBindingDescriptions[0].binding = 0;
-	vertexBindingDescriptions[0].stride = sizeof(float) * 5;
+	vertexBindingDescriptions[0].stride = std::accumulate(component->attributes.begin(), component->attributes.end(), 0) * sizeof(float);
 	vertexBindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-	std::array<VkVertexInputAttributeDescription, A> vertexAttributeDescription{};
-	vertexAttributeDescription[0] = {};
-	vertexAttributeDescription[0].location = 0;
-	vertexAttributeDescription[0].binding = vertexBindingDescriptions[0].binding;
-	vertexAttributeDescription[0].format = VK_FORMAT_R32G32_SFLOAT;
-	vertexAttributeDescription[0].offset = 0;
+	std::vector<VkVertexInputAttributeDescription> vertexAttributeDescription{};
+	int offset = 0;
 
-	vertexAttributeDescription[1] = {};
-	vertexAttributeDescription[1].location = 1;
-	vertexAttributeDescription[1].binding = vertexBindingDescriptions[0].binding;
-	vertexAttributeDescription[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-	vertexAttributeDescription[1].offset = sizeof(float) * 2;
+	for (auto i = 0; i < component->attributes.size(); ++i)
+	{
+		VkVertexInputAttributeDescription value{};
+		value.location = i;
+		value.binding = vertexBindingDescriptions[0].binding;
+		value.format = component->attributes[i] == 3 ? VK_FORMAT_R32G32B32_SFLOAT : VK_FORMAT_R32G32_SFLOAT; // either 3 or 2
+		value.offset = offset * sizeof(float);
+
+		vertexAttributeDescription.push_back(value);
+
+		offset += component->attributes[i];
+	}
 
 	vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(vertexBindingDescriptions.size());
 	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexAttributeDescription.size());
 
-	VertexStateData<B, A> state { 
+	VertexStateData state { 
 		std::move(vertexInputInfo),
 		std::move(vertexBindingDescriptions),
 		std::move(vertexAttributeDescription)
@@ -76,9 +79,50 @@ MiniEngine::Backend::VertexStateData<B, A> MiniEngine::Backend::VulkanPipelineBu
 	return state;
 }
 
-MiniEngine::Backend::VertexStateData<1, 2> MiniEngine::Backend::VulkanPipelineBuilder::createTriangleVertexInputState()
+MiniEngine::Backend::VertexStateData MiniEngine::Backend::VulkanPipelineBuilder::createTriangleVertexInputState()
 {
-	return createCustomVertexInputState<1, 2>();
+	return createCustomVertexInputState(&mDefaultTriangleRenderableComponent);
+}
+
+void MiniEngine::Backend::VulkanPipelineBuilder::createDefaultDescriptorPool()
+{
+	VkDescriptorPoolSize poolSize{};
+	poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	poolSize.descriptorCount = 1;
+	
+	VkDescriptorPoolCreateInfo descriptorPoolInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
+	VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
+
+	descriptorPoolInfo.poolSizeCount = 1;
+	descriptorPoolInfo.pPoolSizes = &poolSize;
+
+	VkDescriptorSetLayoutBinding bindings{};
+	bindings.binding = 0;
+	bindings.descriptorCount = 1;
+	bindings.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	bindings.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+
+	descriptorLayoutInfo.bindingCount = 1;
+	descriptorLayoutInfo.pBindings = &bindings;
+	
+	vkCreateDescriptorPool(mActiveDevice, &descriptorPoolInfo, nullptr, &mDefaultDescriptorPool);
+	vkCreateDescriptorSetLayout(mActiveDevice, &descriptorLayoutInfo, nullptr, &mDefaultDescriptorLayout);
+}
+
+void MiniEngine::Backend::VulkanPipelineBuilder::allocateDefaultDescriptorSet()
+{
+	VkDescriptorSet descriptorSet;
+	VkDescriptorSetAllocateInfo allocInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+
+	allocInfo.descriptorPool = mDefaultDescriptorPool;
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = &mDefaultDescriptorLayout;
+
+	vkAllocateDescriptorSets(mActiveDevice, &allocInfo, &descriptorSet);
+
+	// *** PAUSED HERE FOR HIATUS ***
+	// Things done: vertex buffer added
+	// Currently adding Descriptor sets
 }
 
 VkPipelineInputAssemblyStateCreateInfo MiniEngine::Backend::VulkanPipelineBuilder::createDefaultInputAssemblyState()

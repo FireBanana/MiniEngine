@@ -7,12 +7,11 @@ namespace MiniEngine
 {
 namespace Backend
 {
-	template<size_t B, size_t A>
 	struct VertexStateData
 	{
-		VkPipelineVertexInputStateCreateInfo			 data;
-		std::array<VkVertexInputBindingDescription, B>   vertexBindingDescriptions;
-		std::array<VkVertexInputAttributeDescription, A> vertexAttributeDescription;
+		VkPipelineVertexInputStateCreateInfo		   data;
+		std::vector<VkVertexInputBindingDescription>   vertexBindingDescriptions;
+		std::vector<VkVertexInputAttributeDescription> vertexAttributeDescription;
 	};
 
 	class VulkanPipelineBuilder
@@ -25,10 +24,14 @@ namespace Backend
 		VkPipelineLayout createEmptyPipelineLayout();
 		VkPipelineLayout createDefaultPipelineLayout();
 
-		template<size_t B, size_t A>
-		VertexStateData<B, A> createCustomVertexInputState();
 
-		VertexStateData<1, 2> createTriangleVertexInputState();
+		VertexStateData createCustomVertexInputState(Components::RenderableComponent* component);
+
+		VertexStateData createTriangleVertexInputState();
+
+		void createDefaultDescriptorPool();
+		void allocateDefaultDescriptorSet();
+
 		VkPipelineInputAssemblyStateCreateInfo createDefaultInputAssemblyState();
 		VkPipelineRasterizationStateCreateInfo createDefaultRasterState();
 		VkPipelineColorBlendStateCreateInfo createDefaultPipelineColorBlendState();
@@ -46,6 +49,9 @@ namespace Backend
 		VkDevice mActiveDevice;
 		VkPhysicalDeviceMemoryProperties mPhysicalDeviceMemoryProperties;
 		VkBuffer mDefaultTriangleBuffer;
+
+		VkDescriptorPool mDefaultDescriptorPool;
+		VkDescriptorSetLayout mDefaultDescriptorLayout;
 
 		Components::RenderableComponent mDefaultTriangleRenderableComponent;
 
