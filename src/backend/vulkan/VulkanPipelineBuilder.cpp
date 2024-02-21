@@ -30,9 +30,9 @@ VkPipelineLayout MiniEngine::Backend::VulkanPipelineBuilder::createEmptyPipeline
 	VkPipelineLayoutCreateInfo layoutInfo{ VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
 	layoutInfo.setLayoutCount = 1;
 	layoutInfo.pSetLayouts = &descriptorLayout;
-	VK_CHECK(vkCreatePipelineLayout(mActiveDevice, &layoutInfo, nullptr, &pipelineLayout));
+    vkCreatePipelineLayout(mActiveDevice, &layoutInfo, nullptr, &pipelineLayout);
 
-	return pipelineLayout;
+    return pipelineLayout;
 }
 
 VkPipelineLayout MiniEngine::Backend::VulkanPipelineBuilder::createDefaultPipelineLayout()
@@ -142,20 +142,6 @@ VkPipelineRasterizationStateCreateInfo MiniEngine::Backend::VulkanPipelineBuilde
 	return rasterInfo;
 }
 
-VkPipelineColorBlendStateCreateInfo MiniEngine::Backend::VulkanPipelineBuilder::createDefaultPipelineColorBlendState()
-{
-	VkPipelineColorBlendAttachmentState colorBlendState{};
-	colorBlendState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-
-	VkPipelineColorBlendAttachmentState blendList[] = { colorBlendState };
-
-	VkPipelineColorBlendStateCreateInfo colorBlendInfo{ VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO };
-	colorBlendInfo.attachmentCount = 1;
-	colorBlendInfo.pAttachments = blendList;
-
-	return colorBlendInfo;
-}
-
 VkPipelineViewportStateCreateInfo MiniEngine::Backend::VulkanPipelineBuilder::createDefaultPipelineViewportState()
 {
 	VkPipelineViewportStateCreateInfo viewportInfo{ VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO };
@@ -205,9 +191,9 @@ VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createEmptyDes
 	descriptorSetInfo.bindingCount = 0;
 	descriptorSetInfo.pBindings = nullptr;
 
-	VK_CHECK(vkCreateDescriptorSetLayout(mActiveDevice, &descriptorSetInfo, nullptr, &defaultLayout));
+    vkCreateDescriptorSetLayout(mActiveDevice, &descriptorSetInfo, nullptr, &defaultLayout);
 
-	return defaultLayout;
+    return defaultLayout;
 }
 
 VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createDefaultDescriptorSetLayout()
@@ -226,9 +212,9 @@ VkBuffer MiniEngine::Backend::VulkanPipelineBuilder::createDefaultTriangleBuffer
 	bufferCreateInfo.queueFamilyIndexCount = 0;
 	bufferCreateInfo.pQueueFamilyIndices = nullptr;
 
-	VK_CHECK( vkCreateBuffer(mActiveDevice, &bufferCreateInfo, nullptr, &vertexBuffer) );
+    vkCreateBuffer(mActiveDevice, &bufferCreateInfo, nullptr, &vertexBuffer);
 
-	return vertexBuffer;
+    return vertexBuffer;
 }
 
 VkDeviceMemory MiniEngine::Backend::VulkanPipelineBuilder::allocateDefaultTriangleBuffer(VkBuffer buffer)
@@ -246,10 +232,10 @@ VkDeviceMemory MiniEngine::Backend::VulkanPipelineBuilder::allocateDefaultTriang
 			VkMemoryAllocateInfo allocInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
 			allocInfo.allocationSize = bufferMemRequirements.size;
 			allocInfo.memoryTypeIndex = i;
-		
-			VK_CHECK( vkAllocateMemory(mActiveDevice, &allocInfo, nullptr, &memory) );
-			return memory;
-		}
+
+            vkAllocateMemory(mActiveDevice, &allocInfo, nullptr, &memory);
+            return memory;
+        }
 	}
 
 	Logger::eprint("Memory for default triangle buffer not allocated.");

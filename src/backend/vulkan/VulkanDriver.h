@@ -1,9 +1,10 @@
 #pragma once
 
-#include <vector>
-#include "VulkanHelper.h"
 #include "IDriver.h"
+#include "VulkanHelper.h"
 #include "VulkanPipelineBuilder.h"
+#include "utils/DynamicArray.h"
+#include <vector>
 
 constexpr VkFormat PREFERRED_FORMAT = VK_FORMAT_R16G16B16A16_SFLOAT;
 
@@ -31,16 +32,14 @@ namespace Backend
 			VkImageView imageView;
 			VkFence imageFence;
 			VkCommandPool imageCommandPool;
-			VkCommandBuffer imageCommandBuffer;
-			VkSemaphore releaseSemaphore;
-			VkSemaphore acquireSemaphore;
-		};
+            VkCommandBuffer imageCommandBuffer;
+        };
 
-		inline const VkInstance& getInstance() const { return mInstance; }
+        inline const VkInstance &getInstance() const { return mInstance; }
 
-		void initialize(MiniEngine::Types::EngineInitParams& params);
+        void initialize(MiniEngine::Types::EngineInitParams &params);
 
-		void createInstance(
+        void createInstance(
 			const std::vector<const char*>& requireInstanceExtensions,
 			const std::vector<const char*>&& requiredLayers);
 
@@ -92,9 +91,10 @@ namespace Backend
 		std::vector<VkFramebuffer> mFramebuffers;
 		std::vector<PerFrameData>  mSwapchainPerImageData;
 		std::array<VkImageView, 6> mFrameBufferAttachments;
+        Utils::DynamicArray<std::pair<VkSemaphore, VkSemaphore>> mDisplaySemaphoreArray;
 
-		void enumerateInstanceExtensionProperties();
-		void enumerateInstanceLayerProperties();
+        void enumerateInstanceExtensionProperties();
+        void enumerateInstanceLayerProperties();
 		void enumerateDeviceExtensionProperties();
 		void getPhysicalDevice();
 		void getPhysicalDeviceQueueFamily();
@@ -106,12 +106,15 @@ namespace Backend
 		void createLightingPipeline();
 		void createFramebuffer();
 		void createFramebufferAttachmentSampler();
-		void recordCommandBuffers();
+        void createDisplaySemaphores();
+        void recordCommandBuffers();
 
-		VkImageView createImageAttachment(VkFormat imageFormat, VkImageUsageFlags imageBits, VkImageAspectFlags imageViewAspectFlags);
+        VkImageView createImageAttachment(VkFormat imageFormat,
+                                          VkImageUsageFlags imageBits,
+                                          VkImageAspectFlags imageViewAspectFlags);
 
-		void loadShaderModule();
-		void acquireNextImage(uint32_t* image);
+        void loadShaderModule();
+        void acquireNextImage(uint32_t* image);
 		uint32_t getMemoryTypeIndex(const VkMemoryRequirements* memReqs);
 	};
 }

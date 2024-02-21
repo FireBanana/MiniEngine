@@ -34,17 +34,18 @@ void MiniEngine::Backend::VulkanPlatform::createWindow(uint16_t width, uint16_t 
     for (int i = 0; i < countExtensions; ++i) extensions[i] = exts[i];
     
     extensions.push_back("VK_EXT_swapchain_colorspace");
+    extensions.push_back("VK_KHR_get_physical_device_properties2");
 
 #ifdef GRAPHICS_DEBUG
     extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    mDriver->createInstance(extensions, { "VK_LAYER_KHRONOS_validation" });
+    mDriver->createInstance(extensions, {"VK_LAYER_KHRONOS_validation"});
 
     VulkanRenderDoc::initRenderDoc();
 #else
     mDriver->createInstance(extensions, { });
 #endif
 
-    VK_CHECK(glfwCreateWindowSurface(mDriver->getInstance(), mWindow, nullptr, &mSurface));
+    glfwCreateWindowSurface(mDriver->getInstance(), mWindow, nullptr, &mSurface);
 
     mDriver->updateSurface(mSurface);
     mDriver->generateDevice();

@@ -33,9 +33,8 @@ namespace Backend
 		void allocateDefaultDescriptorSet();
 
 		VkPipelineInputAssemblyStateCreateInfo createDefaultInputAssemblyState();
-		VkPipelineRasterizationStateCreateInfo createDefaultRasterState();
-		VkPipelineColorBlendStateCreateInfo createDefaultPipelineColorBlendState();
-		VkPipelineViewportStateCreateInfo createDefaultPipelineViewportState();
+        VkPipelineRasterizationStateCreateInfo createDefaultRasterState();
+        VkPipelineViewportStateCreateInfo createDefaultPipelineViewportState();
 		VkPipelineMultisampleStateCreateInfo createDefaultPipelineMultisampleState();
 
 		std::array<VkPipelineShaderStageCreateInfo, 2> createDefaultVertFragShaderStage(const char* vertPath, const char* fragPath);
