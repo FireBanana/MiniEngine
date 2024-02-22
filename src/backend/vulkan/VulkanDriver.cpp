@@ -362,13 +362,8 @@ void MiniEngine::Backend::VulkanDriver::createSwapchainImageViews()
 
     // Initialize a command pool per swapchain image
     for (uint32_t i = 0; i < imageCount; ++i) {
-        VkFence fence;
         VkCommandPool commandPool;
         VkCommandBuffer commandBuffer;
-
-        VkFenceCreateInfo imageFenceInfo{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
-        imageFenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-        vkCreateFence(mActiveDevice, &imageFenceInfo, nullptr, &fence);
 
         VkCommandPoolCreateInfo cmdPoolInfo{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
         cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
@@ -381,7 +376,6 @@ void MiniEngine::Backend::VulkanDriver::createSwapchainImageViews()
         cmdBuffInfo.commandBufferCount = 1;
         vkAllocateCommandBuffers(mActiveDevice, &cmdBuffInfo, &commandBuffer);
 
-        mSwapchainPerImageData[i].imageFence = fence;
         mSwapchainPerImageData[i].imageCommandPool = commandPool;
         mSwapchainPerImageData[i].imageCommandBuffer = commandBuffer;
     }
@@ -698,16 +692,18 @@ void MiniEngine::Backend::VulkanDriver::createFramebufferAttachmentSampler()
 
 void MiniEngine::Backend::VulkanDriver::createDisplaySemaphores()
 {
-    mDisplaySemaphoreArray = Utils::DynamicArray<std::pair<VkSemaphore, VkSemaphore>>(
-        mSwapchainPerImageData.size());
+    mDisplaySemaphoreArray = Utils::DynamicArray<DisplaySemaphore>(mSwapchainPerImageData.size());
+
     auto arrayPtr = mDisplaySemaphoreArray.get();
 
     VkSemaphoreCreateInfo info{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+    VkFenceCreateInfo fInfo{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+    fInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    // First acquire semaphore, second present semaphore
     for (int i = 0; i < mSwapchainPerImageData.size(); ++i) {
-        vkCreateSemaphore(mActiveDevice, &info, nullptr, &(arrayPtr[i].first));
-        vkCreateSemaphore(mActiveDevice, &info, nullptr, &(arrayPtr[i].second));
+        vkCreateSemaphore(mActiveDevice, &info, nullptr, &(arrayPtr[i].acquisitionSemaphore));
+        vkCreateSemaphore(mActiveDevice, &info, nullptr, &(arrayPtr[i].presentationSemaphore));
+        vkCreateFence(mActiveDevice, &fInfo, nullptr, &(arrayPtr[i].fence));
     }
 }
 
@@ -820,27 +816,42 @@ VkImageView MiniEngine::Backend::VulkanDriver::createImageAttachment(VkFormat im
 
 void MiniEngine::Backend::VulkanDriver::loadShaderModule() {}
 
-void MiniEngine::Backend::VulkanDriver::acquireNextImage(uint32_t* image)
+void MiniEngine::Backend::VulkanDriver::acquireNextImage(uint32_t *image,
+                                                         uint32_t *displaySemaphoreIndex)
 {
-    // get a non used semaphore pair from array
-    // assign to image
-    // continue as before
+    std::vector<VkFence> mFenceArray(mDisplaySemaphoreArray.getSize());
+    VkSemaphore dSemaphore;
 
-    VkResult res = vkAcquireNextImageKHR(mActiveDevice,
-                                         mActiveSwapchain,
-                                         UINT64_MAX,
-                                         mSwapchainPerImageData[*image].acquireSemaphore,
-                                         VK_NULL_HANDLE,
-                                         image);
-
-    if (mSwapchainPerImageData[*image].imageFence != VK_NULL_HANDLE) {
-        vkWaitForFences(mActiveDevice,
-                        1,
-                        &(mSwapchainPerImageData[*image].imageFence),
-                        true,
-                        UINT64_MAX);
-        vkResetFences(mActiveDevice, 1, &(mSwapchainPerImageData[*image].imageFence));
+    for (int i = 0; i < mDisplaySemaphoreArray.getSize(); ++i) {
+        mFenceArray[i] = mDisplaySemaphoreArray.get()[i].fence;
     }
+
+    vkWaitForFences(mActiveDevice,
+                    mDisplaySemaphoreArray.getSize(),
+                    mFenceArray.data(),
+                    VK_FALSE,
+                    UINT64_MAX);
+
+    for (int i = 0; i < mDisplaySemaphoreArray.getSize(); ++i) {
+        auto displaySyncObj = &mDisplaySemaphoreArray.get()[i];
+
+        if (vkGetFenceStatus(mActiveDevice, displaySyncObj->fence) == VK_SUCCESS) {
+            vkResetFences(mActiveDevice, 1, &displaySyncObj->fence);
+            dSemaphore = displaySyncObj->acquisitionSemaphore;
+            *displaySemaphoreIndex = i;
+            break;
+        }
+    }
+
+    auto status = vkAcquireNextImageKHR(mActiveDevice,
+                                        mActiveSwapchain,
+                                        UINT64_MAX,
+                                        dSemaphore,
+                                        VK_NULL_HANDLE,
+                                        image);
+
+    if (status != VK_SUCCESS)
+        MiniEngine::Logger::eprint("Acquire error: {}", status);
 }
 
 uint32_t MiniEngine::Backend::VulkanDriver::getMemoryTypeIndex(const VkMemoryRequirements* memReqs)
@@ -867,23 +878,28 @@ uint32_t MiniEngine::Backend::VulkanDriver::getMemoryTypeIndex(const VkMemoryReq
 
 void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 {
-	uint32_t imgIndex;
-	acquireNextImage(&imgIndex);
-	
-	auto& cmd = mSwapchainPerImageData[imgIndex].imageCommandBuffer;	
+    uint32_t imgIndex, displaySemaphoreIndex;
+    acquireNextImage(&imgIndex, &displaySemaphoreIndex);
 
-	VkPipelineStageFlags waitStageFlags { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    auto &cmd = mSwapchainPerImageData[imgIndex].imageCommandBuffer;
 
-	VkSubmitInfo submitInfo { VK_STRUCTURE_TYPE_SUBMIT_INFO };
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &cmd;
-	submitInfo.waitSemaphoreCount = 1;
-	submitInfo.pWaitSemaphores = &mSwapchainPerImageData[imgIndex].acquireSemaphore;
-	submitInfo.pWaitDstStageMask = &waitStageFlags;
+    VkPipelineStageFlags waitStageFlags{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+
+    VkSubmitInfo submitInfo{VK_STRUCTURE_TYPE_SUBMIT_INFO};
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &cmd;
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = &(
+        mDisplaySemaphoreArray.get()[displaySemaphoreIndex].acquisitionSemaphore);
+    submitInfo.pWaitDstStageMask = &waitStageFlags;
 	submitInfo.signalSemaphoreCount = 1;
-	submitInfo.pSignalSemaphores = &mSwapchainPerImageData[imgIndex].releaseSemaphore;
+    submitInfo.pSignalSemaphores = &(
+        mDisplaySemaphoreArray.get()[displaySemaphoreIndex].presentationSemaphore);
 
-    vkQueueSubmit(mActiveDeviceQueue, 1, &submitInfo, mSwapchainPerImageData[imgIndex].imageFence);
+    vkQueueSubmit(mActiveDeviceQueue,
+                  1,
+                  &submitInfo,
+                  mDisplaySemaphoreArray.get()[displaySemaphoreIndex].fence);
 
     // Present
     VkPresentInfoKHR presentInfo{VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
@@ -891,7 +907,8 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
     presentInfo.pSwapchains = &mActiveSwapchain;
     presentInfo.pImageIndices = &imgIndex;
     presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores = &mSwapchainPerImageData[imgIndex].releaseSemaphore;
+    presentInfo.pWaitSemaphores = &(
+        mDisplaySemaphoreArray.get()[displaySemaphoreIndex].presentationSemaphore);
 
     vkQueuePresentKHR(mActiveDeviceQueue, &presentInfo);
 }

@@ -12,8 +12,11 @@ template<typename T>
 class DynamicArray
 {
 public:
+    DynamicArray() {}
+
     DynamicArray(int size)
         : mArray(std::make_unique<T[]>(size))
+        , mSize(size)
     {}
 
     ~DynamicArray() { mArray.reset(); }
@@ -21,9 +24,11 @@ public:
     DynamicArray &operator=(DynamicArray &&) = default;
 
     T *get() { return mArray.get(); }
+    size_t getSize() const { return mSize; }
 
 private:
-    std::unique_ptr<T> mArray;
+    std::unique_ptr<T[]> mArray;
+    size_t mSize;
 };
 
 } // namespace Utils

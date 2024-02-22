@@ -29,10 +29,16 @@ namespace Backend
 
 		struct PerFrameData
 		{
-			VkImageView imageView;
-			VkFence imageFence;
-			VkCommandPool imageCommandPool;
+            VkImageView imageView;
+            VkCommandPool imageCommandPool;
             VkCommandBuffer imageCommandBuffer;
+        };
+
+        struct DisplaySemaphore
+        {
+            VkSemaphore acquisitionSemaphore;
+            VkSemaphore presentationSemaphore;
+            VkFence fence;
         };
 
         inline const VkInstance &getInstance() const { return mInstance; }
@@ -91,7 +97,7 @@ namespace Backend
 		std::vector<VkFramebuffer> mFramebuffers;
 		std::vector<PerFrameData>  mSwapchainPerImageData;
 		std::array<VkImageView, 6> mFrameBufferAttachments;
-        Utils::DynamicArray<std::pair<VkSemaphore, VkSemaphore>> mDisplaySemaphoreArray;
+        Utils::DynamicArray<DisplaySemaphore> mDisplaySemaphoreArray;
 
         void enumerateInstanceExtensionProperties();
         void enumerateInstanceLayerProperties();
@@ -114,8 +120,8 @@ namespace Backend
                                           VkImageAspectFlags imageViewAspectFlags);
 
         void loadShaderModule();
-        void acquireNextImage(uint32_t* image);
-		uint32_t getMemoryTypeIndex(const VkMemoryRequirements* memReqs);
-	};
+        void acquireNextImage(uint32_t *image, uint32_t *displaySemaphoreIndex);
+        uint32_t getMemoryTypeIndex(const VkMemoryRequirements *memReqs);
+    };
 }
 }
