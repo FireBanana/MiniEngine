@@ -29,6 +29,7 @@ namespace Backend
 
 		struct PerFrameData
 		{
+            VkImage rawImage;
             VkImageView imageView;
             VkCommandPool imageCommandPool;
             VkCommandBuffer imageCommandBuffer;
@@ -94,8 +95,8 @@ namespace Backend
 		int32_t mActiveQueue{ -1 };
 		VkPhysicalDeviceMemoryProperties mGpuMemoryProperties;
 
-		std::vector<VkFramebuffer> mFramebuffers;
-		std::vector<PerFrameData>  mSwapchainPerImageData;
+        //std::vector<VkFramebuffer> mFramebuffers;
+        std::vector<PerFrameData>  mSwapchainPerImageData;
 		std::array<VkImageView, 6> mFrameBufferAttachments;
         Utils::DynamicArray<DisplaySemaphore> mDisplaySemaphoreArray;
 
