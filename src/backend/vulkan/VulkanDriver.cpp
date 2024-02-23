@@ -243,11 +243,16 @@ void MiniEngine::Backend::VulkanDriver::createDevice(const std::vector<const cha
 	queueInfo.queueCount = 1;
 	queueInfo.pQueuePriorities = qPriority;
 
-	VkDeviceCreateInfo deviceInfo{ VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
-	deviceInfo.queueCreateInfoCount = 1;
-	deviceInfo.pQueueCreateInfos = &queueInfo;
-	deviceInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
-	deviceInfo.ppEnabledExtensionNames = requiredExtensions.data();
+    VkPhysicalDeviceDynamicRenderingFeatures dynamicInfo{
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES};
+    dynamicInfo.dynamicRendering = true;
+
+    VkDeviceCreateInfo deviceInfo{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
+    deviceInfo.queueCreateInfoCount = 1;
+    deviceInfo.pQueueCreateInfos = &queueInfo;
+    deviceInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
+    deviceInfo.ppEnabledExtensionNames = requiredExtensions.data();
+    deviceInfo.pNext = &dynamicInfo;
 
     vkCreateDevice(mActiveGpu, &deviceInfo, nullptr, &mActiveDevice);
     volkLoadDevice(mActiveDevice);
@@ -364,6 +369,7 @@ void MiniEngine::Backend::VulkanDriver::createSwapchainImageViews()
     for (uint32_t i = 0; i < imageCount; ++i) {
         VkCommandPool commandPool;
         VkCommandBuffer commandBuffer;
+        VkImageView imageView;
 
         VkCommandPoolCreateInfo cmdPoolInfo{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
         cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
@@ -378,11 +384,6 @@ void MiniEngine::Backend::VulkanDriver::createSwapchainImageViews()
 
         mSwapchainPerImageData[i].imageCommandPool = commandPool;
         mSwapchainPerImageData[i].imageCommandBuffer = commandBuffer;
-    }
-
-    // Create and image we can render to
-    for (uint32_t i = 0; i < imageCount; ++i) {
-        VkImageView imageView;
 
         VkImageViewCreateInfo viewInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
         viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -398,6 +399,8 @@ void MiniEngine::Backend::VulkanDriver::createSwapchainImageViews()
 
         vkCreateImageView(mActiveDevice, &viewInfo, nullptr, &imageView);
         mSwapchainPerImageData[i].imageView = imageView;
+
+        mSwapchainPerImageData[i].rawImage = swapchainImages[i];
     }
 }
 
@@ -551,24 +554,33 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 	std::array<VkDynamicState, 2> dynamics { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 	
 	VkPipelineDynamicStateCreateInfo dynamicInfo { VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO };
-	dynamicInfo.pDynamicStates = dynamics.data();
-	dynamicInfo.dynamicStateCount = static_cast<uint32_t>(dynamics.size());
+    dynamicInfo.pDynamicStates = dynamics.data();
+    dynamicInfo.dynamicStateCount = static_cast<uint32_t>(dynamics.size());
 
-	VkGraphicsPipelineCreateInfo pipelineInfo { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
-	pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
-	pipelineInfo.pStages = shaderStages.data();
-	pipelineInfo.pVertexInputState = &(vertexInputInfo.data);
-	pipelineInfo.pInputAssemblyState = &inputAssemblyInfo;
-	pipelineInfo.pRasterizationState = &rasterInfo;
-	pipelineInfo.pColorBlendState = &colorBlendInfo;
-	pipelineInfo.pMultisampleState = &multiSampleInfo;
-	pipelineInfo.pViewportState = &viewportInfo;
+    VkFormat colorAttachmentFormats[] = {mCurrentSwapchainFormat,
+                                         mCurrentSwapchainFormat,
+                                         mCurrentSwapchainFormat,
+                                         mCurrentSwapchainFormat,
+                                         mCurrentSwapchainFormat};
+
+    VkPipelineRenderingCreateInfo renderingInfo{VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO};
+    renderingInfo.colorAttachmentCount = 5;
+    renderingInfo.pColorAttachmentFormats = colorAttachmentFormats;
+    renderingInfo.depthAttachmentFormat = mCurrentSwapchainDepthFormat;
+
+    VkGraphicsPipelineCreateInfo pipelineInfo{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
+    pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
+    pipelineInfo.pStages = shaderStages.data();
+    pipelineInfo.pVertexInputState = &(vertexInputInfo.data);
+    pipelineInfo.pInputAssemblyState = &inputAssemblyInfo;
+    pipelineInfo.pRasterizationState = &rasterInfo;
+    pipelineInfo.pColorBlendState = &colorBlendInfo;
+    pipelineInfo.pMultisampleState = &multiSampleInfo;
+    pipelineInfo.pViewportState = &viewportInfo;
 	pipelineInfo.pDepthStencilState = &depthStencilInfo;
 	pipelineInfo.pDynamicState = &dynamicInfo;
-
-	pipelineInfo.renderPass = mDefaultRenderpass;
-	pipelineInfo.subpass = 0;
 	pipelineInfo.layout = pipelineLayout;
+    pipelineInfo.pNext = &renderingInfo;
 
     vkCreateGraphicsPipelines(mActiveDevice,
                               VK_NULL_HANDLE,
@@ -617,6 +629,11 @@ void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
     colorBlendInfo.attachmentCount = 1;
     colorBlendInfo.pAttachments = blendList;
 
+    VkPipelineRenderingCreateInfo renderingInfo{VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO};
+    renderingInfo.colorAttachmentCount = 1;
+    renderingInfo.pColorAttachmentFormats = &mCurrentSwapchainFormat;
+    renderingInfo.depthAttachmentFormat = mCurrentSwapchainDepthFormat;
+
     VkGraphicsPipelineCreateInfo pipelineInfo{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
     pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
     pipelineInfo.pStages = shaderStages.data();
@@ -628,10 +645,8 @@ void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
 	pipelineInfo.pViewportState = &viewportInfo;
 	pipelineInfo.pDepthStencilState = &depthStencilInfo;
 	pipelineInfo.pDynamicState = &dynamicInfo;
-
-	pipelineInfo.renderPass = mDefaultRenderpass;
-	pipelineInfo.subpass = 1;
 	pipelineInfo.layout = pipelineLayout;
+    pipelineInfo.pNext = &renderingInfo;
 
     vkCreateGraphicsPipelines(mActiveDevice,
                               VK_NULL_HANDLE,
@@ -666,7 +681,7 @@ void MiniEngine::Backend::VulkanDriver::createFramebuffer()
 
         vkCreateFramebuffer(mActiveDevice, &fbInfo, nullptr, &fBuffer);
 
-        mFramebuffers.push_back(fBuffer);
+        //mFramebuffers.push_back(fBuffer);
     }
 }
 
@@ -717,24 +732,32 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 
 		vkBeginCommandBuffer(cmd, &beginInfo);
 
-		VkClearValue colorClearValue{}, depthClearValue{};
-		auto color = mParams.clearColor;
-		colorClearValue.color = { { color.r(), color.g(), color.b(), color.a() } };
+        VkImageMemoryBarrier imageMemBarrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
+        imageMemBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        imageMemBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        imageMemBarrier.srcAccessMask = 0;
+        imageMemBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        imageMemBarrier.image = mSwapchainPerImageData[i].rawImage;
 
-		depthClearValue.depthStencil = { 1.0f, 0u };
+        vkCmdPipelineBarrier(mSwapchainPerImageData[i].imageCommandBuffer,
+                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                             0,
+                             0,
+                             nullptr,
+                             0,
+                             nullptr,
+                             1,
+                             &imageMemBarrier);
 
-		VkClearValue clearValues[] = { colorClearValue, colorClearValue, colorClearValue, colorClearValue, colorClearValue, depthClearValue };
+        VkRenderingAttachmentInfo colorAttachment{VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+        colorAttachment.imageView = mSwapchainPerImageData[i].imageView;
+        colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        colorAttachment.clearValue.color = {1, 0, 0, 1};
 
-		VkRenderPassBeginInfo rpBeginInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
-		rpBeginInfo.renderPass = mDefaultRenderpass;
-		rpBeginInfo.framebuffer = mFramebuffers[i];
-		rpBeginInfo.renderArea.extent.width = mParams.screenWidth;
-		rpBeginInfo.renderArea.extent.height = mParams.screenHeight;
-		rpBeginInfo.clearValueCount = 6;
-		rpBeginInfo.pClearValues = clearValues;
-
-		vkCmdBeginRenderPass(cmd, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mGbufferPipeline);
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mGbufferPipeline);
 
 		VkViewport vp{};
 		vp.width = mParams.screenWidth;
@@ -755,13 +778,9 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 		vkCmdDraw(cmd, 3, 6, 0, 0);
 
-		vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
-
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mLightingPipeline);
 
 		vkCmdDraw(cmd, 3, 6, 0, 0);
-
-		vkCmdEndRenderPass(cmd);
 
         vkEndCommandBuffer(cmd);
     }
