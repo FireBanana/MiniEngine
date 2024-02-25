@@ -3,8 +3,10 @@
 #ifdef GRAPHICS_DEBUG
 #include "VulkanRenderDoc.h"
 #include "Logger.h"
-#include <renderdoc_app.h>
 #include <Windows.h>
+#if RENDERDOC_ENABLE
+#include <renderdoc_app.h>
+#endif
 
 namespace MiniEngine
 {
@@ -12,11 +14,13 @@ namespace Backend
 {
 namespace VulkanRenderDoc
 {
+#if defined(RENDERDOC_ENABLE)
 	static RENDERDOC_API_1_1_2* rdoc_api = nullptr;
+#endif
 
 	void initRenderDoc()
 	{
-#ifdef GRAPHICS_DEBUG
+#ifdef RENDERDOC_ENABLE
 
 		// Windows only
 
@@ -33,14 +37,14 @@ namespace VulkanRenderDoc
 
 	void startCapture()
 	{
-#ifdef GRAPHICS_DEBUG
+#ifdef RENDERDOC_ENABLE
 		if (rdoc_api) rdoc_api->StartFrameCapture(nullptr, nullptr);
 #endif
 	} 
 
 	void endCapture()
 	{
-#ifdef GRAPHICS_DEBUG
+#ifdef RENDERDOC_ENABLE
 		if (rdoc_api) rdoc_api->EndFrameCapture(nullptr, nullptr);
 #endif
 	}

@@ -7,9 +7,9 @@ set(CMAKE_SUPPRESS_REGENERATION true)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin/)
 set(CMAKE_RUNTIME_LIBRARY_DIRECTORY bin/)
 
-set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*")
 set(CMAKE_CXX_STANDARD 17)
 set(GRAPHICS_DEBUG ON)
+set(RENDERDOC_ENABLE OFF)
 
 set(USING_OPENGL false)
 
@@ -62,7 +62,7 @@ target_include_directories(MiniEngine PUBLIC libs/glfw/include)
 
 # vulkan
 
-target_include_directories(MiniEngine PUBLIC $ENV{VULKAN_SDK}/Include/)
+target_include_directories(MiniEngine PUBLIC "$ENV{VULKAN_SDK}\\Include")
 
 # ======
 

@@ -52,7 +52,6 @@ namespace Backend
 
 		void generateDevice();
 		void generateSwapchain();
-		void generateRenderPass();
 		void generatePipelines();
 		
 		void generateGbuffer();
@@ -87,7 +86,6 @@ namespace Backend
 		VkDevice mActiveDevice;
 		VkQueue mActiveDeviceQueue;
 		VkSwapchainKHR mActiveSwapchain;
-		VkRenderPass mDefaultRenderpass;
 		VkPipeline mGbufferPipeline;
 		VkPipeline mLightingPipeline;
 		VkFormat mCurrentSwapchainFormat;
@@ -95,9 +93,8 @@ namespace Backend
 		int32_t mActiveQueue{ -1 };
 		VkPhysicalDeviceMemoryProperties mGpuMemoryProperties;
 
-        //std::vector<VkFramebuffer> mFramebuffers;
         std::vector<PerFrameData>  mSwapchainPerImageData;
-		std::array<VkImageView, 6> mFrameBufferAttachments;
+		std::array<VkImageView, 6> mImageAttachments;
         Utils::DynamicArray<DisplaySemaphore> mDisplaySemaphoreArray;
 
         void enumerateInstanceExtensionProperties();
@@ -108,11 +105,8 @@ namespace Backend
 		void createDevice(const std::vector<const char*>&& requiredExtensions);
 		void createSwapchain();
 		void createSwapchainImageViews();
-		void createRenderPasses();
 		void createGBufferPipeline();
 		void createLightingPipeline();
-		void createFramebuffer();
-		void createFramebufferAttachmentSampler();
         void createDisplaySemaphores();
         void recordCommandBuffers();
 

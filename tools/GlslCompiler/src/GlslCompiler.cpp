@@ -2,6 +2,7 @@
 #include "FileHelper.h"
 #include "GlslCompiler.h"
 #include <glslang/Public/ResourceLimits.h>
+#include <glslang/Public/ShaderLang.h>
 #include <glslang/SPIRV/GlslangToSpv.h>
 
 VkShaderModule MiniTools::GlslCompiler::loadShader(std::string path, VkShaderStageFlagBits stage, VkDevice& device)

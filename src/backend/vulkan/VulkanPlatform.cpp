@@ -50,7 +50,6 @@ void MiniEngine::Backend::VulkanPlatform::createWindow(uint16_t width, uint16_t 
     mDriver->updateSurface(mSurface);
     mDriver->generateDevice();
     mDriver->generateSwapchain();
-    mDriver->generateRenderPass();
     mDriver->generateGbuffer();
     mDriver->generatePipelines();
 

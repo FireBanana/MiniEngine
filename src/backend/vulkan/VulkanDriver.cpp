@@ -34,10 +34,10 @@ void MiniEngine::Backend::VulkanDriver::initialize(MiniEngine::Types::EngineInit
 {
 	mParams = params;
 
-    volkInitialize();
+	volkInitialize();
 
-    enumerateInstanceExtensionProperties();
-    enumerateInstanceLayerProperties();
+	enumerateInstanceExtensionProperties();
+	enumerateInstanceLayerProperties();
 }
 
 void MiniEngine::Backend::VulkanDriver::generateDevice()
@@ -45,36 +45,30 @@ void MiniEngine::Backend::VulkanDriver::generateDevice()
 	getPhysicalDevice();
 	getPhysicalDeviceQueueFamily();
 	enumerateDeviceExtensionProperties();
-    createDevice({"VK_KHR_swapchain",
-                  "VK_KHR_dynamic_rendering",
-                  "VK_KHR_depth_stencil_resolve",
-                  "VK_KHR_create_renderpass2",
-                  "VK_KHR_multiview",
-                  "VK_KHR_maintenance2"});
+	createDevice({ "VK_KHR_swapchain",
+				  "VK_KHR_dynamic_rendering",
+				  "VK_KHR_depth_stencil_resolve",
+				  "VK_KHR_create_renderpass2",
+				  "VK_KHR_multiview",
+				  "VK_KHR_maintenance2" });
 }
 
 void MiniEngine::Backend::VulkanDriver::generateSwapchain()
 {
 	createSwapchain();
 	createSwapchainImageViews();
-    createDisplaySemaphores();
-}
-
-void MiniEngine::Backend::VulkanDriver::generateRenderPass()
-{
-	createRenderPasses();	
+	createDisplaySemaphores();
 }
 
 void MiniEngine::Backend::VulkanDriver::generatePipelines()
 {
 	mPipelineBuilder = std::make_unique<VulkanPipelineBuilder>(mActiveDevice, mGpuMemoryProperties);
-	
+
 	mPipelineBuilder->instantiateTriangleBuffer();
 
-    createGBufferPipeline();
-    createLightingPipeline();
-    createFramebuffer();
-    recordCommandBuffers();
+	createGBufferPipeline();
+	createLightingPipeline();
+	recordCommandBuffers();
 }
 
 void MiniEngine::Backend::VulkanDriver::generateGbuffer()
@@ -86,14 +80,12 @@ void MiniEngine::Backend::VulkanDriver::generateGbuffer()
 	auto depthImageView = createImageAttachment(mCurrentSwapchainDepthFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT);
 
 	// 0 is swapchain image
-	mFrameBufferAttachments[0] = mSwapchainPerImageData[0].imageView;
-	mFrameBufferAttachments[1] = colorImageView;
-	mFrameBufferAttachments[2] = positionImageView;
-	mFrameBufferAttachments[3] = normalImageView;
-	mFrameBufferAttachments[4] = roughnessImageView;
-	mFrameBufferAttachments[5] = depthImageView;
-
-	createFramebufferAttachmentSampler();
+	mImageAttachments[0] = mSwapchainPerImageData[0].imageView;
+	mImageAttachments[1] = colorImageView;
+	mImageAttachments[2] = positionImageView;
+	mImageAttachments[3] = normalImageView;
+	mImageAttachments[4] = roughnessImageView;
+	mImageAttachments[5] = depthImageView;
 }
 
 void MiniEngine::Backend::VulkanDriver::createInstance(
@@ -105,14 +97,14 @@ void MiniEngine::Backend::VulkanDriver::createInstance(
 	VkApplicationInfo app{ VK_STRUCTURE_TYPE_APPLICATION_INFO };
 	app.pApplicationName = "MiniEngine";
 	app.pEngineName = "MiniEngine";
-    app.apiVersion = VK_MAKE_API_VERSION(0, 1, 3, 261);
+	app.apiVersion = VK_MAKE_API_VERSION(0, 1, 3, 261);
 
-    VkInstanceCreateInfo info{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
-    info.pApplicationInfo = &app;
-    info.enabledExtensionCount = static_cast<uint32_t>(requireInstanceExtensions.size());
-    info.ppEnabledExtensionNames = requireInstanceExtensions.data();
-    info.enabledLayerCount = static_cast<uint32_t>(requiredLayers.size());
-    info.ppEnabledLayerNames = requiredLayers.data();
+	VkInstanceCreateInfo info{ VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
+	info.pApplicationInfo = &app;
+	info.enabledExtensionCount = static_cast<uint32_t>(requireInstanceExtensions.size());
+	info.ppEnabledExtensionNames = requireInstanceExtensions.data();
+	info.enabledLayerCount = static_cast<uint32_t>(requiredLayers.size());
+	info.ppEnabledLayerNames = requiredLayers.data();
 
 #ifdef GRAPHICS_DEBUG
 	VkDebugUtilsMessengerCreateInfoEXT debugInfo{ VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
@@ -120,16 +112,16 @@ void MiniEngine::Backend::VulkanDriver::createInstance(
 	debugInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
 	debugInfo.pfnUserCallback = debugUtilsCallback;
 
-    info.pNext = &debugInfo;
+	info.pNext = &debugInfo;
 #endif
 
-    vkCreateInstance(&info, nullptr, &mInstance);
+	vkCreateInstance(&info, nullptr, &mInstance);
 
-    volkLoadInstance(mInstance);
+	volkLoadInstance(mInstance);
 
 #ifdef GRAPHICS_DEBUG
 	VkDebugUtilsMessengerEXT messenger;
-    vkCreateDebugUtilsMessengerEXT(mInstance, &debugInfo, nullptr, &messenger);
+	vkCreateDebugUtilsMessengerEXT(mInstance, &debugInfo, nullptr, &messenger);
 #endif
 }
 
@@ -138,69 +130,69 @@ void MiniEngine::Backend::VulkanDriver::enumerateInstanceExtensionProperties()
 {
 	uint32_t instanceExtensionCount;
 
-    vkEnumerateInstanceExtensionProperties(nullptr, &instanceExtensionCount, nullptr);
-    std::vector<VkExtensionProperties> instanceExtensionList(instanceExtensionCount);
-    vkEnumerateInstanceExtensionProperties(nullptr,
-                                           &instanceExtensionCount,
-                                           instanceExtensionList.data());
+	vkEnumerateInstanceExtensionProperties(nullptr, &instanceExtensionCount, nullptr);
+	std::vector<VkExtensionProperties> instanceExtensionList(instanceExtensionCount);
+	vkEnumerateInstanceExtensionProperties(nullptr,
+		&instanceExtensionCount,
+		instanceExtensionList.data());
 
-    for (auto i : instanceExtensionList) {
-        MiniEngine::Logger::print(i.extensionName);
-    }
+	for (auto i : instanceExtensionList) {
+		MiniEngine::Logger::print(i.extensionName);
+	}
 }
 
 void MiniEngine::Backend::VulkanDriver::enumerateInstanceLayerProperties()
 {
 	uint32_t instanceLayerCount;
 
-    vkEnumerateInstanceLayerProperties(&instanceLayerCount, nullptr);
-    std::vector<VkLayerProperties> layerPropertyList(instanceLayerCount);
-    vkEnumerateInstanceLayerProperties(&instanceLayerCount, layerPropertyList.data());
+	vkEnumerateInstanceLayerProperties(&instanceLayerCount, nullptr);
+	std::vector<VkLayerProperties> layerPropertyList(instanceLayerCount);
+	vkEnumerateInstanceLayerProperties(&instanceLayerCount, layerPropertyList.data());
 
-    for (auto i : layerPropertyList) {
-        MiniEngine::Logger::print(i.layerName);
-    }
+	for (auto i : layerPropertyList) {
+		MiniEngine::Logger::print(i.layerName);
+	}
 }
 
 void MiniEngine::Backend::VulkanDriver::enumerateDeviceExtensionProperties()
 {
 	uint32_t deviceExtensionCount;
 
-    vkEnumerateDeviceExtensionProperties(mActiveGpu, nullptr, &deviceExtensionCount, nullptr);
-    std::vector<VkExtensionProperties> deviceExtensions(deviceExtensionCount);
+	vkEnumerateDeviceExtensionProperties(mActiveGpu, nullptr, &deviceExtensionCount, nullptr);
+	std::vector<VkExtensionProperties> deviceExtensions(deviceExtensionCount);
 
-    vkEnumerateDeviceExtensionProperties(mActiveGpu,
-                                         nullptr,
-                                         &deviceExtensionCount,
-                                         deviceExtensions.data());
+	vkEnumerateDeviceExtensionProperties(mActiveGpu,
+		nullptr,
+		&deviceExtensionCount,
+		deviceExtensions.data());
 
-    // Check required extensions here (swapchain)
+	// Check required extensions here (swapchain)
 
-    MiniEngine::Logger::print("Device Extensions: ");
+	MiniEngine::Logger::print("Device Extensions: ");
 
-    for (auto i : deviceExtensions) {
-        MiniEngine::Logger::print(i.extensionName);
-    }
+	for (auto i : deviceExtensions) {
+		MiniEngine::Logger::print(i.extensionName);
+	}
 }
 
 void MiniEngine::Backend::VulkanDriver::getPhysicalDevice()
 {
 	uint32_t gpuCount;
 
-    vkEnumeratePhysicalDevices(mInstance, &gpuCount, nullptr);
+	vkEnumeratePhysicalDevices(mInstance, &gpuCount, nullptr);
 
-    if (gpuCount < 1) {
-        MiniEngine::Logger::eprint("No Vulkan device found");
-        throw;
-    }
+	if (gpuCount < 1) {
+		MiniEngine::Logger::eprint("No Vulkan device found");
+		throw;
+	}
 
-    std::vector<VkPhysicalDevice> gpuList(gpuCount);
-    vkEnumeratePhysicalDevices(mInstance, &gpuCount, gpuList.data());
+	std::vector<VkPhysicalDevice> gpuList(gpuCount);
+	vkEnumeratePhysicalDevices(mInstance, &gpuCount, gpuList.data());
 
-    // Only taking the first GPU found
-    mActiveGpu = gpuList.size() > 1 ? gpuList[1] : gpuList[0];
+	// Only taking the first GPU found
+	mActiveGpu = gpuList.size() > 1 ? gpuList[1] : gpuList[0];
 
-    vkGetPhysicalDeviceMemoryProperties(mActiveGpu, &mGpuMemoryProperties);
+	vkGetPhysicalDeviceMemoryProperties(mActiveGpu, &mGpuMemoryProperties);
 }
 
 void MiniEngine::Backend::VulkanDriver::getPhysicalDeviceQueueFamily()
@@ -208,7 +200,7 @@ void MiniEngine::Backend::VulkanDriver::getPhysicalDeviceQueueFamily()
 	uint32_t queueFamilyCount;
 	vkGetPhysicalDeviceQueueFamilyProperties(mActiveGpu, &queueFamilyCount, nullptr);
 
-	if(queueFamilyCount < 1) { MiniEngine::Logger::eprint("No queue family found"); throw; }
+	if (queueFamilyCount < 1) { MiniEngine::Logger::eprint("No queue family found"); throw; }
 
 	std::vector<VkQueueFamilyProperties> queuePropertyList(queueFamilyCount);
 	vkGetPhysicalDeviceQueueFamilyProperties(mActiveGpu, &queueFamilyCount, queuePropertyList.data());
@@ -243,107 +235,108 @@ void MiniEngine::Backend::VulkanDriver::createDevice(const std::vector<const cha
 	queueInfo.queueCount = 1;
 	queueInfo.pQueuePriorities = qPriority;
 
-    VkPhysicalDeviceDynamicRenderingFeatures dynamicInfo{
-        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES};
-    dynamicInfo.dynamicRendering = true;
+	VkPhysicalDeviceDynamicRenderingFeatures dynamicInfo{
+		VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES };
+	dynamicInfo.dynamicRendering = true;
 
-    VkDeviceCreateInfo deviceInfo{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
-    deviceInfo.queueCreateInfoCount = 1;
-    deviceInfo.pQueueCreateInfos = &queueInfo;
-    deviceInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
-    deviceInfo.ppEnabledExtensionNames = requiredExtensions.data();
-    deviceInfo.pNext = &dynamicInfo;
+	VkDeviceCreateInfo deviceInfo{ VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
+	deviceInfo.queueCreateInfoCount = 1;
+	deviceInfo.pQueueCreateInfos = &queueInfo;
+	deviceInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
+	deviceInfo.ppEnabledExtensionNames = requiredExtensions.data();
+	deviceInfo.pNext = &dynamicInfo;
 
-    vkCreateDevice(mActiveGpu, &deviceInfo, nullptr, &mActiveDevice);
-    volkLoadDevice(mActiveDevice);
+	vkCreateDevice(mActiveGpu, &deviceInfo, nullptr, &mActiveDevice);
+	volkLoadDevice(mActiveDevice);
 
-    // Getting first queue only
-    vkGetDeviceQueue(mActiveDevice, mActiveQueue, 0, &mActiveDeviceQueue);
+	// Getting first queue only
+	vkGetDeviceQueue(mActiveDevice, mActiveQueue, 0, &mActiveDeviceQueue);
 
-    VkPhysicalDeviceProperties deviceProps;
-    vkGetPhysicalDeviceProperties(mActiveGpu, &deviceProps);
+	VkPhysicalDeviceProperties deviceProps;
+	vkGetPhysicalDeviceProperties(mActiveGpu, &deviceProps);
 
-    MiniEngine::Logger::print("Device Name: {}, Driver Version: {}",
-                              deviceProps.deviceName,
-                              deviceProps.driverVersion);
+	MiniEngine::Logger::print("Device Name: {}, Driver Version: {}",
+		deviceProps.deviceName,
+		deviceProps.driverVersion);
 }
 
 void MiniEngine::Backend::VulkanDriver::createSwapchain()
 {
 	VkSurfaceCapabilitiesKHR surfaceProperties;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(mActiveGpu, mSurface, &surfaceProperties);
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(mActiveGpu, mSurface, &surfaceProperties);
 
-    // Preferred format VK_FORMAT_R16G16B16A16_SFLOAT
-    uint32_t surfaceFormatCount;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(mActiveGpu, mSurface, &surfaceFormatCount, nullptr);
-    std::vector<VkSurfaceFormatKHR> supportedFormatList(surfaceFormatCount);
-    vkGetPhysicalDeviceSurfaceFormatsKHR(mActiveGpu,
-                                         mSurface,
-                                         &surfaceFormatCount,
-                                         supportedFormatList.data());
+	// Preferred format VK_FORMAT_R16G16B16A16_SFLOAT
+	uint32_t surfaceFormatCount;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(mActiveGpu, mSurface, &surfaceFormatCount, nullptr);
+	std::vector<VkSurfaceFormatKHR> supportedFormatList(surfaceFormatCount);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(mActiveGpu,
+		mSurface,
+		&surfaceFormatCount,
+		supportedFormatList.data());
 
-    auto iter = std::find_if(supportedFormatList.begin(),
-                             supportedFormatList.end(),
-                             [](VkSurfaceFormatKHR currFormat) {
-                                 return currFormat.format == PREFERRED_FORMAT;
-                             });
+	auto iter = std::find_if(supportedFormatList.begin(),
+		supportedFormatList.end(),
+		[](VkSurfaceFormatKHR currFormat) {
+			return currFormat.format == PREFERRED_FORMAT;
+		});
 
-    if (iter == supportedFormatList.end()) {
-        iter = supportedFormatList.begin();
-        MiniEngine::Logger::wprint("{} not found as a supported format. Defaulting to {}",
-                                   PREFERRED_FORMAT,
-                                   (*iter).format);
-    }
+	if (iter == supportedFormatList.end()) {
+		iter = supportedFormatList.begin();
+		MiniEngine::Logger::wprint("{} not found as a supported format. Defaulting to {}",
+			PREFERRED_FORMAT,
+			(*iter).format);
+	}
 
-    auto format = *iter;
+	auto format = *iter;
 
-    mCurrentSwapchainFormat = format.format;
+	mCurrentSwapchainFormat = format.format;
 
-    // Choose desired depth as well
-    constexpr VkFormat depthList[] = {VK_FORMAT_D32_SFLOAT,
-                                      VK_FORMAT_D32_SFLOAT_S8_UINT,
-                                      VK_FORMAT_D24_UNORM_S8_UINT};
+	// Choose desired depth as well
+	constexpr VkFormat depthList[] = { VK_FORMAT_D32_SFLOAT,
+									  VK_FORMAT_D32_SFLOAT_S8_UINT,
+									  VK_FORMAT_D24_UNORM_S8_UINT };
 
-    mCurrentSwapchainDepthFormat = depthList[0];
+	mCurrentSwapchainDepthFormat = depthList[0];
 
-    for (auto dFormat : depthList) {
-        VkFormatProperties dProps;
-        vkGetPhysicalDeviceFormatProperties(mActiveGpu, dFormat, &dProps);
+	for (auto dFormat : depthList) {
+		VkFormatProperties dProps;
+		vkGetPhysicalDeviceFormatProperties(mActiveGpu, dFormat, &dProps);
 
-        if (dProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
-            mCurrentSwapchainDepthFormat = dFormat;
-            break;
-        }
-    }
+		if (dProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+			mCurrentSwapchainDepthFormat = dFormat;
+			break;
+		}
+	}
 
-    VkExtent2D swapchainSize;
+	VkExtent2D swapchainSize;
 
-    if (surfaceProperties.currentExtent.width == 0xFFFFFFFF) {
-        swapchainSize.width = mParams.screenWidth;
-        swapchainSize.height = mParams.screenHeight;
-    } else {
-        swapchainSize = surfaceProperties.currentExtent;
-        mParams.screenHeight = swapchainSize.height;
-        mParams.screenWidth = swapchainSize.width;
-    }
+	if (surfaceProperties.currentExtent.width == 0xFFFFFFFF) {
+		swapchainSize.width = mParams.screenWidth;
+		swapchainSize.height = mParams.screenHeight;
+	}
+	else {
+		swapchainSize = surfaceProperties.currentExtent;
+		mParams.screenHeight = swapchainSize.height;
+		mParams.screenWidth = swapchainSize.width;
+	}
 
-    VkPresentModeKHR swapchainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+	VkPresentModeKHR swapchainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
 
-    uint32_t desiredSwapchainImages = surfaceProperties.minImageCount + 1;
+	uint32_t desiredSwapchainImages = surfaceProperties.minImageCount + 1;
 
-    if ((surfaceProperties.maxImageCount > 0)
-        && desiredSwapchainImages > surfaceProperties.maxImageCount)
-        desiredSwapchainImages = surfaceProperties.maxImageCount;
+	if ((surfaceProperties.maxImageCount > 0)
+		&& desiredSwapchainImages > surfaceProperties.maxImageCount)
+		desiredSwapchainImages = surfaceProperties.maxImageCount;
 
-    VkCompositeAlphaFlagBitsKHR composite = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	VkCompositeAlphaFlagBitsKHR composite = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
-    VkSwapchainCreateInfoKHR swapchainInfo{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
-    swapchainInfo.surface = mSurface;
-    swapchainInfo.minImageCount = desiredSwapchainImages;
-    swapchainInfo.imageFormat = format.format;
-    swapchainInfo.imageColorSpace = format.colorSpace;
-    swapchainInfo.imageExtent.width = swapchainSize.width;
-    swapchainInfo.imageExtent.height = swapchainSize.height;
+	VkSwapchainCreateInfoKHR swapchainInfo{ VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
+	swapchainInfo.surface = mSurface;
+	swapchainInfo.minImageCount = desiredSwapchainImages;
+	swapchainInfo.imageFormat = format.format;
+	swapchainInfo.imageColorSpace = format.colorSpace;
+	swapchainInfo.imageExtent.width = swapchainSize.width;
+	swapchainInfo.imageExtent.height = swapchainSize.height;
 	swapchainInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 	swapchainInfo.imageArrayLayers = 1;
 	swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
@@ -352,170 +345,56 @@ void MiniEngine::Backend::VulkanDriver::createSwapchain()
 	swapchainInfo.presentMode = swapchainPresentMode;
 	swapchainInfo.clipped = true;
 
-    vkCreateSwapchainKHR(mActiveDevice, &swapchainInfo, nullptr, &mActiveSwapchain);
+	vkCreateSwapchainKHR(mActiveDevice, &swapchainInfo, nullptr, &mActiveSwapchain);
 }
 
 void MiniEngine::Backend::VulkanDriver::createSwapchainImageViews()
 {
 	uint32_t imageCount;
-    vkGetSwapchainImagesKHR(mActiveDevice, mActiveSwapchain, &imageCount, nullptr);
+	vkGetSwapchainImagesKHR(mActiveDevice, mActiveSwapchain, &imageCount, nullptr);
 
-    std::vector<VkImage> swapchainImages(imageCount);
-    vkGetSwapchainImagesKHR(mActiveDevice, mActiveSwapchain, &imageCount, swapchainImages.data());
+	std::vector<VkImage> swapchainImages(imageCount);
+	vkGetSwapchainImagesKHR(mActiveDevice, mActiveSwapchain, &imageCount, swapchainImages.data());
 
-    mSwapchainPerImageData = std::vector<PerFrameData>(imageCount, PerFrameData{});
+	mSwapchainPerImageData = std::vector<PerFrameData>(imageCount, PerFrameData{});
 
-    // Initialize a command pool per swapchain image
-    for (uint32_t i = 0; i < imageCount; ++i) {
-        VkCommandPool commandPool;
-        VkCommandBuffer commandBuffer;
-        VkImageView imageView;
+	// Initialize a command pool per swapchain image
+	for (uint32_t i = 0; i < imageCount; ++i) {
+		VkCommandPool commandPool;
+		VkCommandBuffer commandBuffer;
+		VkImageView imageView;
 
-        VkCommandPoolCreateInfo cmdPoolInfo{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
-        cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-        cmdPoolInfo.queueFamilyIndex = mActiveQueue;
-        vkCreateCommandPool(mActiveDevice, &cmdPoolInfo, nullptr, &commandPool);
+		VkCommandPoolCreateInfo cmdPoolInfo{ VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
+		cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+		cmdPoolInfo.queueFamilyIndex = mActiveQueue;
+		vkCreateCommandPool(mActiveDevice, &cmdPoolInfo, nullptr, &commandPool);
 
-        VkCommandBufferAllocateInfo cmdBuffInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
-        cmdBuffInfo.commandPool = commandPool;
-        cmdBuffInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        cmdBuffInfo.commandBufferCount = 1;
-        vkAllocateCommandBuffers(mActiveDevice, &cmdBuffInfo, &commandBuffer);
+		VkCommandBufferAllocateInfo cmdBuffInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+		cmdBuffInfo.commandPool = commandPool;
+		cmdBuffInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		cmdBuffInfo.commandBufferCount = 1;
+		vkAllocateCommandBuffers(mActiveDevice, &cmdBuffInfo, &commandBuffer);
 
-        mSwapchainPerImageData[i].imageCommandPool = commandPool;
-        mSwapchainPerImageData[i].imageCommandBuffer = commandBuffer;
+		mSwapchainPerImageData[i].imageCommandPool = commandPool;
+		mSwapchainPerImageData[i].imageCommandBuffer = commandBuffer;
 
-        VkImageViewCreateInfo viewInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
-        viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        viewInfo.format = mCurrentSwapchainFormat;
-        viewInfo.image = swapchainImages[i];
-        viewInfo.subresourceRange.levelCount = 1;
-        viewInfo.subresourceRange.layerCount = 1;
-        viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        viewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
-        viewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
-        viewInfo.components.b = VK_COMPONENT_SWIZZLE_B;
-        viewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
+		VkImageViewCreateInfo viewInfo{ VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		viewInfo.format = mCurrentSwapchainFormat;
+		viewInfo.image = swapchainImages[i];
+		viewInfo.subresourceRange.levelCount = 1;
+		viewInfo.subresourceRange.layerCount = 1;
+		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		viewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
+		viewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
+		viewInfo.components.b = VK_COMPONENT_SWIZZLE_B;
+		viewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
 
-        vkCreateImageView(mActiveDevice, &viewInfo, nullptr, &imageView);
-        mSwapchainPerImageData[i].imageView = imageView;
+		vkCreateImageView(mActiveDevice, &viewInfo, nullptr, &imageView);
+		mSwapchainPerImageData[i].imageView = imageView;
 
-        mSwapchainPerImageData[i].rawImage = swapchainImages[i];
-    }
-}
-
-void MiniEngine::Backend::VulkanDriver::createRenderPasses()
-{
-	std::array<VkAttachmentDescription, 6> attachmentDescs = {};
-
-	for (uint32_t i = 0; i < attachmentDescs.size(); ++i)
-	{
-		attachmentDescs[i].samples = VK_SAMPLE_COUNT_1_BIT;
-		attachmentDescs[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachmentDescs[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		attachmentDescs[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachmentDescs[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachmentDescs[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-		if (i == attachmentDescs.size() - 1) // Depth target
-		{
-			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-			attachmentDescs[i].format = mCurrentSwapchainDepthFormat;
-		}
-		else if (i == 0) // Swapchain target
-		{
-			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-			attachmentDescs[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-			attachmentDescs[i].format = mCurrentSwapchainFormat;
-		}
-		else
-		{
-			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			attachmentDescs[i].format = mCurrentSwapchainFormat;
-		}
+		mSwapchainPerImageData[i].rawImage = swapchainImages[i];
 	}
-
-	std::array<VkAttachmentReference, attachmentDescs.size() - 1> colorReferences = {};
-	std::array<VkAttachmentReference, attachmentDescs.size() - 1> inputReferences = {};
-
-	VkAttachmentReference depthReference = {};
-
-	colorReferences[0] = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-	colorReferences[1] = { 1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-	colorReferences[2] = { 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-	colorReferences[3] = { 3, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-	colorReferences[4] = { 4, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-
-	inputReferences[0] = { 0, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-	inputReferences[1] = { 1, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-	inputReferences[2] = { 2, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-	inputReferences[3] = { 3, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-	inputReferences[4] = { 4, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-
-	depthReference.attachment = 5;
-	depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-	// ============== Subpasses ===============
-
-	std::array<VkSubpassDescription, 2> subpassDesc = {};
-	subpassDesc[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpassDesc[0].colorAttachmentCount = colorReferences.size();
-	subpassDesc[0].pColorAttachments = colorReferences.data();
-	subpassDesc[0].pDepthStencilAttachment = &depthReference;
-
-	subpassDesc[1].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpassDesc[1].colorAttachmentCount = 1;
-	subpassDesc[1].pColorAttachments = &colorReferences[0];
-	subpassDesc[1].pDepthStencilAttachment = &depthReference;
-	subpassDesc[1].inputAttachmentCount = 4;
-	subpassDesc[1].pInputAttachments = &inputReferences[1];
-	
-	// ========= Subpass Dependencies ==========
-
-	std::array<VkSubpassDependency, 4> dependencies;
-	// This makes sure that writes to the depth image are done before we try to write to it again
-	dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependencies[0].dstSubpass = 0;
-	dependencies[0].srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-	dependencies[0].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-	dependencies[0].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-	dependencies[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-	dependencies[1].srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependencies[1].dstSubpass = 0;
-	dependencies[1].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependencies[1].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependencies[1].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	dependencies[1].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-	// This dependency transitions the input attachment from color attachment to input attachment read
-	dependencies[2].srcSubpass = 0;
-	dependencies[2].dstSubpass = 1;
-	dependencies[2].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependencies[2].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	dependencies[2].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	dependencies[2].dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
-	dependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-	dependencies[3].srcSubpass = 1;
-	dependencies[3].dstSubpass = VK_SUBPASS_EXTERNAL;
-	dependencies[3].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependencies[3].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependencies[3].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	dependencies[3].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	dependencies[3].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-	VkRenderPassCreateInfo rpInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
-	rpInfo.attachmentCount = attachmentDescs.size();
-	rpInfo.pAttachments = attachmentDescs.data();
-	rpInfo.subpassCount = subpassDesc.size();
-	rpInfo.pSubpasses = subpassDesc.data();
-	rpInfo.dependencyCount = dependencies.size();
-	rpInfo.pDependencies = dependencies.data();
-
-    vkCreateRenderPass(mActiveDevice, &rpInfo, nullptr, &mDefaultRenderpass);
 }
 
 void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
@@ -535,62 +414,62 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 	VkPipelineColorBlendAttachmentState colorBlendState{};
 	colorBlendState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
-    VkPipelineColorBlendAttachmentState blendList[] = { colorBlendState, colorBlendState, colorBlendState, colorBlendState, colorBlendState };
+	VkPipelineColorBlendAttachmentState blendList[] = { colorBlendState, colorBlendState, colorBlendState, colorBlendState, colorBlendState };
 
-	VkPipelineColorBlendStateCreateInfo colorBlendInfo { VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO };
-	colorBlendInfo.attachmentCount = 5;
+	VkPipelineColorBlendStateCreateInfo colorBlendInfo{ VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO };
+	colorBlendInfo.attachmentCount = 1;
 	colorBlendInfo.pAttachments = blendList;
 
-    MiniEngine::Logger::wprint("{}", colorBlendState.srcColorBlendFactor);
+	MiniEngine::Logger::wprint("{}", colorBlendState.srcColorBlendFactor);
 
-    VkPipelineDepthStencilStateCreateInfo depthStencilInfo{
-        VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO};
-    depthStencilInfo.depthTestEnable = true;
-    depthStencilInfo.depthWriteEnable = true;
+	VkPipelineDepthStencilStateCreateInfo depthStencilInfo{
+		VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO };
+	depthStencilInfo.depthTestEnable = true;
+	depthStencilInfo.depthWriteEnable = true;
 	depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 	depthStencilInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
 
 	// Change to static
-	std::array<VkDynamicState, 2> dynamics { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
-	
-	VkPipelineDynamicStateCreateInfo dynamicInfo { VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO };
-    dynamicInfo.pDynamicStates = dynamics.data();
-    dynamicInfo.dynamicStateCount = static_cast<uint32_t>(dynamics.size());
+	std::array<VkDynamicState, 2> dynamics{ VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
-    VkFormat colorAttachmentFormats[] = {mCurrentSwapchainFormat,
-                                         mCurrentSwapchainFormat,
-                                         mCurrentSwapchainFormat,
-                                         mCurrentSwapchainFormat,
-                                         mCurrentSwapchainFormat};
+	VkPipelineDynamicStateCreateInfo dynamicInfo{ VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO };
+	dynamicInfo.pDynamicStates = dynamics.data();
+	dynamicInfo.dynamicStateCount = static_cast<uint32_t>(dynamics.size());
 
-    VkPipelineRenderingCreateInfo renderingInfo{VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO};
-    renderingInfo.colorAttachmentCount = 5;
-    renderingInfo.pColorAttachmentFormats = colorAttachmentFormats;
-    renderingInfo.depthAttachmentFormat = mCurrentSwapchainDepthFormat;
+	VkFormat colorAttachmentFormats[] = { mCurrentSwapchainFormat,
+										 mCurrentSwapchainFormat,
+										 mCurrentSwapchainFormat,
+										 mCurrentSwapchainFormat,
+										 mCurrentSwapchainFormat };
 
-    VkGraphicsPipelineCreateInfo pipelineInfo{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
-    pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
-    pipelineInfo.pStages = shaderStages.data();
-    pipelineInfo.pVertexInputState = &(vertexInputInfo.data);
-    pipelineInfo.pInputAssemblyState = &inputAssemblyInfo;
-    pipelineInfo.pRasterizationState = &rasterInfo;
-    pipelineInfo.pColorBlendState = &colorBlendInfo;
-    pipelineInfo.pMultisampleState = &multiSampleInfo;
-    pipelineInfo.pViewportState = &viewportInfo;
+	VkPipelineRenderingCreateInfo renderingInfo{ VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO };
+	renderingInfo.colorAttachmentCount = 1;
+	renderingInfo.pColorAttachmentFormats = colorAttachmentFormats;
+	renderingInfo.depthAttachmentFormat = mCurrentSwapchainDepthFormat;
+
+	VkGraphicsPipelineCreateInfo pipelineInfo{ VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
+	pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
+	pipelineInfo.pStages = shaderStages.data();
+	pipelineInfo.pVertexInputState = &(vertexInputInfo.data);
+	pipelineInfo.pInputAssemblyState = &inputAssemblyInfo;
+	pipelineInfo.pRasterizationState = &rasterInfo;
+	pipelineInfo.pColorBlendState = &colorBlendInfo;
+	pipelineInfo.pMultisampleState = &multiSampleInfo;
+	pipelineInfo.pViewportState = &viewportInfo;
 	pipelineInfo.pDepthStencilState = &depthStencilInfo;
 	pipelineInfo.pDynamicState = &dynamicInfo;
 	pipelineInfo.layout = pipelineLayout;
-    pipelineInfo.pNext = &renderingInfo;
+	pipelineInfo.pNext = &renderingInfo;
 
-    vkCreateGraphicsPipelines(mActiveDevice,
-                              VK_NULL_HANDLE,
-                              1,
-                              &pipelineInfo,
-                              nullptr,
-                              &mGbufferPipeline);
+	vkCreateGraphicsPipelines(mActiveDevice,
+		VK_NULL_HANDLE,
+		1,
+		&pipelineInfo,
+		nullptr,
+		&mGbufferPipeline);
 
-    vkDestroyShaderModule(mActiveDevice, shaderStages[0].module, nullptr);
-    vkDestroyShaderModule(mActiveDevice, shaderStages[1].module, nullptr);
+	vkDestroyShaderModule(mActiveDevice, shaderStages[0].module, nullptr);
+	vkDestroyShaderModule(mActiveDevice, shaderStages[1].module, nullptr);
 }
 
 void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
@@ -611,119 +490,77 @@ void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
 	depthStencilInfo.depthTestEnable = false;
 	depthStencilInfo.depthWriteEnable = false;
 
-    std::array<VkDynamicState, 2> dynamics{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+	std::array<VkDynamicState, 2> dynamics{ VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
-    VkPipelineDynamicStateCreateInfo dynamicInfo{
-        VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
-    dynamicInfo.pDynamicStates = dynamics.data();
-    dynamicInfo.dynamicStateCount = static_cast<uint32_t>(dynamics.size());
+	VkPipelineDynamicStateCreateInfo dynamicInfo{
+		VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO };
+	dynamicInfo.pDynamicStates = dynamics.data();
+	dynamicInfo.dynamicStateCount = static_cast<uint32_t>(dynamics.size());
 
-    VkPipelineColorBlendAttachmentState colorBlendState{};
-    colorBlendState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
-                                     | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	VkPipelineColorBlendAttachmentState colorBlendState{};
+	colorBlendState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
+		| VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
-    VkPipelineColorBlendAttachmentState blendList[] = {colorBlendState};
+	VkPipelineColorBlendAttachmentState blendList[] = { colorBlendState };
 
-    VkPipelineColorBlendStateCreateInfo colorBlendInfo{
-        VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO};
-    colorBlendInfo.attachmentCount = 1;
-    colorBlendInfo.pAttachments = blendList;
+	VkPipelineColorBlendStateCreateInfo colorBlendInfo{
+		VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO };
+	colorBlendInfo.attachmentCount = 1;
+	colorBlendInfo.pAttachments = blendList;
 
-    VkPipelineRenderingCreateInfo renderingInfo{VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO};
-    renderingInfo.colorAttachmentCount = 1;
-    renderingInfo.pColorAttachmentFormats = &mCurrentSwapchainFormat;
-    renderingInfo.depthAttachmentFormat = mCurrentSwapchainDepthFormat;
+	VkPipelineRenderingCreateInfo renderingInfo{ VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO };
+	renderingInfo.colorAttachmentCount = 1;
+	renderingInfo.pColorAttachmentFormats = &mCurrentSwapchainFormat;
+	renderingInfo.depthAttachmentFormat = mCurrentSwapchainDepthFormat;
 
-    VkGraphicsPipelineCreateInfo pipelineInfo{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
-    pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
-    pipelineInfo.pStages = shaderStages.data();
-    pipelineInfo.pVertexInputState = &vertexInputInfo.data;
-    pipelineInfo.pInputAssemblyState = &inputAssemblyInfo;
-    pipelineInfo.pRasterizationState = &rasterInfo;
-    pipelineInfo.pColorBlendState = &colorBlendInfo;
-    pipelineInfo.pMultisampleState = &multiSampleInfo;
+	VkGraphicsPipelineCreateInfo pipelineInfo{ VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
+	pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
+	pipelineInfo.pStages = shaderStages.data();
+	pipelineInfo.pVertexInputState = &vertexInputInfo.data;
+	pipelineInfo.pInputAssemblyState = &inputAssemblyInfo;
+	pipelineInfo.pRasterizationState = &rasterInfo;
+	pipelineInfo.pColorBlendState = &colorBlendInfo;
+	pipelineInfo.pMultisampleState = &multiSampleInfo;
 	pipelineInfo.pViewportState = &viewportInfo;
 	pipelineInfo.pDepthStencilState = &depthStencilInfo;
 	pipelineInfo.pDynamicState = &dynamicInfo;
 	pipelineInfo.layout = pipelineLayout;
-    pipelineInfo.pNext = &renderingInfo;
+	pipelineInfo.pNext = &renderingInfo;
 
-    vkCreateGraphicsPipelines(mActiveDevice,
-                              VK_NULL_HANDLE,
-                              1,
-                              &pipelineInfo,
-                              nullptr,
-                              &mLightingPipeline);
+	vkCreateGraphicsPipelines(mActiveDevice,
+		VK_NULL_HANDLE,
+		1,
+		&pipelineInfo,
+		nullptr,
+		&mLightingPipeline);
 
-    vkDestroyShaderModule(mActiveDevice, shaderStages[0].module, nullptr);
-    vkDestroyShaderModule(mActiveDevice, shaderStages[1].module, nullptr);
-}
-
-void MiniEngine::Backend::VulkanDriver::createFramebuffer()
-{
-	for (auto i = 0; i < mSwapchainPerImageData.size(); ++i)
-	{
-		VkFramebuffer fBuffer;
-
-		//copy attachments
-		std::vector<VkImageView> framebufferAttachments{mFrameBufferAttachments.size()};
-		std::copy(mFrameBufferAttachments.begin(), mFrameBufferAttachments.end(), framebufferAttachments.begin());
-
-		framebufferAttachments[0] = mSwapchainPerImageData[i].imageView;
-
-		VkFramebufferCreateInfo fbInfo{ VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
-		fbInfo.renderPass = mDefaultRenderpass;
-		fbInfo.attachmentCount = framebufferAttachments.size();
-		fbInfo.pAttachments = framebufferAttachments.data();
-		fbInfo.width = mParams.screenWidth;
-		fbInfo.height = mParams.screenHeight;
-		fbInfo.layers = 1;
-
-        vkCreateFramebuffer(mActiveDevice, &fbInfo, nullptr, &fBuffer);
-
-        //mFramebuffers.push_back(fBuffer);
-    }
-}
-
-void MiniEngine::Backend::VulkanDriver::createFramebufferAttachmentSampler()
-{
-	VkSampler colorSampler;
-
-	VkSamplerCreateInfo samplerInfo { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
-	samplerInfo.magFilter = VK_FILTER_NEAREST;
-	samplerInfo.minFilter = VK_FILTER_NEAREST;
-	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	samplerInfo.mipLodBias = 0.0f;
-	samplerInfo.maxAnisotropy = 1.0f;
-	samplerInfo.minLod = 0.0f;
-	samplerInfo.maxLod = 1.0f;
-	samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-
-    vkCreateSampler(mActiveDevice, &samplerInfo, nullptr, &colorSampler);
+	vkDestroyShaderModule(mActiveDevice, shaderStages[0].module, nullptr);
+	vkDestroyShaderModule(mActiveDevice, shaderStages[1].module, nullptr);
 }
 
 void MiniEngine::Backend::VulkanDriver::createDisplaySemaphores()
 {
-    mDisplaySemaphoreArray = Utils::DynamicArray<DisplaySemaphore>(mSwapchainPerImageData.size());
+	mDisplaySemaphoreArray = Utils::DynamicArray<DisplaySemaphore>(mSwapchainPerImageData.size());
 
-    auto arrayPtr = mDisplaySemaphoreArray.get();
+	auto arrayPtr = mDisplaySemaphoreArray.get();
 
-    VkSemaphoreCreateInfo info{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
-    VkFenceCreateInfo fInfo{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
-    fInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+	VkSemaphoreCreateInfo info{ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+	VkFenceCreateInfo fInfo{ VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+	fInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    for (int i = 0; i < mSwapchainPerImageData.size(); ++i) {
-        vkCreateSemaphore(mActiveDevice, &info, nullptr, &(arrayPtr[i].acquisitionSemaphore));
-        vkCreateSemaphore(mActiveDevice, &info, nullptr, &(arrayPtr[i].presentationSemaphore));
-        vkCreateFence(mActiveDevice, &fInfo, nullptr, &(arrayPtr[i].fence));
-    }
+	for (int i = 0; i < mSwapchainPerImageData.size(); ++i) {
+		vkCreateSemaphore(mActiveDevice, &info, nullptr, &(arrayPtr[i].acquisitionSemaphore));
+		vkCreateSemaphore(mActiveDevice, &info, nullptr, &(arrayPtr[i].presentationSemaphore));
+		vkCreateFence(mActiveDevice, &fInfo, nullptr, &(arrayPtr[i].fence));
+	}
 }
 
 void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 {
+	// Todo:
+	// - Update pipeline to take in all 5 attachments
+	// - 
+
 	VkCommandBufferBeginInfo beginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 
 	for (auto i = 0; i < mSwapchainPerImageData.size(); ++i)
@@ -732,32 +569,36 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 
 		vkBeginCommandBuffer(cmd, &beginInfo);
 
-        VkImageMemoryBarrier imageMemBarrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
-        imageMemBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        imageMemBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        imageMemBarrier.srcAccessMask = 0;
-        imageMemBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        imageMemBarrier.image = mSwapchainPerImageData[i].rawImage;
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mGbufferPipeline);
 
-        vkCmdPipelineBarrier(mSwapchainPerImageData[i].imageCommandBuffer,
-                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                             0,
-                             0,
-                             nullptr,
-                             0,
-                             nullptr,
-                             1,
-                             &imageMemBarrier);
+		VkImageMemoryBarrier imageMemBarrier{ VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
+		imageMemBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		imageMemBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		imageMemBarrier.srcAccessMask = 0;
+		imageMemBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		imageMemBarrier.image = mSwapchainPerImageData[i].rawImage;
+		imageMemBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		imageMemBarrier.subresourceRange.levelCount = 1;
+		imageMemBarrier.subresourceRange.layerCount = 1;
+		imageMemBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-        VkRenderingAttachmentInfo colorAttachment{VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
-        colorAttachment.imageView = mSwapchainPerImageData[i].imageView;
-        colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        colorAttachment.clearValue.color = {1, 0, 0, 1};
+		vkCmdPipelineBarrier(mSwapchainPerImageData[i].imageCommandBuffer,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			0,
+			0,
+			nullptr,
+			0,
+			nullptr,
+			1,
+			&imageMemBarrier);
 
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mGbufferPipeline);
+		VkRenderingAttachmentInfo colorAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
+		colorAttachment.imageView = mSwapchainPerImageData[i].imageView;
+		colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachment.clearValue.color = { 1, 0, 0, 1 };
 
 		VkViewport vp{};
 		vp.width = mParams.screenWidth;
@@ -773,17 +614,26 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 
 		auto tBuffer = mPipelineBuilder->getDefaultTriangleBuffer();
 		VkDeviceSize offsets[1] = { 0 };
-		vkCmdBindVertexBuffers(cmd, 0, 1, &tBuffer, offsets);
+		//vkCmdBindVertexBuffers(cmd, 0, 1, &tBuffer, offsets);
 
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
-		vkCmdDraw(cmd, 3, 6, 0, 0);
 
+		VkRenderingInfoKHR renderingInfo{ VK_STRUCTURE_TYPE_RENDERING_INFO };
+		renderingInfo.layerCount = 1;
+		renderingInfo.colorAttachmentCount = 1;
+		renderingInfo.pColorAttachments = &colorAttachment;
+		renderingInfo.renderArea = { 0,0,mParams.screenWidth,mParams.screenHeight };
+
+		vkCmdBeginRendering(cmd, &renderingInfo);
+		vkCmdDraw(cmd, 3, 1, 0, 0);
+		
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mLightingPipeline);
+		//vkCmdDraw(cmd, 3, 6, 2, 2);
+		
+		vkCmdEndRendering(cmd);
 
-		vkCmdDraw(cmd, 3, 6, 0, 0);
-
-        vkEndCommandBuffer(cmd);
-    }
+		vkEndCommandBuffer(cmd);
+	}
 }
 
 VkImageView MiniEngine::Backend::VulkanDriver::createImageAttachment(VkFormat imageFormat, VkImageUsageFlags imageBits, VkImageAspectFlags imageViewAspectFlags)
@@ -806,71 +656,71 @@ VkImageView MiniEngine::Backend::VulkanDriver::createImageAttachment(VkFormat im
 	VkImageView attachmentImageView;
 	VkDeviceMemory attachmentMemory;
 
-    vkCreateImage(mActiveDevice, &attachmentImageInfo, nullptr, &attachmentImage);
-    vkGetImageMemoryRequirements(mActiveDevice, attachmentImage, &attachmentMemReqs);
+	vkCreateImage(mActiveDevice, &attachmentImageInfo, nullptr, &attachmentImage);
+	vkGetImageMemoryRequirements(mActiveDevice, attachmentImage, &attachmentMemReqs);
 
-    // Get memory info
+	// Get memory info
 
-    uint32_t index = getMemoryTypeIndex(&attachmentMemReqs);
+	uint32_t index = getMemoryTypeIndex(&attachmentMemReqs);
 
-    attachmentAllocateInfo.allocationSize = attachmentMemReqs.size;
-    attachmentAllocateInfo.memoryTypeIndex = index;
-    vkAllocateMemory(mActiveDevice, &attachmentAllocateInfo, nullptr, &attachmentMemory);
-    vkBindImageMemory(mActiveDevice, attachmentImage, attachmentMemory, 0);
+	attachmentAllocateInfo.allocationSize = attachmentMemReqs.size;
+	attachmentAllocateInfo.memoryTypeIndex = index;
+	vkAllocateMemory(mActiveDevice, &attachmentAllocateInfo, nullptr, &attachmentMemory);
+	vkBindImageMemory(mActiveDevice, attachmentImage, attachmentMemory, 0);
 
-    VkImageViewCreateInfo colorImageViewInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
-    colorImageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    colorImageViewInfo.format = imageFormat;
-    colorImageViewInfo.subresourceRange = {};
-    colorImageViewInfo.subresourceRange.aspectMask = imageViewAspectFlags;
-    colorImageViewInfo.subresourceRange.baseMipLevel = 0;
-    colorImageViewInfo.subresourceRange.levelCount = 1;
-    colorImageViewInfo.subresourceRange.baseArrayLayer = 0;
-    colorImageViewInfo.subresourceRange.layerCount = 1;
-    colorImageViewInfo.image = attachmentImage;
-    vkCreateImageView(mActiveDevice, &colorImageViewInfo, nullptr, &attachmentImageView);
+	VkImageViewCreateInfo colorImageViewInfo{ VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+	colorImageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	colorImageViewInfo.format = imageFormat;
+	colorImageViewInfo.subresourceRange = {};
+	colorImageViewInfo.subresourceRange.aspectMask = imageViewAspectFlags;
+	colorImageViewInfo.subresourceRange.baseMipLevel = 0;
+	colorImageViewInfo.subresourceRange.levelCount = 1;
+	colorImageViewInfo.subresourceRange.baseArrayLayer = 0;
+	colorImageViewInfo.subresourceRange.layerCount = 1;
+	colorImageViewInfo.image = attachmentImage;
+	vkCreateImageView(mActiveDevice, &colorImageViewInfo, nullptr, &attachmentImageView);
 
-    return attachmentImageView;
+	return attachmentImageView;
 }
 
 void MiniEngine::Backend::VulkanDriver::loadShaderModule() {}
 
-void MiniEngine::Backend::VulkanDriver::acquireNextImage(uint32_t *image,
-                                                         uint32_t *displaySemaphoreIndex)
+void MiniEngine::Backend::VulkanDriver::acquireNextImage(uint32_t* image,
+	uint32_t* displaySemaphoreIndex)
 {
-    std::vector<VkFence> mFenceArray(mDisplaySemaphoreArray.getSize());
-    VkSemaphore dSemaphore;
+	std::vector<VkFence> mFenceArray(mDisplaySemaphoreArray.getSize());
+	VkSemaphore dSemaphore;
 
-    for (int i = 0; i < mDisplaySemaphoreArray.getSize(); ++i) {
-        mFenceArray[i] = mDisplaySemaphoreArray.get()[i].fence;
-    }
+	for (int i = 0; i < mDisplaySemaphoreArray.getSize(); ++i) {
+		mFenceArray[i] = mDisplaySemaphoreArray.get()[i].fence;
+	}
 
-    vkWaitForFences(mActiveDevice,
-                    mDisplaySemaphoreArray.getSize(),
-                    mFenceArray.data(),
-                    VK_FALSE,
-                    UINT64_MAX);
+	vkWaitForFences(mActiveDevice,
+		mDisplaySemaphoreArray.getSize(),
+		mFenceArray.data(),
+		VK_FALSE,
+		UINT64_MAX);
 
-    for (int i = 0; i < mDisplaySemaphoreArray.getSize(); ++i) {
-        auto displaySyncObj = &mDisplaySemaphoreArray.get()[i];
+	for (int i = 0; i < mDisplaySemaphoreArray.getSize(); ++i) {
+		auto displaySyncObj = &mDisplaySemaphoreArray.get()[i];
 
-        if (vkGetFenceStatus(mActiveDevice, displaySyncObj->fence) == VK_SUCCESS) {
-            vkResetFences(mActiveDevice, 1, &displaySyncObj->fence);
-            dSemaphore = displaySyncObj->acquisitionSemaphore;
-            *displaySemaphoreIndex = i;
-            break;
-        }
-    }
+		if (vkGetFenceStatus(mActiveDevice, displaySyncObj->fence) == VK_SUCCESS) {
+			vkResetFences(mActiveDevice, 1, &displaySyncObj->fence);
+			dSemaphore = displaySyncObj->acquisitionSemaphore;
+			*displaySemaphoreIndex = i;
+			break;
+		}
+	}
 
-    auto status = vkAcquireNextImageKHR(mActiveDevice,
-                                        mActiveSwapchain,
-                                        UINT64_MAX,
-                                        dSemaphore,
-                                        VK_NULL_HANDLE,
-                                        image);
+	auto status = vkAcquireNextImageKHR(mActiveDevice,
+		mActiveSwapchain,
+		UINT64_MAX,
+		dSemaphore,
+		VK_NULL_HANDLE,
+		image);
 
-    if (status != VK_SUCCESS)
-        MiniEngine::Logger::eprint("Acquire error: {}", status);
+	if (status != VK_SUCCESS)
+		MiniEngine::Logger::eprint("Acquire error: {}", status);
 }
 
 uint32_t MiniEngine::Backend::VulkanDriver::getMemoryTypeIndex(const VkMemoryRequirements* memReqs)
@@ -897,39 +747,36 @@ uint32_t MiniEngine::Backend::VulkanDriver::getMemoryTypeIndex(const VkMemoryReq
 
 void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 {
-    uint32_t imgIndex, displaySemaphoreIndex;
-    acquireNextImage(&imgIndex, &displaySemaphoreIndex);
+	uint32_t imgIndex, displaySemaphoreIndex;
+	acquireNextImage(&imgIndex, &displaySemaphoreIndex);
 
-    auto &cmd = mSwapchainPerImageData[imgIndex].imageCommandBuffer;
+	auto& cmd = mSwapchainPerImageData[imgIndex].imageCommandBuffer;
 
-    VkPipelineStageFlags waitStageFlags{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+	VkPipelineStageFlags waitStageFlags{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
-    VkSubmitInfo submitInfo{VK_STRUCTURE_TYPE_SUBMIT_INFO};
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &cmd;
-    submitInfo.waitSemaphoreCount = 1;
-    submitInfo.pWaitSemaphores = &(
-        mDisplaySemaphoreArray.get()[displaySemaphoreIndex].acquisitionSemaphore);
-    submitInfo.pWaitDstStageMask = &waitStageFlags;
+	VkSubmitInfo submitInfo{ VK_STRUCTURE_TYPE_SUBMIT_INFO };
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &cmd;
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = &(mDisplaySemaphoreArray.get()[displaySemaphoreIndex].acquisitionSemaphore);
+	submitInfo.pWaitDstStageMask = &waitStageFlags;
 	submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores = &(
-        mDisplaySemaphoreArray.get()[displaySemaphoreIndex].presentationSemaphore);
+	submitInfo.pSignalSemaphores = &(mDisplaySemaphoreArray.get()[displaySemaphoreIndex].presentationSemaphore);
 
-    vkQueueSubmit(mActiveDeviceQueue,
-                  1,
-                  &submitInfo,
-                  mDisplaySemaphoreArray.get()[displaySemaphoreIndex].fence);
+	vkQueueSubmit(mActiveDeviceQueue,
+		1,
+		&submitInfo,
+		mDisplaySemaphoreArray.get()[displaySemaphoreIndex].fence);
 
-    // Present
-    VkPresentInfoKHR presentInfo{VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
-    presentInfo.swapchainCount = 1;
-    presentInfo.pSwapchains = &mActiveSwapchain;
-    presentInfo.pImageIndices = &imgIndex;
-    presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores = &(
-        mDisplaySemaphoreArray.get()[displaySemaphoreIndex].presentationSemaphore);
+	// Present
+	VkPresentInfoKHR presentInfo{ VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = &mActiveSwapchain;
+	presentInfo.pImageIndices = &imgIndex;
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = &(mDisplaySemaphoreArray.get()[displaySemaphoreIndex].presentationSemaphore);
 
-    vkQueuePresentKHR(mActiveDeviceQueue, &presentInfo);
+	vkQueuePresentKHR(mActiveDeviceQueue, &presentInfo);
 }
 
 unsigned int MiniEngine::Backend::VulkanDriver::createTexture(int width, int height, int channels, void* data, Texture::TextureType type)
@@ -949,32 +796,32 @@ unsigned int MiniEngine::Backend::VulkanDriver::createTexture(int width, int hei
 	createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 	createInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
-    vkCreateImage(mActiveDevice, &createInfo, nullptr, &image);
+	vkCreateImage(mActiveDevice, &createInfo, nullptr, &image);
 
-    VkMemoryAllocateInfo memAllocInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
-    VkMemoryRequirements memReqs{};
+	VkMemoryAllocateInfo memAllocInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
+	VkMemoryRequirements memReqs{};
 
-    vkGetImageMemoryRequirements(mActiveDevice, image, &memReqs);
+	vkGetImageMemoryRequirements(mActiveDevice, image, &memReqs);
 
-    memAllocInfo.allocationSize = memReqs.size;
-    memAllocInfo.memoryTypeIndex = getMemoryTypeIndex(&memReqs);
+	memAllocInfo.allocationSize = memReqs.size;
+	memAllocInfo.memoryTypeIndex = getMemoryTypeIndex(&memReqs);
 
-    vkAllocateMemory(mActiveDevice, &memAllocInfo, nullptr, &mem);
-    vkBindImageMemory(mActiveDevice, image, mem, 0);
+	vkAllocateMemory(mActiveDevice, &memAllocInfo, nullptr, &mem);
+	vkBindImageMemory(mActiveDevice, image, mem, 0);
 
-    // Image view
-    VkImageViewCreateInfo imageViewInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
-    imageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    imageViewInfo.format = mCurrentSwapchainFormat;
-    imageViewInfo.subresourceRange = {};
-    imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    imageViewInfo.subresourceRange.levelCount = 1;
-    imageViewInfo.subresourceRange.layerCount = 1;
-    imageViewInfo.image = image;
+	// Image view
+	VkImageViewCreateInfo imageViewInfo{ VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+	imageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	imageViewInfo.format = mCurrentSwapchainFormat;
+	imageViewInfo.subresourceRange = {};
+	imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageViewInfo.subresourceRange.levelCount = 1;
+	imageViewInfo.subresourceRange.layerCount = 1;
+	imageViewInfo.image = image;
 
-    vkCreateImageView(mActiveDevice, &imageViewInfo, nullptr, &imageView);
+	vkCreateImageView(mActiveDevice, &imageViewInfo, nullptr, &imageView);
 
-    return 0; //todo: fix
+	return 0; //todo: fix
 }
 
 unsigned int MiniEngine::Backend::VulkanDriver::createUniformBlock(size_t dataSize, unsigned int bindIndex) const
