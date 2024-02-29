@@ -42,6 +42,12 @@ namespace Backend
             VkFence fence;
         };
 
+        struct ImageAttachmentData
+        {
+            VkImage rawImage;
+            VkImageView imageView;
+        };
+
         inline const VkInstance &getInstance() const { return mInstance; }
 
         void initialize(MiniEngine::Types::EngineInitParams &params);
@@ -94,7 +100,7 @@ namespace Backend
 		VkPhysicalDeviceMemoryProperties mGpuMemoryProperties;
 
         std::vector<PerFrameData>  mSwapchainPerImageData;
-		std::array<VkImageView, 6> mImageAttachments;
+        std::array<ImageAttachmentData, 5> mImageAttachments;
         Utils::DynamicArray<DisplaySemaphore> mDisplaySemaphoreArray;
 
         void enumerateInstanceExtensionProperties();
@@ -110,9 +116,19 @@ namespace Backend
         void createDisplaySemaphores();
         void recordCommandBuffers();
 
-        VkImageView createImageAttachment(VkFormat imageFormat,
-                                          VkImageUsageFlags imageBits,
-                                          VkImageAspectFlags imageViewAspectFlags);
+        ImageAttachmentData createImageAttachment(VkFormat imageFormat,
+                                                  VkImageUsageFlags imageBits,
+                                                  VkImageAspectFlags imageViewAspectFlags);
+
+        void createPipelineBarrier(VkImage image,
+                                   VkCommandBuffer buffer,
+                                   VkAccessFlags srcAccessMask,
+                                   VkAccessFlags dstAccessMask,
+                                   VkImageAspectFlags aspectMask,
+                                   VkImageLayout oldLayout,
+                                   VkImageLayout newLayout,
+                                   VkPipelineStageFlags srcStageMask,
+                                   VkPipelineStageFlags dstStageMask);
 
         void loadShaderModule();
         void acquireNextImage(uint32_t *image, uint32_t *displaySemaphoreIndex);
