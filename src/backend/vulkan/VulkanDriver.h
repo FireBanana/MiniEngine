@@ -48,6 +48,15 @@ namespace Backend
             VkImageView imageView;
         };
 
+        enum class ImageAttachmentType : unsigned int {
+            COLOR,
+            POSITION,
+            NORMAL,
+            ROUGHNESS,
+            DEPTH,
+            SWAPCHAIN
+        };
+
         inline const VkInstance &getInstance() const { return mInstance; }
 
         void initialize(MiniEngine::Types::EngineInitParams &params);
