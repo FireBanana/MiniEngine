@@ -1,16 +1,15 @@
 cmake_minimum_required(VERSION 3.23.0)
-project(MiniEngine)
-
 include(FetchContent)
 
+project(MiniEngine)
+
 set(CMAKE_SUPPRESS_REGENERATION true)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin/)
 set(CMAKE_RUNTIME_LIBRARY_DIRECTORY bin/)
 
-set(CMAKE_CXX_STANDARD 17)
 set(GRAPHICS_DEBUG ON)
 set(RENDERDOC_ENABLE OFF)
-
 set(USING_OPENGL false)
 
 add_definitions(-DGLFW_INCLUDE_NONE)
@@ -29,43 +28,14 @@ endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-file( GLOB LIB_SOURCES 
-	src/*.cpp
-	src/components/*.cpp
-	src/systems/*.cpp
-	src/backend/*.cpp
-	src/backend/vulkan/*.cpp
-	src/backend/opengl/*.cpp
-	src/core/*.cpp
-	src/core/utils/*.cpp
-	src/core/types/*.cpp
-	src/core/ui/*.cpp)
+file( GLOB_RECURSE PROJ_SRC CONFIGURE_DEPENDS "src/*.h" "src/*.cpp" "shaders/*.vert" "shaders/*.frag")
+add_library( MiniEngine ${PROJ_SRC})
 
-file( GLOB LIB_HEADERS 
-	src/*.h
-	src/components/*.h
-	src/systems/*.h
-	src/backend/*.h
-	src/backend/vulkan/*.h
-	src/backend/opengl/*.h
-	src/core/*.h 
-	src/core/utils/*.h
-	src/core/types/*.h
-	src/core/ui/*.h)
-
-add_library( MiniEngine ${LIB_SOURCES} ${LIB_HEADERS} )
 target_sources( MiniEngine PRIVATE ${CMAKE_SOURCE_DIR}/libs/glad/src/glad.c)
 
 target_include_directories(MiniEngine PUBLIC libs)
 target_include_directories(MiniEngine PUBLIC libs/glad/include)
 target_include_directories(MiniEngine PUBLIC libs/glfw/include)
-
-# vulkan
-
-target_include_directories(MiniEngine PUBLIC "$ENV{VULKAN_SDK}\\Include")
-
-# ======
-
 target_include_directories(MiniEngine PUBLIC src/)
 target_include_directories(MiniEngine PUBLIC src/components)
 target_include_directories(MiniEngine PUBLIC src/systems)
@@ -75,9 +45,14 @@ target_include_directories(MiniEngine PUBLIC src/backend/opengl)
 target_include_directories(MiniEngine PUBLIC src/core)
 target_include_directories(MiniEngine PUBLIC src/core/utils)
 target_include_directories(MiniEngine PUBLIC src/core/types)
+target_include_directories(MiniEngine PUBLIC shaders/)
+
+if(NOT USING_OPENGL)
+    target_include_directories(MiniEngine PUBLIC "$ENV{VULKAN_SDK}\\Include")
+endif()
 
 if(GRAPHICS_DEBUG)
-	target_include_directories(MiniEngine PUBLIC $ENV{RENDERDOC}/) # Make sure RenderDoc installation is added to env var(RENDERDOC)
+    target_include_directories(MiniEngine PUBLIC $ENV{RENDERDOC}/) # Make sure RenderDoc installation is added to env var(RENDERDOC)
 endif()
 
 if(MSVC)
@@ -93,16 +68,6 @@ foreach( testsourcefile ${APP_SOURCES} )
 	add_executable( ${testname} ${testsourcefile})	
 	target_link_libraries( ${testname} MiniEngine )
 endforeach( testsourcefile ${APP_SOURCES} )
-
-# set_target_properties( MiniEngine PROPERTIES VS_PLATFORM_TOOLSET ClangCL )
-
-target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3.lib)
-target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3dll.lib)
-
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${LIB_SOURCES})
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${LIB_HEADERS})
-
-#install(TARGETS ${model-loader} RUNTIME DESTINATION bin)
 
 # Get additional libraries
 
@@ -200,6 +165,9 @@ set(BUILD_TESTING OFF CACHE BOOL "")
 set(BUILD_EXTERNAL OFF CACHE BOOL "")
 add_subdirectory(${glslang_SOURCE_DIR} ${glslang_BINARY_DIR})
 target_link_libraries(MiniEngine glslang OSDependent SPIRV glslang-default-resource-limits)
+
+target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3.lib)
+target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3dll.lib)
 
 # Add secondary tools
 

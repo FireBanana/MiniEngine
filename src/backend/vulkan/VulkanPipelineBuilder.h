@@ -22,15 +22,15 @@ namespace Backend
 		VulkanPipelineBuilder(VkDevice device, VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties);
 
 		VkPipelineLayout createEmptyPipelineLayout();
-		VkPipelineLayout createDefaultPipelineLayout();
+        VkPipelineLayout createDefaultPipelineLayout(VkPipelineLayout& oLayout);
 
 
 		VertexStateData createCustomVertexInputState(Components::RenderableComponent* component);
 
 		VertexStateData createTriangleVertexInputState();
 
-		void createDefaultDescriptorPool();
-		void allocateDefaultDescriptorSet();
+        VkDescriptorSetLayout createSceneDescriptorLayout();
+        VkDescriptorSetLayout createAttachmentDescriptorLayout();
 
 		VkPipelineInputAssemblyStateCreateInfo createDefaultInputAssemblyState();
         VkPipelineRasterizationStateCreateInfo createDefaultRasterState();
@@ -49,13 +49,9 @@ namespace Backend
 		VkPhysicalDeviceMemoryProperties mPhysicalDeviceMemoryProperties;
 		VkBuffer mDefaultTriangleBuffer;
 
-		VkDescriptorPool mDefaultDescriptorPool;
-		VkDescriptorSetLayout mDefaultDescriptorLayout;
-
 		Components::RenderableComponent mDefaultTriangleRenderableComponent;
 
-		VkDescriptorSetLayout createEmptyDescriptorSetLayout();		
-		VkDescriptorSetLayout createDefaultDescriptorSetLayout();
+        VkDescriptorSetLayout createEmptyDescriptorSetLayout();
 
 		VkBuffer createDefaultTriangleBuffer();
 		VkDeviceMemory allocateDefaultTriangleBuffer(VkBuffer buffer);

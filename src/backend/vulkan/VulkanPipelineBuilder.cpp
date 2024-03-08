@@ -1,6 +1,8 @@
 #include "VulkanPipelineBuilder.h"
 #include "GlslCompiler.h"
 #include "RenderableComponent.h"
+#include "EnumExtension.h"
+#include "VulkanDriver.h"
 
 #include <numeric>
 
@@ -8,18 +10,18 @@ MiniEngine::Backend::VulkanPipelineBuilder::VulkanPipelineBuilder(VkDevice devic
 	: mActiveDevice(device), mPhysicalDeviceMemoryProperties(physicalDeviceMemoryProperties)
 {
 	mDefaultTriangleRenderableComponent = Components::RenderableComponent{};
-	mDefaultTriangleRenderableComponent.buffer =
-	{
-		//vertex     color
-		  0.5, -0.5,  1.0, 0.0, 0.0,
-		  0.5,  0.5,  0.0, 1.0, 0.0,
-		  -0.5, 0.5,  0.0, 0.0, 1.0
-	};
+    mDefaultTriangleRenderableComponent.buffer =
+    {
+        //vertex     color
+          0.5, -0.5,  1.0, 0.0, 0.0,
+          0.5,  0.5,  1.0, 1.0, 0.0,
+          -0.5, 0.5,  0.0, 0.0, 1.0
+    };
 
-	mDefaultTriangleRenderableComponent.indices = { 0, 1, 2 };
+    mDefaultTriangleRenderableComponent.indices = { 0, 1, 2 };
 
-	mDefaultTriangleRenderableComponent.attributes.push_back(2);
-	mDefaultTriangleRenderableComponent.attributes.push_back(3);
+    mDefaultTriangleRenderableComponent.attributes.push_back(2);
+    mDefaultTriangleRenderableComponent.attributes.push_back(3);
 }
 
 VkPipelineLayout MiniEngine::Backend::VulkanPipelineBuilder::createEmptyPipelineLayout()
@@ -35,10 +37,19 @@ VkPipelineLayout MiniEngine::Backend::VulkanPipelineBuilder::createEmptyPipeline
     return pipelineLayout;
 }
 
-VkPipelineLayout MiniEngine::Backend::VulkanPipelineBuilder::createDefaultPipelineLayout()
+VkPipelineLayout MiniEngine::Backend::VulkanPipelineBuilder::createDefaultPipelineLayout(VkPipelineLayout& oLayout)
 {
-	VkPipelineLayout pipelineLayout;
-	return pipelineLayout;
+    auto sceneLayout = createSceneDescriptorLayout();
+    auto attachmentLayout = createAttachmentDescriptorLayout();
+
+    VkDescriptorSetLayout arr[] = { sceneLayout, attachmentLayout };
+
+    VkPipelineLayoutCreateInfo layoutInfo{ VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
+    layoutInfo.setLayoutCount = 2;
+    layoutInfo.pSetLayouts = arr;
+    vkCreatePipelineLayout(mActiveDevice, &layoutInfo, nullptr, &oLayout);
+
+    return oLayout;
 }
 
 MiniEngine::Backend::VertexStateData MiniEngine::Backend::VulkanPipelineBuilder::createCustomVertexInputState(Components::RenderableComponent* component)
@@ -84,45 +95,86 @@ MiniEngine::Backend::VertexStateData MiniEngine::Backend::VulkanPipelineBuilder:
 	return createCustomVertexInputState(&mDefaultTriangleRenderableComponent);
 }
 
-void MiniEngine::Backend::VulkanPipelineBuilder::createDefaultDescriptorPool()
+VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createSceneDescriptorLayout()
 {
-	VkDescriptorPoolSize poolSize{};
-	poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSize.descriptorCount = 1;
-	
+    VkDescriptorPoolSize uniformScenePoolSize{};
+
+    // view, projection, and camera position
+    uniformScenePoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uniformScenePoolSize.descriptorCount = 1;
+
 	VkDescriptorPoolCreateInfo descriptorPoolInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
 	VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
 
-	descriptorPoolInfo.poolSizeCount = 1;
-	descriptorPoolInfo.pPoolSizes = &poolSize;
+    descriptorPoolInfo.poolSizeCount = 1;
+    descriptorPoolInfo.maxSets = 1;
+    descriptorPoolInfo.pPoolSizes = &uniformScenePoolSize;
 
 	VkDescriptorSetLayoutBinding bindings{};
 	bindings.binding = 0;
 	bindings.descriptorCount = 1;
-	bindings.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    bindings.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 	bindings.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
 	descriptorLayoutInfo.bindingCount = 1;
 	descriptorLayoutInfo.pBindings = &bindings;
-	
-	vkCreateDescriptorPool(mActiveDevice, &descriptorPoolInfo, nullptr, &mDefaultDescriptorPool);
-	vkCreateDescriptorSetLayout(mActiveDevice, &descriptorLayoutInfo, nullptr, &mDefaultDescriptorLayout);
+
+    VkDescriptorPool pool;
+    VkDescriptorSetLayout layout;
+    vkCreateDescriptorPool(mActiveDevice, &descriptorPoolInfo, nullptr, &pool);
+    vkCreateDescriptorSetLayout(mActiveDevice, &descriptorLayoutInfo, nullptr, &layout);
+
+    VkDescriptorSet descriptorSet;
+    VkDescriptorSetAllocateInfo allocInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+
+    allocInfo.descriptorPool = pool;
+    allocInfo.descriptorSetCount = 1;
+    allocInfo.pSetLayouts = &layout;
+
+    vkAllocateDescriptorSets(mActiveDevice, &allocInfo, &descriptorSet);
+
+    return layout;
 }
 
-void MiniEngine::Backend::VulkanPipelineBuilder::allocateDefaultDescriptorSet()
+VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createAttachmentDescriptorLayout()
 {
-	VkDescriptorSet descriptorSet;
-	VkDescriptorSetAllocateInfo allocInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+    VkDescriptorPoolSize imageAttachmentPoolSize{};
+    auto attachmentSize = EnumExtension::elementCount<VulkanDriver::ImageAttachmentType>() - 1;
 
-	allocInfo.descriptorPool = mDefaultDescriptorPool;
-	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = &mDefaultDescriptorLayout;
+    imageAttachmentPoolSize.type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    imageAttachmentPoolSize.descriptorCount = attachmentSize;
 
-	vkAllocateDescriptorSets(mActiveDevice, &allocInfo, &descriptorSet);
+    VkDescriptorPoolCreateInfo descriptorPoolInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
+    VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
 
-	// *** PAUSED HERE FOR HIATUS ***
-	// Things done: vertex buffer added
-	// Currently adding Descriptor sets
+    descriptorPoolInfo.poolSizeCount = 1;
+    descriptorPoolInfo.maxSets = 1;
+    descriptorPoolInfo.pPoolSizes = &imageAttachmentPoolSize;
+
+    VkDescriptorSetLayoutBinding bindings{};
+    bindings.binding = 0;
+    bindings.descriptorCount = attachmentSize;
+    bindings.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    bindings.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+
+    descriptorLayoutInfo.bindingCount = 1;
+    descriptorLayoutInfo.pBindings = &bindings;
+
+    VkDescriptorPool pool;
+    VkDescriptorSetLayout layout;
+    vkCreateDescriptorPool(mActiveDevice, &descriptorPoolInfo, nullptr, &pool);
+    vkCreateDescriptorSetLayout(mActiveDevice, &descriptorLayoutInfo, nullptr, &layout);
+
+    VkDescriptorSet descriptorSet;
+    VkDescriptorSetAllocateInfo allocInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+
+    allocInfo.descriptorPool = pool;
+    allocInfo.descriptorSetCount = 1;
+    allocInfo.pSetLayouts = &layout;
+
+    vkAllocateDescriptorSets(mActiveDevice, &allocInfo, &descriptorSet);
+
+    return layout;
 }
 
 VkPipelineInputAssemblyStateCreateInfo MiniEngine::Backend::VulkanPipelineBuilder::createDefaultInputAssemblyState()
@@ -194,11 +246,6 @@ VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createEmptyDes
     vkCreateDescriptorSetLayout(mActiveDevice, &descriptorSetInfo, nullptr, &defaultLayout);
 
     return defaultLayout;
-}
-
-VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createDefaultDescriptorSetLayout()
-{
-	return VkDescriptorSetLayout();
 }
 
 VkBuffer MiniEngine::Backend::VulkanPipelineBuilder::createDefaultTriangleBuffer()

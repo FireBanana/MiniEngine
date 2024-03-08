@@ -103,6 +103,7 @@ namespace Backend
 		VkSwapchainKHR mActiveSwapchain;
 		VkPipeline mGbufferPipeline;
 		VkPipeline mLightingPipeline;
+        VkPipelineLayout mDefaultPipelineLayout;
 		VkFormat mCurrentSwapchainFormat;
 		VkFormat mCurrentSwapchainDepthFormat;
 		int32_t mActiveQueue{ -1 };
