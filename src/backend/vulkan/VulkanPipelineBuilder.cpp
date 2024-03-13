@@ -139,7 +139,7 @@ VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createSceneDes
 VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createAttachmentDescriptorLayout()
 {
     VkDescriptorPoolSize imageAttachmentPoolSize{};
-    auto attachmentSize = EnumExtension::elementCount<VulkanDriver::ImageAttachmentType>() - 1;
+    constexpr auto attachmentSize = EnumExtension::elementCount<VulkanDriver::ImageAttachmentType>() - 1;
 
     imageAttachmentPoolSize.type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
     imageAttachmentPoolSize.descriptorCount = attachmentSize;
