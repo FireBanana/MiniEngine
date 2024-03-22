@@ -30,7 +30,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugUtilsCallback(
 	return VK_FALSE;
 }
 
-void MiniEngine::Backend::VulkanDriver::initialize(MiniEngine::Types::EngineInitParams& params)
+void MiniEngine::Backend::VulkanDriver::initialize(MiniEngine::Types::EngineInitParams &params)
 {
 	mParams = params;
 
@@ -69,7 +69,11 @@ void MiniEngine::Backend::VulkanDriver::generatePipelines()
 
 	createGBufferPipeline();
 	createLightingPipeline();
-	recordCommandBuffers();
+
+    mPipelineBuilder->updateSceneDescriptorSetData();
+    mPipelineBuilder->updateAttachmentDescriptorSetData(mImageAttachments);
+
+    recordCommandBuffers();
 }
 
 void MiniEngine::Backend::VulkanDriver::generateGbuffer()
@@ -238,14 +242,20 @@ void MiniEngine::Backend::VulkanDriver::createDevice(const std::vector<const cha
 		VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES };
 	dynamicInfo.dynamicRendering = true;
 
-	VkDeviceCreateInfo deviceInfo{ VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
-	deviceInfo.queueCreateInfoCount = 1;
+    // Enable storage image write feature
+    VkPhysicalDeviceFeatures features;
+    vkGetPhysicalDeviceFeatures(mActiveGpu, &features);
+    features.fragmentStoresAndAtomics = VK_TRUE;
+
+    VkDeviceCreateInfo deviceInfo{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
+    deviceInfo.queueCreateInfoCount = 1;
 	deviceInfo.pQueueCreateInfos = &queueInfo;
 	deviceInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
 	deviceInfo.ppEnabledExtensionNames = requiredExtensions.data();
-	deviceInfo.pNext = &dynamicInfo;
+    deviceInfo.pEnabledFeatures = &features;
+    deviceInfo.pNext = &dynamicInfo;
 
-	vkCreateDevice(mActiveGpu, &deviceInfo, nullptr, &mActiveDevice);
+    vkCreateDevice(mActiveGpu, &deviceInfo, nullptr, &mActiveDevice);
 	volkLoadDevice(mActiveDevice);
 
 	// Getting first queue only
@@ -697,9 +707,19 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
-		// GBuffer pass
-		vkCmdBeginRendering(cmd, &gBufferRenderingInfo);
-		vkCmdDraw(cmd, 3, 1, 0, 0);
+        auto descriptorSets = mPipelineBuilder->getDefaultDescriptorSets();
+        vkCmdBindDescriptorSets(cmd,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                mDefaultPipelineLayout,
+                                0,
+                                descriptorSets.size(),
+                                descriptorSets.data(),
+                                0,
+                                nullptr);
+
+        // GBuffer pass
+        vkCmdBeginRendering(cmd, &gBufferRenderingInfo);
+        vkCmdDraw(cmd, 3, 1, 0, 0);
 		vkCmdEndRendering(cmd);
 
 		VkRenderingInfoKHR lightingRenderingInfo{ VK_STRUCTURE_TYPE_RENDERING_INFO };
@@ -733,8 +753,8 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 
 MiniEngine::Backend::VulkanDriver::ImageAttachmentData
 MiniEngine::Backend::VulkanDriver::createImageAttachment(VkFormat imageFormat,
-	VkImageUsageFlags imageBits,
-	VkImageAspectFlags imageViewAspectFlags)
+                                                         VkImageUsageFlags imageBits,
+                                                         VkImageAspectFlags imageViewAspectFlags)
 {
 	VkImageCreateInfo attachmentImageInfo{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
 	attachmentImageInfo.imageType = VK_IMAGE_TYPE_2D;

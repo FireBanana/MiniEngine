@@ -37,7 +37,8 @@ VkPipelineLayout MiniEngine::Backend::VulkanPipelineBuilder::createEmptyPipeline
     return pipelineLayout;
 }
 
-VkPipelineLayout MiniEngine::Backend::VulkanPipelineBuilder::createDefaultPipelineLayout(VkPipelineLayout& oLayout)
+VkPipelineLayout MiniEngine::Backend::VulkanPipelineBuilder::createDefaultPipelineLayout(
+    VkPipelineLayout &oLayout)
 {
     auto sceneLayout = createSceneDescriptorLayout();
     auto attachmentLayout = createAttachmentDescriptorLayout();
@@ -124,14 +125,13 @@ VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createSceneDes
     vkCreateDescriptorPool(mActiveDevice, &descriptorPoolInfo, nullptr, &pool);
     vkCreateDescriptorSetLayout(mActiveDevice, &descriptorLayoutInfo, nullptr, &layout);
 
-    VkDescriptorSet descriptorSet;
     VkDescriptorSetAllocateInfo allocInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
 
     allocInfo.descriptorPool = pool;
     allocInfo.descriptorSetCount = 1;
     allocInfo.pSetLayouts = &layout;
 
-    vkAllocateDescriptorSets(mActiveDevice, &allocInfo, &descriptorSet);
+    vkAllocateDescriptorSets(mActiveDevice, &allocInfo, &mSceneDescriptorSet);
 
     return layout;
 }
@@ -165,16 +165,74 @@ VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createAttachme
     vkCreateDescriptorPool(mActiveDevice, &descriptorPoolInfo, nullptr, &pool);
     vkCreateDescriptorSetLayout(mActiveDevice, &descriptorLayoutInfo, nullptr, &layout);
 
-    VkDescriptorSet descriptorSet;
     VkDescriptorSetAllocateInfo allocInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
 
     allocInfo.descriptorPool = pool;
     allocInfo.descriptorSetCount = 1;
     allocInfo.pSetLayouts = &layout;
 
-    vkAllocateDescriptorSets(mActiveDevice, &allocInfo, &descriptorSet);
+    vkAllocateDescriptorSets(mActiveDevice, &allocInfo, &mAttachmentDescriptorSet);
+
+    VkBufferCreateInfo bufferCreateInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
+    bufferCreateInfo.size = sizeof(SceneBlock);
+    bufferCreateInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    bufferCreateInfo.queueFamilyIndexCount = 0;
+    bufferCreateInfo.pQueueFamilyIndices = nullptr;
+
+    vkCreateBuffer(mActiveDevice, &bufferCreateInfo, nullptr, &mSceneBlockBuffer);
 
     return layout;
+}
+
+void MiniEngine::Backend::VulkanPipelineBuilder::updateSceneDescriptorSetData()
+{
+    VkDescriptorBufferInfo bufferInfo;
+    bufferInfo.buffer = mSceneBlockBuffer;
+    bufferInfo.offset = 0;
+    bufferInfo.range = sizeof(SceneBlock);
+
+    VkWriteDescriptorSet writeSet{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+    writeSet.dstSet = mSceneDescriptorSet;
+    writeSet.dstBinding = 0;
+    writeSet.dstArrayElement = 0;
+    writeSet.descriptorCount = 1;
+    writeSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    writeSet.pBufferInfo = &bufferInfo;
+
+    vkUpdateDescriptorSets(mActiveDevice, 1, &writeSet, 0, nullptr);
+}
+
+void MiniEngine::Backend::VulkanPipelineBuilder::updateAttachmentDescriptorSetData(
+    std::array<VulkanDriver::ImageAttachmentData, 5> &attachments)
+{
+    VkDescriptorImageInfo colorInfo{};
+    colorInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    colorInfo.imageView = attachments[0].imageView;
+
+    VkDescriptorImageInfo positionInfo{};
+    positionInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    positionInfo.imageView = attachments[1].imageView;
+
+    VkDescriptorImageInfo normalInfo{};
+    normalInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    normalInfo.imageView = attachments[2].imageView;
+
+    VkDescriptorImageInfo roughnessInfo{};
+    roughnessInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    roughnessInfo.imageView = attachments[3].imageView;
+
+    auto imageInfos = {colorInfo, positionInfo, normalInfo, roughnessInfo};
+
+    VkWriteDescriptorSet writeSet{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+    writeSet.dstSet = mAttachmentDescriptorSet;
+    writeSet.dstBinding = 0;
+    writeSet.dstArrayElement = 0;
+    writeSet.descriptorCount = 4;
+    writeSet.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    writeSet.pImageInfo = imageInfos.begin();
+
+    vkUpdateDescriptorSets(mActiveDevice, 1, &writeSet, 0, nullptr);
 }
 
 VkPipelineInputAssemblyStateCreateInfo MiniEngine::Backend::VulkanPipelineBuilder::createDefaultInputAssemblyState()
@@ -307,5 +365,5 @@ void MiniEngine::Backend::VulkanPipelineBuilder::instantiateTriangleBuffer()
 
 	vkFlushMappedMemoryRanges(mActiveDevice, 1, &flushRange);
 
-	vkUnmapMemory(mActiveDevice, bufferMemory);
+    vkUnmapMemory(mActiveDevice, bufferMemory);
 }
