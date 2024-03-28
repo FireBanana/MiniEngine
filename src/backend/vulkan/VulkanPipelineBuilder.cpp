@@ -4,12 +4,21 @@
 #include "EnumExtension.h"
 #include "VulkanDriver.h"
 
+#include <glm/gtc/matrix_transform.hpp>
 #include <numeric>
 
-MiniEngine::Backend::VulkanPipelineBuilder::VulkanPipelineBuilder(VkDevice device, VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties)
-	: mActiveDevice(device), mPhysicalDeviceMemoryProperties(physicalDeviceMemoryProperties)
+MiniEngine::Backend::VulkanPipelineBuilder::VulkanPipelineBuilder(VulkanDriver *driver)
+    : mDriver(driver)
+    , mActiveDevice(driver->mActiveDevice)
+    , mDefaultSceneBlock()
 {
-	mDefaultTriangleRenderableComponent = Components::RenderableComponent{};
+    mDefaultSceneBlock.cameraPosition = glm::vec3(0, 0, -5);
+    mDefaultSceneBlock.projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+    mDefaultSceneBlock.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f),
+                                          glm::vec3(1.0f, 0.0f, 0.0f),
+                                          glm::vec3(0.0f, -1.0f, 0.0f));
+
+    mDefaultTriangleRenderableComponent = Components::RenderableComponent{};
     mDefaultTriangleRenderableComponent.buffer =
     {
         //vertex     color
@@ -133,6 +142,20 @@ VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createSceneDes
 
     vkAllocateDescriptorSets(mActiveDevice, &allocInfo, &mSceneDescriptorSet);
 
+    VkBufferCreateInfo bufferCreateInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
+    bufferCreateInfo.size = sizeof(SceneBlock);
+    bufferCreateInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    bufferCreateInfo.queueFamilyIndexCount = 0;
+    bufferCreateInfo.pQueueFamilyIndices = nullptr;
+
+    vkCreateBuffer(mActiveDevice, &bufferCreateInfo, nullptr, &mSceneBlockBuffer);
+    auto bufferMemory = mDriver->allocateBuffer(mSceneBlockBuffer);
+    mDriver->pushBufferMemory(mSceneBlockBuffer,
+                              bufferMemory,
+                              &mDefaultSceneBlock,
+                              sizeof(SceneBlock));
+
     return layout;
 }
 
@@ -173,15 +196,6 @@ VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createAttachme
 
     vkAllocateDescriptorSets(mActiveDevice, &allocInfo, &mAttachmentDescriptorSet);
 
-    VkBufferCreateInfo bufferCreateInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
-    bufferCreateInfo.size = sizeof(SceneBlock);
-    bufferCreateInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    bufferCreateInfo.queueFamilyIndexCount = 0;
-    bufferCreateInfo.pQueueFamilyIndices = nullptr;
-
-    vkCreateBuffer(mActiveDevice, &bufferCreateInfo, nullptr, &mSceneBlockBuffer);
-
     return layout;
 }
 
@@ -207,19 +221,19 @@ void MiniEngine::Backend::VulkanPipelineBuilder::updateAttachmentDescriptorSetDa
     std::array<VulkanDriver::ImageAttachmentData, 5> &attachments)
 {
     VkDescriptorImageInfo colorInfo{};
-    colorInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    colorInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
     colorInfo.imageView = attachments[0].imageView;
 
     VkDescriptorImageInfo positionInfo{};
-    positionInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    positionInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
     positionInfo.imageView = attachments[1].imageView;
 
     VkDescriptorImageInfo normalInfo{};
-    normalInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    normalInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
     normalInfo.imageView = attachments[2].imageView;
 
     VkDescriptorImageInfo roughnessInfo{};
-    roughnessInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    roughnessInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
     roughnessInfo.imageView = attachments[3].imageView;
 
     auto imageInfos = {colorInfo, positionInfo, normalInfo, roughnessInfo};
@@ -322,48 +336,13 @@ VkBuffer MiniEngine::Backend::VulkanPipelineBuilder::createDefaultTriangleBuffer
     return vertexBuffer;
 }
 
-VkDeviceMemory MiniEngine::Backend::VulkanPipelineBuilder::allocateDefaultTriangleBuffer(VkBuffer buffer)
-{
-	VkMemoryRequirements bufferMemRequirements;
-	VkDeviceMemory memory;
-
-	vkGetBufferMemoryRequirements(mActiveDevice, buffer, &bufferMemRequirements);
-
-	for (auto i = 0; i < mPhysicalDeviceMemoryProperties.memoryTypeCount; ++i)
-	{
-		if ((bufferMemRequirements.memoryTypeBits & (1 << i)) && 
-			(mPhysicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT))
-		{
-			VkMemoryAllocateInfo allocInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
-			allocInfo.allocationSize = bufferMemRequirements.size;
-			allocInfo.memoryTypeIndex = i;
-
-            vkAllocateMemory(mActiveDevice, &allocInfo, nullptr, &memory);
-            return memory;
-        }
-	}
-
-	Logger::eprint("Memory for default triangle buffer not allocated.");
-	return memory;
-}
-
 void MiniEngine::Backend::VulkanPipelineBuilder::instantiateTriangleBuffer()
 {
 	mDefaultTriangleBuffer = createDefaultTriangleBuffer();
-	auto bufferMemory = allocateDefaultTriangleBuffer(mDefaultTriangleBuffer);
+    auto bufferMemory = mDriver->allocateBuffer(mDefaultTriangleBuffer);
 
-	vkBindBufferMemory(mActiveDevice, mDefaultTriangleBuffer, bufferMemory, 0);
-
-	void* bufferMemoryPointer;
-	vkMapMemory(mActiveDevice, bufferMemory, 0, VK_WHOLE_SIZE, 0, &bufferMemoryPointer);
-	memcpy(bufferMemoryPointer, mDefaultTriangleRenderableComponent.buffer.data(), mDefaultTriangleRenderableComponent.buffer.size() * sizeof(float));
-
-	VkMappedMemoryRange flushRange{ VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
-	flushRange.memory = bufferMemory;
-	flushRange.offset = 0;
-	flushRange.size = VK_WHOLE_SIZE;
-
-	vkFlushMappedMemoryRanges(mActiveDevice, 1, &flushRange);
-
-    vkUnmapMemory(mActiveDevice, bufferMemory);
+    mDriver->pushBufferMemory(mDefaultTriangleBuffer,
+                              bufferMemory,
+                              mDefaultTriangleRenderableComponent.buffer.data(),
+                              mDefaultTriangleRenderableComponent.buffer.size() * sizeof(float));
 }

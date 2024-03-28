@@ -27,10 +27,9 @@ namespace Backend
     {
 
 	public:
+        VulkanPipelineBuilder(VulkanDriver *driver);
 
-		VulkanPipelineBuilder(VkDevice device, VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties);
-
-		VkPipelineLayout createEmptyPipelineLayout();
+        VkPipelineLayout createEmptyPipelineLayout();
         VkPipelineLayout createDefaultPipelineLayout(VkPipelineLayout &oLayout);
 
         VertexStateData createCustomVertexInputState(Components::RenderableComponent *component);
@@ -59,18 +58,18 @@ namespace Backend
         }
 
     private:
-
-		VkDevice mActiveDevice;
-		VkPhysicalDeviceMemoryProperties mPhysicalDeviceMemoryProperties;
+        VulkanDriver *mDriver;
+        VkDevice mActiveDevice;
+        VkPhysicalDeviceMemoryProperties mPhysicalDeviceMemoryProperties;
 		VkBuffer mDefaultTriangleBuffer;
         VkBuffer mSceneBlockBuffer;
+        SceneBlock mDefaultSceneBlock;
 
         Components::RenderableComponent mDefaultTriangleRenderableComponent;
 
         VkDescriptorSetLayout createEmptyDescriptorSetLayout();
 
-		VkBuffer createDefaultTriangleBuffer();
-		VkDeviceMemory allocateDefaultTriangleBuffer(VkBuffer buffer);
+        VkBuffer createDefaultTriangleBuffer();
 
         VkDescriptorSet mSceneDescriptorSet;
         VkDescriptorSet mAttachmentDescriptorSet;

@@ -3,7 +3,6 @@
 
 #include "IDriver.h"
 #include "VulkanHelper.h"
-#include "VulkanPipelineBuilder.h"
 #include "utils/DynamicArray.h"
 #include <vector>
 
@@ -23,6 +22,8 @@ namespace Components
 
 namespace Backend
 {
+
+class VulkanPipelineBuilder;
 
 class VulkanDriver : public IDriver
 {
@@ -61,6 +62,8 @@ public:
 
     void initialize(MiniEngine::Types::EngineInitParams &params);
 
+    ~VulkanDriver();
+
     void createInstance(const std::vector<const char *> &requireInstanceExtensions,
                         const std::vector<const char *> &&requiredLayers);
 
@@ -98,7 +101,7 @@ public:
 private:
     MiniEngine::Types::EngineInitParams mParams;
 
-    std::unique_ptr<VulkanPipelineBuilder> mPipelineBuilder;
+    VulkanPipelineBuilder *mPipelineBuilder;
 
     VkInstance mInstance;
     VkPhysicalDevice mActiveGpu;
@@ -148,6 +151,11 @@ private:
     void loadShaderModule();
     void acquireNextImage(uint32_t *image, uint32_t *displaySemaphoreIndex);
     uint32_t getMemoryTypeIndex(const VkMemoryRequirements *memReqs);
+
+    VkDeviceMemory allocateBuffer(VkBuffer buffer);
+    void pushBufferMemory(VkBuffer buffer, VkDeviceMemory bufferMemory, void *data, size_t size);
+
+    friend class VulkanPipelineBuilder;
 };
 }
 }
