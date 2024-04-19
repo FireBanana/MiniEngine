@@ -136,7 +136,8 @@ private:
 
     ImageAttachmentData createImageAttachment(VkFormat imageFormat,
                                               VkImageUsageFlags imageBits,
-                                              VkImageAspectFlags imageViewAspectFlags);
+                                              VkImageAspectFlags imageViewAspectFlags,
+                                              std::string debugName = {});
 
     void createPipelineBarrier(VkImage image,
                                VkCommandBuffer buffer,

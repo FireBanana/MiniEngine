@@ -11,23 +11,19 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugUtilsCallback(
 	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 	void* pUserData)
 {
+    return VK_FALSE;
+    if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
+        MiniEngine::Logger::print("MiniVkVerbose: {}\n", pCallbackData->pMessage);
+    } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
+        MiniEngine::Logger::print("MiniVkInfo: {}\n", pCallbackData->pMessage);
+    } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+        MiniEngine::Logger::wprint("MiniVkWarning: {}\n", pCallbackData->pMessage);
+    } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+        MiniEngine::Logger::eprint("MiniVkError: {}\n", pCallbackData->pMessage);
+    } else
+        MiniEngine::Logger::eprint("UnknownVkError: {}\n", pCallbackData->pMessage);
 
-	if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
-		MiniEngine::Logger::print("MiniVkVerbose: {}\n", pCallbackData->pMessage);
-	}
-	else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
-		MiniEngine::Logger::print("MiniVkInfo: {}\n", pCallbackData->pMessage);
-	}
-	else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-		MiniEngine::Logger::wprint("MiniVkWarning: {}\n", pCallbackData->pMessage);
-	}
-	else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-		MiniEngine::Logger::eprint("MiniVkError: {}\n", pCallbackData->pMessage);
-	}
-	else
-		MiniEngine::Logger::eprint("UnknownVkError: {}\n", pCallbackData->pMessage);
-
-	return VK_FALSE;
+    return VK_FALSE;
 }
 
 void MiniEngine::Backend::VulkanDriver::initialize(MiniEngine::Types::EngineInitParams &params)
@@ -87,26 +83,31 @@ void MiniEngine::Backend::VulkanDriver::generateGbuffer()
                                                 VK_IMAGE_USAGE_SAMPLED_BIT
                                                     | VK_IMAGE_USAGE_STORAGE_BIT
                                                     | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-                                                VK_IMAGE_ASPECT_COLOR_BIT);
+                                                VK_IMAGE_ASPECT_COLOR_BIT,
+                                                "Color Target");
     auto positionImageView = createImageAttachment(mCurrentSwapchainFormat,
                                                    VK_IMAGE_USAGE_SAMPLED_BIT
                                                        | VK_IMAGE_USAGE_STORAGE_BIT
                                                        | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-                                                   VK_IMAGE_ASPECT_COLOR_BIT);
+                                                   VK_IMAGE_ASPECT_COLOR_BIT,
+                                                   "Position Target");
     auto normalImageView = createImageAttachment(mCurrentSwapchainFormat,
                                                  VK_IMAGE_USAGE_SAMPLED_BIT
                                                      | VK_IMAGE_USAGE_STORAGE_BIT
                                                      | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-                                                 VK_IMAGE_ASPECT_COLOR_BIT);
+                                                 VK_IMAGE_ASPECT_COLOR_BIT,
+                                                 "Normals Target");
     auto roughnessImageView = createImageAttachment(mCurrentSwapchainFormat,
                                                     VK_IMAGE_USAGE_SAMPLED_BIT
                                                         | VK_IMAGE_USAGE_STORAGE_BIT
                                                         | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-                                                    VK_IMAGE_ASPECT_COLOR_BIT);
+                                                    VK_IMAGE_ASPECT_COLOR_BIT,
+                                                    "Roughness Target");
     auto depthImageView = createImageAttachment(mCurrentSwapchainDepthFormat,
                                                 VK_IMAGE_USAGE_SAMPLED_BIT
                                                     | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                                                VK_IMAGE_ASPECT_DEPTH_BIT);
+                                                VK_IMAGE_ASPECT_DEPTH_BIT,
+                                                "Depth Target");
 
     mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::COLOR)] = colorImageView;
     mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::POSITION)] = positionImageView;
@@ -690,8 +691,8 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 
         createPipelineBarrier(swapchainImage,
                               cmd,
-                              0,
-                              0,
+                              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
                               VK_IMAGE_ASPECT_COLOR_BIT,
                               VK_IMAGE_LAYOUT_UNDEFINED,
                               VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
@@ -700,43 +701,43 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 
         createPipelineBarrier(colorImage,
                               cmd,
-                              0,
-                              0,
+                              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                              VK_ACCESS_SHADER_WRITE_BIT,
                               VK_IMAGE_ASPECT_COLOR_BIT,
                               VK_IMAGE_LAYOUT_UNDEFINED,
                               VK_IMAGE_LAYOUT_GENERAL,
-                              VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                              VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+                              VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
         createPipelineBarrier(positionImage,
                               cmd,
-                              0,
-                              0,
+                              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                              VK_ACCESS_SHADER_WRITE_BIT,
                               VK_IMAGE_ASPECT_COLOR_BIT,
                               VK_IMAGE_LAYOUT_UNDEFINED,
                               VK_IMAGE_LAYOUT_GENERAL,
-                              VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                              VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+                              VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
         createPipelineBarrier(normalImage,
                               cmd,
-                              0,
-                              0,
+                              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                              VK_ACCESS_SHADER_WRITE_BIT,
                               VK_IMAGE_ASPECT_COLOR_BIT,
                               VK_IMAGE_LAYOUT_UNDEFINED,
                               VK_IMAGE_LAYOUT_GENERAL,
-                              VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                              VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+                              VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
         createPipelineBarrier(roughnessImage,
                               cmd,
-                              0,
-                              0,
+                              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                              VK_ACCESS_SHADER_WRITE_BIT,
                               VK_IMAGE_ASPECT_COLOR_BIT,
                               VK_IMAGE_LAYOUT_UNDEFINED,
                               VK_IMAGE_LAYOUT_GENERAL,
-                              VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                              VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+                              VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
         auto descriptorSets = mPipelineBuilder->getDefaultDescriptorSets();
         vkCmdBindDescriptorSets(cmd,
@@ -785,7 +786,8 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 MiniEngine::Backend::VulkanDriver::ImageAttachmentData
 MiniEngine::Backend::VulkanDriver::createImageAttachment(VkFormat imageFormat,
                                                          VkImageUsageFlags imageBits,
-                                                         VkImageAspectFlags imageViewAspectFlags)
+                                                         VkImageAspectFlags imageViewAspectFlags,
+                                                         std::string debugName)
 {
 	VkImageCreateInfo attachmentImageInfo{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
 	attachmentImageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -829,33 +831,46 @@ MiniEngine::Backend::VulkanDriver::createImageAttachment(VkFormat imageFormat,
 	colorImageViewInfo.image = attachmentImage;
 	vkCreateImageView(mActiveDevice, &colorImageViewInfo, nullptr, &attachmentImageView);
 
-	return { attachmentImage, attachmentImageView };
+#ifdef GRAPHICS_DEBUG
+
+    VkDebugUtilsObjectNameInfoEXT imageNameInfo{};
+    imageNameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+    imageNameInfo.pNext = NULL;
+    imageNameInfo.objectType = VK_OBJECT_TYPE_IMAGE_VIEW;
+    imageNameInfo.objectHandle = (uint64_t) attachmentImageView;
+    imageNameInfo.pObjectName = debugName.c_str();
+
+    vkSetDebugUtilsObjectNameEXT(mActiveDevice, &imageNameInfo);
+
+#endif
+
+    return {attachmentImage, attachmentImageView};
 }
 
 void MiniEngine::Backend::VulkanDriver::createPipelineBarrier(VkImage image,
-	VkCommandBuffer buffer,
-	VkAccessFlags srcAccessMask,
-	VkAccessFlags dstAccessMask,
-	VkImageAspectFlags aspectMask,
-	VkImageLayout oldLayout,
-	VkImageLayout newLayout,
-	VkPipelineStageFlags srcStageMask,
-	VkPipelineStageFlags dstStageMask)
+                                                              VkCommandBuffer buffer,
+                                                              VkAccessFlags srcAccessMask,
+                                                              VkAccessFlags dstAccessMask,
+                                                              VkImageAspectFlags aspectMask,
+                                                              VkImageLayout oldLayout,
+                                                              VkImageLayout newLayout,
+                                                              VkPipelineStageFlags srcStageMask,
+                                                              VkPipelineStageFlags dstStageMask)
 {
-	VkImageMemoryBarrier imageMemBarrier{ VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
-	imageMemBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	imageMemBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	imageMemBarrier.srcAccessMask = srcAccessMask;
-	imageMemBarrier.dstAccessMask = dstAccessMask;
-	imageMemBarrier.image = image;
-	imageMemBarrier.subresourceRange.aspectMask = aspectMask;
+    VkImageMemoryBarrier imageMemBarrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
+    imageMemBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    imageMemBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    imageMemBarrier.srcAccessMask = srcAccessMask;
+    imageMemBarrier.dstAccessMask = dstAccessMask;
+    imageMemBarrier.image = image;
+    imageMemBarrier.subresourceRange.aspectMask = aspectMask;
 	imageMemBarrier.subresourceRange.levelCount = 1;
 	imageMemBarrier.subresourceRange.layerCount = 1;
 	imageMemBarrier.newLayout = newLayout;
-	imageMemBarrier.oldLayout = oldLayout;
+    imageMemBarrier.oldLayout = oldLayout;
 
-	vkCmdPipelineBarrier(
-		buffer, srcStageMask, dstStageMask, 0, 0, nullptr, 0, nullptr, 1, &imageMemBarrier);
+    vkCmdPipelineBarrier(
+        buffer, srcStageMask, dstStageMask, 0, 0, nullptr, 0, nullptr, 1, &imageMemBarrier);
 }
 
 void MiniEngine::Backend::VulkanDriver::loadShaderModule() {}
