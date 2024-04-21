@@ -535,7 +535,7 @@ void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
     colorBlendState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
                                      | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
-    VkPipelineColorBlendAttachmentState blendList[] = {colorBlendState};
+    VkPipelineColorBlendAttachmentState blendList[] = {colorBlendState, colorBlendState , colorBlendState , colorBlendState };
 
     VkPipelineColorBlendStateCreateInfo colorBlendInfo{
         VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO};
@@ -622,7 +622,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
             = mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::COLOR)].imageView;
         colorAttachment.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
         colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
         colorAttachment.clearValue.color = {1, 0, 0, 1};
 
         VkRenderingAttachmentInfo positionAttachment{VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
@@ -699,17 +699,17 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
-        createPipelineBarrier(colorImage,
-                              cmd,
-                              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                              VK_ACCESS_SHADER_WRITE_BIT,
-                              VK_IMAGE_ASPECT_COLOR_BIT,
-                              VK_IMAGE_LAYOUT_UNDEFINED,
-                              VK_IMAGE_LAYOUT_GENERAL,
-                              VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+		createPipelineBarrier(colorImage,
+			cmd,
+			VK_ACCESS_SHADER_WRITE_BIT,
+			VK_ACCESS_SHADER_WRITE_BIT,
+			VK_IMAGE_ASPECT_COLOR_BIT,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_GENERAL,
+			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
-        createPipelineBarrier(positionImage,
+        /*createPipelineBarrier(positionImage,
                               cmd,
                               VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
                               VK_ACCESS_SHADER_WRITE_BIT,
@@ -737,7 +737,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
                               VK_IMAGE_LAYOUT_UNDEFINED,
                               VK_IMAGE_LAYOUT_GENERAL,
                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+                              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);*/
 
         auto descriptorSets = mPipelineBuilder->getDefaultDescriptorSets();
         vkCmdBindDescriptorSets(cmd,
