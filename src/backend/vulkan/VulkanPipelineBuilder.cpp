@@ -176,14 +176,22 @@ VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createAttachme
     descriptorPoolInfo.maxSets = 1;
     descriptorPoolInfo.pPoolSizes = &imageAttachmentPoolSize;
 
-    VkDescriptorSetLayoutBinding bindings{};
-    bindings.binding = 0;
-    bindings.descriptorCount = attachmentSize;
-    bindings.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-    bindings.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    VkDescriptorSetLayoutBinding colorBinding{};
+    colorBinding.binding = 0;
+    colorBinding.descriptorCount = attachmentSize;
+    colorBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    colorBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+
+    VkDescriptorSetLayoutBinding positionBinding{};
+    positionBinding.binding = 1;
+    positionBinding.descriptorCount = attachmentSize;
+    positionBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    positionBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+
+    auto bindings = {colorBinding, positionBinding};
 
     descriptorLayoutInfo.bindingCount = 1;
-    descriptorLayoutInfo.pBindings = &bindings;
+    descriptorLayoutInfo.pBindings = &colorBinding;
 
     VkDescriptorPool pool;
     VkDescriptorSetLayout layout;
