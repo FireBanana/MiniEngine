@@ -37,9 +37,8 @@ namespace Backend
         VertexStateData createTriangleVertexInputState();
 
         VkDescriptorSetLayout createSceneDescriptorLayout();
-        VkDescriptorSetLayout createAttachmentDescriptorLayout();
 
-		VkPipelineInputAssemblyStateCreateInfo createDefaultInputAssemblyState();
+        VkPipelineInputAssemblyStateCreateInfo createDefaultInputAssemblyState();
         VkPipelineRasterizationStateCreateInfo createDefaultRasterState();
         VkPipelineViewportStateCreateInfo createDefaultPipelineViewportState();
 		VkPipelineMultisampleStateCreateInfo createDefaultPipelineMultisampleState();
@@ -48,14 +47,9 @@ namespace Backend
 
 		void instantiateTriangleBuffer();
         void updateSceneDescriptorSetData();
-        void updateAttachmentDescriptorSetData(
-            std::array<VulkanDriver::ImageAttachmentData, 5> &attachments);
 
         VkBuffer getDefaultTriangleBuffer() const { return mDefaultTriangleBuffer; }
-        std::array<VkDescriptorSet, 2> getDefaultDescriptorSets()
-        {
-            return {mSceneDescriptorSet, mAttachmentDescriptorSet};
-        }
+        VkDescriptorSet getSceneBlockDescriptorSet() { return mSceneDescriptorSet; }
 
     private:
         VulkanDriver *mDriver;
@@ -72,7 +66,6 @@ namespace Backend
         VkBuffer createDefaultTriangleBuffer();
 
         VkDescriptorSet mSceneDescriptorSet;
-        VkDescriptorSet mAttachmentDescriptorSet;
     };
 }
 }

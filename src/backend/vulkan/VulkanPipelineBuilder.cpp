@@ -50,12 +50,11 @@ VkPipelineLayout MiniEngine::Backend::VulkanPipelineBuilder::createDefaultPipeli
     VkPipelineLayout &oLayout)
 {
     auto sceneLayout = createSceneDescriptorLayout();
-    auto attachmentLayout = createAttachmentDescriptorLayout();
 
-    VkDescriptorSetLayout arr[] = { sceneLayout, attachmentLayout };
+    VkDescriptorSetLayout arr[] = {sceneLayout};
 
     VkPipelineLayoutCreateInfo layoutInfo{ VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
-    layoutInfo.setLayoutCount = 2;
+    layoutInfo.setLayoutCount = 1;
     layoutInfo.pSetLayouts = arr;
     vkCreatePipelineLayout(mActiveDevice, &layoutInfo, nullptr, &oLayout);
 
@@ -159,56 +158,6 @@ VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createSceneDes
     return layout;
 }
 
-VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createAttachmentDescriptorLayout()
-{
-    VkDescriptorPoolSize imageAttachmentPoolSize{};
-    // Size sans depth and swapchain
-    constexpr auto attachmentSize = EnumExtension::elementCount<VulkanDriver::ImageAttachmentType>()
-                                    - 2;
-
-    imageAttachmentPoolSize.type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-    imageAttachmentPoolSize.descriptorCount = attachmentSize;
-
-    VkDescriptorPoolCreateInfo descriptorPoolInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
-    VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
-
-    descriptorPoolInfo.poolSizeCount = 1;
-    descriptorPoolInfo.maxSets = 1;
-    descriptorPoolInfo.pPoolSizes = &imageAttachmentPoolSize;
-
-    VkDescriptorSetLayoutBinding colorBinding{};
-    colorBinding.binding = 0;
-    colorBinding.descriptorCount = attachmentSize;
-    colorBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-    colorBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-
-    VkDescriptorSetLayoutBinding positionBinding{};
-    positionBinding.binding = 1;
-    positionBinding.descriptorCount = attachmentSize;
-    positionBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-    positionBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-
-    auto bindings = {colorBinding, positionBinding};
-
-    descriptorLayoutInfo.bindingCount = 1;
-    descriptorLayoutInfo.pBindings = &colorBinding;
-
-    VkDescriptorPool pool;
-    VkDescriptorSetLayout layout;
-    vkCreateDescriptorPool(mActiveDevice, &descriptorPoolInfo, nullptr, &pool);
-    vkCreateDescriptorSetLayout(mActiveDevice, &descriptorLayoutInfo, nullptr, &layout);
-
-    VkDescriptorSetAllocateInfo allocInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
-
-    allocInfo.descriptorPool = pool;
-    allocInfo.descriptorSetCount = 1;
-    allocInfo.pSetLayouts = &layout;
-
-    vkAllocateDescriptorSets(mActiveDevice, &allocInfo, &mAttachmentDescriptorSet);
-
-    return layout;
-}
-
 void MiniEngine::Backend::VulkanPipelineBuilder::updateSceneDescriptorSetData()
 {
     VkDescriptorBufferInfo bufferInfo;
@@ -223,38 +172,6 @@ void MiniEngine::Backend::VulkanPipelineBuilder::updateSceneDescriptorSetData()
     writeSet.descriptorCount = 1;
     writeSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     writeSet.pBufferInfo = &bufferInfo;
-
-    vkUpdateDescriptorSets(mActiveDevice, 1, &writeSet, 0, nullptr);
-}
-
-void MiniEngine::Backend::VulkanPipelineBuilder::updateAttachmentDescriptorSetData(
-    std::array<VulkanDriver::ImageAttachmentData, 5> &attachments)
-{
-    VkDescriptorImageInfo colorInfo{};
-    colorInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-    colorInfo.imageView = attachments[0].imageView;
-
-    VkDescriptorImageInfo positionInfo{};
-    positionInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-    positionInfo.imageView = attachments[1].imageView;
-
-    VkDescriptorImageInfo normalInfo{};
-    normalInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-    normalInfo.imageView = attachments[2].imageView;
-
-    VkDescriptorImageInfo roughnessInfo{};
-    roughnessInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-    roughnessInfo.imageView = attachments[3].imageView;
-
-    auto imageInfos = {colorInfo, positionInfo, normalInfo, roughnessInfo};
-
-    VkWriteDescriptorSet writeSet{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
-    writeSet.dstSet = mAttachmentDescriptorSet;
-    writeSet.dstBinding = 0;
-    writeSet.dstArrayElement = 0;
-    writeSet.descriptorCount = 4;
-    writeSet.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-    writeSet.pImageInfo = imageInfos.begin();
 
     vkUpdateDescriptorSets(mActiveDevice, 1, &writeSet, 0, nullptr);
 }
