@@ -14,16 +14,11 @@ layout(location = 3) out vec4 roughnessAttachment;
 void main()
 {
     vec4 c = gl_FragCoord;
-    c.x /= 32;
-    c.y /= 32;
+    c.x /= 800;
+    c.y /= 600;
 
     colorAttachment = vec4(c.x, c.y, 0, 1.);
     positionAttachment = vec4(c.y, c.x, 0, 1.);
     normalAttachment = vec4(c.x, c.x, 0, 1.);
     roughnessAttachment = vec4(c.y, c.y, 0, 1.);
-
-    // imageStore(gbuffer[0], ivec2(gl_FragCoord.x, gl_FragCoord.y), ivec4(gl_FragCoord.x, gl_FragCoord.y, 0, 1.));
-    // imageStore(gbuffer[1], ivec2(gl_FragCoord.x, gl_FragCoord.y), ivec4(gl_FragCoord.y, gl_FragCoord.x, 0, 1.));
-    // imageStore(gbuffer[2], ivec2(gl_FragCoord.x, gl_FragCoord.y), ivec4(gl_FragCoord.x, gl_FragCoord.x, 0, 1.));
-    // imageStore(gbuffer[3], ivec2(gl_FragCoord.x, gl_FragCoord.y), ivec4(gl_FragCoord.y, gl_FragCoord.y, 0, 1.));
 }

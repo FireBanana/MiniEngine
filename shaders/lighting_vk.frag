@@ -1,11 +1,13 @@
 #version 450 core
 
-layout(set=1, binding=0, rgba16f) uniform image2D someImage;
-layout(set=1, binding=1, rgba16f) uniform image2D someImage2;
-layout(set=1, binding=2, rgba16f) uniform image2D someImage3;
-layout(set=1, binding=3, rgba16f) uniform image2D someImage4;
+layout(input_attachment_index = 0, binding = 0) uniform subpassInput colorAttachment;
+layout(location = 1) out vec4 positionAttachment;
+layout(location = 2) out vec4 normalAttachment;
+layout(location = 3) out vec4 roughnessAttachment;
+layout(location = 4) out vec4 swapchainAttachment;
 
 void main()
 {
-    //imageStore(someImage2, ivec2(gl_FragCoord.x, gl_FragCoord.y), ivec4(1.));
+
+    swapchainAttachment = vec4(1.);
 }

@@ -70,14 +70,14 @@ void MiniEngine::Backend::VulkanDriver::generatePipelines()
 	mPipelineBuilder = new VulkanPipelineBuilder{ this };
 
 	mPipelineBuilder->instantiateTriangleBuffer();
-    mPipelineBuilder->createDefaultPipelineLayout(mDefaultPipelineLayout);
+	mPipelineBuilder->createDefaultPipelineLayout(mDefaultPipelineLayout);
 
-    createGBufferPipeline();
-    createLightingPipeline();
+	createGBufferPipeline();
+	createLightingPipeline();
 
-    mPipelineBuilder->updateSceneDescriptorSetData();
+	mPipelineBuilder->updateSceneDescriptorSetData();
 
-    recordCommandBuffers();
+	recordCommandBuffers();
 }
 
 void MiniEngine::Backend::VulkanDriver::generateGbuffer()
@@ -436,10 +436,10 @@ void MiniEngine::Backend::VulkanDriver::createSwapchainImageViews()
 
 void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 {
-    auto vertexInputInfo = mPipelineBuilder->createTriangleVertexInputState();
-    auto inputAssemblyInfo = mPipelineBuilder->createDefaultInputAssemblyState();
-    auto rasterInfo = mPipelineBuilder->createDefaultRasterState();
-    auto viewportInfo = mPipelineBuilder->createDefaultPipelineViewportState();
+	auto vertexInputInfo = mPipelineBuilder->createTriangleVertexInputState();
+	auto inputAssemblyInfo = mPipelineBuilder->createDefaultInputAssemblyState();
+	auto rasterInfo = mPipelineBuilder->createDefaultRasterState();
+	auto viewportInfo = mPipelineBuilder->createDefaultPipelineViewportState();
 	auto multiSampleInfo = mPipelineBuilder->createDefaultPipelineMultisampleState();
 	auto shaderStages = mPipelineBuilder->createDefaultVertFragShaderStage(RESOLVE_PATH("/shaders/temp.vert"), RESOLVE_PATH("/shaders/temp.frag"));
 
@@ -536,20 +536,21 @@ void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
 	colorBlendState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
 		| VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
-	VkPipelineColorBlendAttachmentState blendList[] = { colorBlendState, colorBlendState , colorBlendState , colorBlendState };
+	VkPipelineColorBlendAttachmentState blendList[] = { colorBlendState, colorBlendState , colorBlendState , colorBlendState, colorBlendState };
 
 	VkPipelineColorBlendStateCreateInfo colorBlendInfo{
 		VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO };
-	colorBlendInfo.attachmentCount = 4;
+	colorBlendInfo.attachmentCount = 5;
 	colorBlendInfo.pAttachments = blendList;
 
 	VkFormat colorAttachmentFormats[] = { mCurrentSwapchainFormat,
 										 mCurrentSwapchainFormat,
 										 mCurrentSwapchainFormat,
+										 mCurrentSwapchainFormat,
 										 mCurrentSwapchainFormat };
 
 	VkPipelineRenderingCreateInfo renderingInfo{ VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO };
-	renderingInfo.colorAttachmentCount = 4;
+	renderingInfo.colorAttachmentCount = 5;
 	renderingInfo.pColorAttachmentFormats = colorAttachmentFormats;
 	renderingInfo.depthAttachmentFormat = mCurrentSwapchainDepthFormat;
 
@@ -611,46 +612,39 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 		auto normalImage = mImageAttachments[static_cast<int>(ImageAttachmentType::NORMAL)].rawImage;
 		auto roughnessImage = mImageAttachments[static_cast<int>(ImageAttachmentType::ROUGHNESS)].rawImage;
 
-		VkRenderingAttachmentInfo swapChainAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-		swapChainAttachment.imageView = mSwapchainPerImageData[i].imageView;
-		swapChainAttachment.imageLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		swapChainAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		swapChainAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		swapChainAttachment.clearValue.color = { 1, 0, 0, 1 };
-
-		VkRenderingAttachmentInfo colorAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-		colorAttachment.imageView
+		VkRenderingAttachmentInfo gBufferColorAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
+		gBufferColorAttachment.imageView
 			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::COLOR)].imageView;
-		colorAttachment.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-        colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        colorAttachment.clearValue.color = { 1, 0, 0, 1 };
+		gBufferColorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		gBufferColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		gBufferColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		gBufferColorAttachment.clearValue.color = { 1, 0, 0, 1 };
 
-		VkRenderingAttachmentInfo positionAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-		positionAttachment.imageView
+		VkRenderingAttachmentInfo gBufferPositionAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
+		gBufferPositionAttachment.imageView
 			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::POSITION)].imageView;
-		positionAttachment.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-        positionAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        positionAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        positionAttachment.clearValue.color = {1, 0, 0, 1};
+		gBufferPositionAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		gBufferPositionAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		gBufferPositionAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		gBufferPositionAttachment.clearValue.color = { 1, 0, 0, 1 };
 
-        VkRenderingAttachmentInfo normalAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-		normalAttachment.imageView
+		VkRenderingAttachmentInfo gBufferNormalAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
+		gBufferNormalAttachment.imageView
 			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::NORMAL)].imageView;
-		normalAttachment.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-        normalAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        normalAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        normalAttachment.clearValue.color = {1, 0, 0, 1};
+		gBufferNormalAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		gBufferNormalAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		gBufferNormalAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		gBufferNormalAttachment.clearValue.color = { 1, 0, 0, 1 };
 
-        VkRenderingAttachmentInfo roughnessAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-		roughnessAttachment.imageView
+		VkRenderingAttachmentInfo gBufferRoughnessAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
+		gBufferRoughnessAttachment.imageView
 			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::ROUGHNESS)].imageView;
-		roughnessAttachment.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-        roughnessAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        roughnessAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        roughnessAttachment.clearValue.color = {1, 0, 0, 1};
+		gBufferRoughnessAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		gBufferRoughnessAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		gBufferRoughnessAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		gBufferRoughnessAttachment.clearValue.color = { 1, 0, 0, 1 };
 
-        VkRenderingAttachmentInfo depthAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
+		VkRenderingAttachmentInfo depthAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
 		depthAttachment.imageView
 			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::DEPTH)].imageView;
 		depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
@@ -658,10 +652,10 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		depthAttachment.clearValue.depthStencil = { 1, 0 };
 
-		VkRenderingAttachmentInfo attachmentArray[] = { colorAttachment,
-													   positionAttachment,
-													   normalAttachment,
-													   roughnessAttachment };
+		VkRenderingAttachmentInfo gBufferAttachmentArray[] = { gBufferColorAttachment,
+													   gBufferPositionAttachment,
+													   gBufferNormalAttachment,
+													   gBufferRoughnessAttachment };
 
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mGbufferPipeline);
 
@@ -685,96 +679,137 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 
 		VkRenderingInfoKHR gBufferRenderingInfo{ VK_STRUCTURE_TYPE_RENDERING_INFO };
 		gBufferRenderingInfo.layerCount = 1;
-        gBufferRenderingInfo.colorAttachmentCount = 4;
-        gBufferRenderingInfo.pColorAttachments = attachmentArray;
-        gBufferRenderingInfo.pDepthAttachment = &depthAttachment;
-        gBufferRenderingInfo.renderArea = {0, 0, mParams.screenWidth, mParams.screenHeight};
+		gBufferRenderingInfo.colorAttachmentCount = 4;
+		gBufferRenderingInfo.pColorAttachments = gBufferAttachmentArray;
+		gBufferRenderingInfo.pDepthAttachment = &depthAttachment;
+		gBufferRenderingInfo.renderArea = { 0, 0, mParams.screenWidth, mParams.screenHeight };
 
-        createPipelineBarrier(swapchainImage,
-                              cmd,
-                              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                              VK_IMAGE_ASPECT_COLOR_BIT,
-                              VK_IMAGE_LAYOUT_UNDEFINED,
-                              VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                              VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                              VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-
-        // TODO: Differing behavior on AMD vs Nvidia, revisit
-        createPipelineBarrier(colorImage,
-                              cmd,
-                              VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                              VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                              VK_IMAGE_ASPECT_COLOR_BIT,
-                              VK_IMAGE_LAYOUT_UNDEFINED,
-                              VK_IMAGE_LAYOUT_GENERAL,
-                              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
-                                  | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
-                                  | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-
-        createPipelineBarrier(positionImage,
+		createPipelineBarrier(swapchainImage,
 			cmd,
-			VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_IMAGE_ASPECT_COLOR_BIT,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+		// TODO: Differing behavior on AMD vs Nvidia, revisit
+		createPipelineBarrier(colorImage,
+			cmd,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			VK_IMAGE_ASPECT_COLOR_BIT,
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_GENERAL,
-			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+		createPipelineBarrier(positionImage,
+			cmd,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_IMAGE_ASPECT_COLOR_BIT,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_GENERAL,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
 		createPipelineBarrier(normalImage,
 			cmd,
-			VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			VK_IMAGE_ASPECT_COLOR_BIT,
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_GENERAL,
-			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
 		createPipelineBarrier(roughnessImage,
 			cmd,
-			VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			VK_IMAGE_ASPECT_COLOR_BIT,
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_GENERAL,
-			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
-        auto descriptorSet = mPipelineBuilder->getSceneBlockDescriptorSet();
-        vkCmdBindDescriptorSets(cmd,
-                                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                mDefaultPipelineLayout,
-                                0,
-                                1,
-                                &descriptorSet,
-                                0,
-                                nullptr);
+		auto descriptorSet = mPipelineBuilder->getSceneBlockDescriptorSet();
+		vkCmdBindDescriptorSets(cmd,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			mDefaultPipelineLayout,
+			0,
+			1,
+			&descriptorSet,
+			0,
+			nullptr);
 
-        // GBuffer pass
-        vkCmdBeginRendering(cmd, &gBufferRenderingInfo);
-        vkCmdDraw(cmd, 3, 1, 0, 0);
+		// GBuffer pass
+		vkCmdBeginRendering(cmd, &gBufferRenderingInfo);
+		vkCmdDraw(cmd, 3, 1, 0, 0);
 		vkCmdEndRendering(cmd);
+
+		// ================ LIGHTING ==================================================================================
+
+		VkRenderingAttachmentInfo lightingSwapChainAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
+		lightingSwapChainAttachment.imageView = mSwapchainPerImageData[i].imageView;
+		lightingSwapChainAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		lightingSwapChainAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		lightingSwapChainAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		lightingSwapChainAttachment.clearValue.color = { 1, 0, 0, 1 };
+
+		VkRenderingAttachmentInfo lightingColorAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
+		lightingColorAttachment.imageView
+			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::COLOR)].imageView;
+		lightingColorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		lightingColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+		lightingColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		lightingColorAttachment.clearValue.color = { 1, 0, 0, 1 };
+
+		VkRenderingAttachmentInfo lightingPositionAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
+		lightingPositionAttachment.imageView
+			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::POSITION)].imageView;
+		lightingPositionAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		lightingPositionAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+		lightingPositionAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		lightingPositionAttachment.clearValue.color = { 1, 0, 0, 1 };
+
+		VkRenderingAttachmentInfo lightingNormalAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
+		lightingNormalAttachment.imageView
+			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::NORMAL)].imageView;
+		lightingNormalAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		lightingNormalAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+		lightingNormalAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		lightingNormalAttachment.clearValue.color = { 1, 0, 0, 1 };
+
+		VkRenderingAttachmentInfo lightingRoughnessAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
+		lightingRoughnessAttachment.imageView
+			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::ROUGHNESS)].imageView;
+		lightingRoughnessAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		lightingRoughnessAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+		lightingRoughnessAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		lightingRoughnessAttachment.clearValue.color = { 1, 0, 0, 1 };
+
+		auto lightingAttachmentArray = { lightingColorAttachment, lightingPositionAttachment, lightingNormalAttachment,
+			lightingRoughnessAttachment, lightingSwapChainAttachment };
 
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mLightingPipeline);
 
 		VkRenderingInfoKHR lightingRenderingInfo{ VK_STRUCTURE_TYPE_RENDERING_INFO };
 		lightingRenderingInfo.layerCount = 1;
-		lightingRenderingInfo.colorAttachmentCount = 4;
-		lightingRenderingInfo.pColorAttachments = attachmentArray;
-		lightingRenderingInfo.pDepthAttachment = &depthAttachment;
+		lightingRenderingInfo.colorAttachmentCount = 5;
+		lightingRenderingInfo.pColorAttachments = lightingAttachmentArray.begin();
 		lightingRenderingInfo.renderArea = { 0, 0, mParams.screenWidth, mParams.screenHeight };
 
-        // Create new attachment array here with different load store
-        // Lighting pass
-        vkCmdBeginRendering(cmd, &lightingRenderingInfo);
+		// Create new attachment array here with different load store
+		// Lighting pass
+		vkCmdBeginRendering(cmd, &lightingRenderingInfo);
 		vkCmdDraw(cmd, 3, 1, 0, 0);
 		vkCmdEndRendering(cmd);
 
 		// swapchain present
-		/*createPipelineBarrier(swapchainImage,
+		createPipelineBarrier(swapchainImage,
 			cmd,
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			0,
@@ -782,7 +817,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);*/
+			VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
 
 		vkEndCommandBuffer(cmd);
 	}
