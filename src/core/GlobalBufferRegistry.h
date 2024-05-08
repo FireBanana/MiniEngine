@@ -1,10 +1,9 @@
 #pragma once
 
-#include <vector>
-#include <unordered_map>
-
-#include "IDriver.h"
+#include "VulkanDriver.h"
 #include "types/EngineTypes.h"
+#include <unordered_map>
+#include <vector>
 
 namespace MiniEngine
 {
@@ -33,7 +32,7 @@ public:
         float p5[3]; //padding
     };
 
-    GlobalBufferRegistry(const Backend::IDriver *driver);
+    GlobalBufferRegistry(const Backend::VulkanDriver *driver);
 
     void createNewBinding(BlockType block, unsigned int bindIndex);
     void updateUniformData(BlockType block, unsigned int offset, size_t size, void *data);
@@ -41,7 +40,7 @@ public:
     inline SceneBlock *getSceneBlockInstance() { return &mSceneBlockInstance; }
 
 private:
-    const Backend::IDriver *mDriver;
+    const Backend::VulkanDriver *mDriver;
     std::unordered_map<BlockType, unsigned int> mBindingPoints;
     SceneBlock mSceneBlockInstance;
 

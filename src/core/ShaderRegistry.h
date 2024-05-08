@@ -1,8 +1,8 @@
 #pragma once
 
-#include <vector>
-#include "IDriver.h"
 #include "Shader.h"
+#include "VulkanDriver.h"
+#include <vector>
 
 #define RESOLVE_PATH(path) DIR##path
 
@@ -24,10 +24,9 @@ namespace MiniEngine
 	class ShaderRegistry
 	{
 	public:
+        ShaderRegistry(Backend::VulkanDriver *driver);
 
-		ShaderRegistry(const Backend::IDriver* driver);
-
-		void loadDeferredShader();
+        void loadDeferredShader();
 		void loadPbrShader();
 		void loadSkyboxShader();
 		void loadSkyboxRenderShader();
@@ -51,11 +50,10 @@ namespace MiniEngine
 		inline const Shader* getActiveShader() const { return mActiveShader; }
 
 	private:
+        std::vector<MiniEngine::Shader> mShaderTable;
+        Backend::VulkanDriver *mDriver;
+        Shader*						 mActiveShader;
 
-		std::vector<Shader>			 mShaderTable;
-		const Backend::IDriver*		 mDriver;
-		Shader*						 mActiveShader;
-
-		void createShader(unsigned int program, const Backend::IDriver* driver);
-	};
+        void createShader(unsigned int program, Backend::VulkanDriver *driver);
+    };
 }

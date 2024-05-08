@@ -1054,7 +1054,8 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 	vkQueuePresentKHR(mActiveDeviceQueue, &presentInfo);
 }
 
-unsigned int MiniEngine::Backend::VulkanDriver::createTexture(int width, int height, int channels, void* data, Texture::TextureType type)
+unsigned int MiniEngine::Backend::VulkanDriver::createTexture(
+    int width, int height, int channels, void *data, TextureType type)
 {
 	VkImage image;
 	VkDeviceMemory mem;

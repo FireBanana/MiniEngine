@@ -3,16 +3,16 @@
 #include <unordered_map>
 #include <functional>
 
+#include "Color.h"
 #include "EngineTypes.h"
 #include "Entity.h"
-#include "IDriver.h"
-#include "IPlatform.h"
-#include "RenderableComponent.h"
-#include "Color.h"
+#include "GlobalBufferRegistry.h"
 #include "Material.h"
 #include "Mesh.h"
-#include "GlobalBufferRegistry.h"
+#include "RenderableComponent.h"
 #include "ShaderRegistry.h"
+#include "VulkanDriver.h"
+#include "VulkanPlatform.h"
 
 namespace MiniEngine
 {
@@ -33,8 +33,11 @@ namespace MiniEngine
 
 		inline ShaderRegistry* getShaderRegistry() const { return mShaderRegistry.get(); }
 		inline GlobalBufferRegistry* getGlobalBufferRegistry() const { return mGlobalBufferRegistry.get(); }
-		inline Backend::IDriver* getGraphicsDriver() const { return mGraphicsPlatform.get()->getDriver(); }
-		inline MaterialInstance* getDefaultMaterial() { return &mDefaultMaterial; }
+        inline Backend::VulkanDriver *getGraphicsDriver() const
+        {
+            return mGraphicsPlatform.get()->getDriver();
+        }
+        inline MaterialInstance* getDefaultMaterial() { return &mDefaultMaterial; }
 
 		// UI
 		void addSlider(const char* name, float* value, float min, float max, std::function<void()> cb = nullptr);
@@ -43,8 +46,8 @@ namespace MiniEngine
 	private:
 
 		std::unique_ptr<GlobalBufferRegistry> mGlobalBufferRegistry;
-		std::unique_ptr<Backend::IPlatform> mGraphicsPlatform;
-		std::unique_ptr<ShaderRegistry> mShaderRegistry;
+        std::unique_ptr<Backend::VulkanPlatform> mGraphicsPlatform;
+        std::unique_ptr<ShaderRegistry> mShaderRegistry;
 
 		MaterialInstance mDefaultMaterial;
 	

@@ -1,8 +1,8 @@
 #ifndef MINIENGINE_VULKAN_DRIVER
 #define MINIENGINE_VULKAN_DRIVER
 
-#include "IDriver.h"
 #include "VulkanHelper.h"
+#include "types/EngineTypes.h"
 #include "utils/DynamicArray.h"
 #include <vector>
 
@@ -25,7 +25,7 @@ namespace Backend
 
 class VulkanPipelineBuilder;
 
-class VulkanDriver : public IDriver
+class VulkanDriver
 {
 public:
     struct PerFrameData
@@ -49,6 +49,8 @@ public:
         VkImageView imageView;
     };
 
+    enum class ShaderType { VERTEX, FRAGMENT };
+
     enum class ImageAttachmentType : unsigned int {
         COLOR,
         POSITION,
@@ -57,6 +59,8 @@ public:
         DEPTH,
         SWAPCHAIN
     };
+
+    enum class TextureType : int { Default = 0, CubeMap = 1 };
 
     inline const VkInstance &getInstance() const { return mInstance; }
 
@@ -75,28 +79,26 @@ public:
 
     inline void updateSurface(VkSurfaceKHR s) { mSurface = s; }
 
-    unsigned int createTexture(
-        int width, int height, int channels, void *data, Texture::TextureType type) override;
-    unsigned int createUniformBlock(size_t dataSize, unsigned int bindIndex) const override;
+    unsigned int createTexture(int width, int height, int channels, void *data, TextureType type);
+    unsigned int createUniformBlock(size_t dataSize, unsigned int bindIndex) const;
     void updateUniformData(unsigned int bufferId,
                            unsigned int offset,
                            size_t size,
-                           void *data) const override;
+                           void *data) const;
     void registerUniformBlock(const char *blockName,
                               const Shader *program,
-                              unsigned int layoutIndex) const override;
-    void setupMesh(MiniEngine::Components::RenderableComponent *component) override;
-    void setupSkybox(MiniEngine::Components::SkyboxComponent *skybox) override;
-    void beginRenderpass() override;
-    void endRenderpass() override;
-    void draw(MiniEngine::Scene *scene) override;
-    unsigned int loadShader(const char *path, ShaderType type) const override;
-    unsigned int createShaderProgram(unsigned int vertexShader,
-                                     unsigned int fragmentShader) const override;
-    void useShaderProgram(unsigned int program) const override;
-    void setFloat(unsigned int program, const char *name, float value) const override;
-    void setVec3(unsigned int program, const char *name, Vector3 value) const override;
-    void setMat4(unsigned int program, const char *name, Matrix4x4 value) const override;
+                              unsigned int layoutIndex) const;
+    void setupMesh(MiniEngine::Components::RenderableComponent *component);
+    void setupSkybox(MiniEngine::Components::SkyboxComponent *skybox);
+    void beginRenderpass();
+    void endRenderpass();
+    void draw(MiniEngine::Scene *scene);
+    unsigned int loadShader(const char *path, ShaderType type) const;
+    unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader) const;
+    void useShaderProgram(unsigned int program) const;
+    void setFloat(unsigned int program, const char *name, float value) const;
+    void setVec3(unsigned int program, const char *name, Vector3 value) const;
+    void setMat4(unsigned int program, const char *name, Matrix4x4 value) const;
 
 private:
     MiniEngine::Types::EngineInitParams mParams;

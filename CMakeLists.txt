@@ -10,20 +10,15 @@ set(CMAKE_RUNTIME_LIBRARY_DIRECTORY bin/)
 
 set(GRAPHICS_DEBUG ON)
 set(RENDERDOC_ENABLE OFF)
-set(USING_OPENGL false)
 
 add_definitions(-DGLFW_INCLUDE_NONE)
 add_compile_definitions(DIR="${CMAKE_SOURCE_DIR}")
 
-if(USING_OPENGL)
-	add_compile_definitions(USING_OPENGL)
-else()
-	add_compile_definitions(USING_VULKAN)
-	add_compile_definitions(VK_USE_PLATFORM_WIN32_KHR)
-endif()
+add_compile_definitions(USING_VULKAN)
+add_compile_definitions(VK_USE_PLATFORM_WIN32_KHR)
 
 if(GRAPHICS_DEBUG)
-	add_compile_definitions(GRAPHICS_DEBUG)
+        add_compile_definitions(GRAPHICS_DEBUG)
 endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -41,15 +36,12 @@ target_include_directories(MiniEngine PUBLIC src/components)
 target_include_directories(MiniEngine PUBLIC src/systems)
 target_include_directories(MiniEngine PUBLIC src/backend)
 target_include_directories(MiniEngine PUBLIC src/backend/vulkan)
-target_include_directories(MiniEngine PUBLIC src/backend/opengl)
 target_include_directories(MiniEngine PUBLIC src/core)
 target_include_directories(MiniEngine PUBLIC src/core/utils)
 target_include_directories(MiniEngine PUBLIC src/core/types)
 target_include_directories(MiniEngine PUBLIC shaders/)
 
-if(NOT USING_OPENGL)
-    target_include_directories(MiniEngine PUBLIC "$ENV{VULKAN_SDK}\\Include")
-endif()
+target_include_directories(MiniEngine PUBLIC "$ENV{VULKAN_SDK}\\Include")
 
 if(GRAPHICS_DEBUG)
     target_include_directories(MiniEngine PUBLIC $ENV{RENDERDOC}/) # Make sure RenderDoc installation is added to env var(RENDERDOC)
@@ -64,41 +56,41 @@ endif()
 file( GLOB APP_SOURCES app/*.cxx )
 
 foreach( testsourcefile ${APP_SOURCES} )
-	string( REPLACE ".cpp" "" testname ${testsourcefile} )
-	add_executable( ${testname} ${testsourcefile})	
-	target_link_libraries( ${testname} MiniEngine )
+        string( REPLACE ".cpp" "" testname ${testsourcefile} )
+        add_executable( ${testname} ${testsourcefile})
+        target_link_libraries( ${testname} MiniEngine )
 endforeach( testsourcefile ${APP_SOURCES} )
 
 # Get additional libraries
 
 FetchContent_Declare(
-	glm
-	GIT_REPOSITORY https://github.com/g-truc/glm
-	GIT_TAG 0.9.9.8
+        glm
+        GIT_REPOSITORY https://github.com/g-truc/glm
+        GIT_TAG 0.9.9.8
 )
 
 FetchContent_Declare(
-	imgui
-	GIT_REPOSITORY https://github.com/ocornut/imgui
-	GIT_TAG v1.89.6
+        imgui
+        GIT_REPOSITORY https://github.com/ocornut/imgui
+        GIT_TAG v1.89.6
 )
 
 FetchContent_Declare(
-	spdlog
-	GIT_REPOSITORY https://github.com/gabime/spdlog
-	GIT_TAG v1.12.0
+        spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog
+        GIT_TAG v1.12.0
 )
 
 FetchContent_Declare(
-	volk
-	GIT_REPOSITORY https://github.com/zeux/volk
-	GIT_TAG sdk-1.3.261.1
+        volk
+        GIT_REPOSITORY https://github.com/zeux/volk
+        GIT_TAG sdk-1.3.261.1
 )
 
 FetchContent_Declare(
-	glslang
-	GIT_REPOSITORY https://github.com/KhronosGroup/glslang
-	GIT_TAG main
+        glslang
+        GIT_REPOSITORY https://github.com/KhronosGroup/glslang
+        GIT_TAG main
 )
 
 FetchContent_GetProperties(glm)
@@ -141,14 +133,14 @@ add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR})
 target_include_directories(MiniEngine PUBLIC ${spdlog_SOURCE_DIR}/include/)
 #target_link_libraries(MiniEngine spdlog)
 
-add_library(IMGUI EXCLUDE_FROM_ALL 
-	${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp 
-	${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp 
-	${imgui_SOURCE_DIR}/imgui.cpp
-	${imgui_SOURCE_DIR}/imgui_demo.cpp
-	${imgui_SOURCE_DIR}/imgui_draw.cpp
-	${imgui_SOURCE_DIR}/imgui_tables.cpp
-	${imgui_SOURCE_DIR}/imgui_widgets.cpp)
+add_library(IMGUI EXCLUDE_FROM_ALL
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+        ${imgui_SOURCE_DIR}/imgui.cpp
+        ${imgui_SOURCE_DIR}/imgui_demo.cpp
+        ${imgui_SOURCE_DIR}/imgui_draw.cpp
+        ${imgui_SOURCE_DIR}/imgui_tables.cpp
+        ${imgui_SOURCE_DIR}/imgui_widgets.cpp)
 
 target_include_directories(IMGUI PUBLIC libs/glfw/include)
 target_include_directories(IMGUI PUBLIC ${imgui_SOURCE_DIR}/backends)

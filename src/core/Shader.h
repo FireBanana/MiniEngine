@@ -1,17 +1,16 @@
 #pragma once
 
-#include "IDriver.h"
 #include "EngineTypes.h"
+#include "VulkanDriver.h"
 
 namespace MiniEngine
 {
 	class Shader
 	{
 	public:
+        Shader(unsigned int program, Backend::VulkanDriver *driver);
 
-		Shader(unsigned int program, const Backend::IDriver* driver);
-
-		Shader() {};
+        Shader() {};
 		Shader(const Shader&) = default;
 		Shader& operator=(const Shader&) = default;
 		Shader(Shader&&) = default;
@@ -29,8 +28,8 @@ namespace MiniEngine
 	private:
 
 		unsigned int				 mShaderId;
-		const Backend::IDriver*		 mDriver;
+        Backend::VulkanDriver *mDriver;
 
-		unsigned int				 mUniformBufferIndex;
+        unsigned int				 mUniformBufferIndex;
 	};
 }
