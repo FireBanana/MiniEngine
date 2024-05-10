@@ -48,23 +48,21 @@ namespace Backend
 		void instantiateTriangleBuffer();
         void updateSceneDescriptorSetData();
 
-        VkBuffer getDefaultTriangleBuffer() const { return mDefaultTriangleBuffer; }
         VkDescriptorSet getSceneBlockDescriptorSet() { return mSceneDescriptorSet; }
+
+        VulkanBuffer getDefaultTriangleBuffer() const { return mTriangleBuffer; }
 
     private:
         VulkanDriver *mDriver;
         VkDevice mActiveDevice;
         VkPhysicalDeviceMemoryProperties mPhysicalDeviceMemoryProperties;
-		VkBuffer mDefaultTriangleBuffer;
-        VkBuffer mSceneBlockBuffer;
         SceneBlock mDefaultSceneBlock;
+        VulkanBuffer mSceneBlockBuffer;
+        VulkanBuffer mTriangleBuffer;
 
         Components::RenderableComponent mDefaultTriangleRenderableComponent;
 
         VkDescriptorSetLayout createEmptyDescriptorSetLayout();
-
-        VkBuffer createDefaultTriangleBuffer();
-
         VkDescriptorSet mSceneDescriptorSet;
     };
 }

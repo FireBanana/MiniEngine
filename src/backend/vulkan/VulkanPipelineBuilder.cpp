@@ -141,19 +141,9 @@ VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createSceneDes
 
     vkAllocateDescriptorSets(mActiveDevice, &allocInfo, &mSceneDescriptorSet);
 
-    VkBufferCreateInfo bufferCreateInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
-    bufferCreateInfo.size = sizeof(SceneBlock);
-    bufferCreateInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    bufferCreateInfo.queueFamilyIndexCount = 0;
-    bufferCreateInfo.pQueueFamilyIndices = nullptr;
-
-    vkCreateBuffer(mActiveDevice, &bufferCreateInfo, nullptr, &mSceneBlockBuffer);
-    auto bufferMemory = mDriver->allocateBuffer(mSceneBlockBuffer);
-    mDriver->pushBufferMemory(mSceneBlockBuffer,
-                              bufferMemory,
-                              &mDefaultSceneBlock,
-                              sizeof(SceneBlock));
+    auto buffer = mDriver->createBuffer(sizeof(SceneBlock), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+    buffer.Allocate();
+    buffer.Flush(&mDefaultSceneBlock, sizeof(SceneBlock));
 
     return layout;
 }
@@ -161,7 +151,7 @@ VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createSceneDes
 void MiniEngine::Backend::VulkanPipelineBuilder::updateSceneDescriptorSetData()
 {
     VkDescriptorBufferInfo bufferInfo;
-    bufferInfo.buffer = mSceneBlockBuffer;
+    bufferInfo.buffer = mSceneBlockBuffer.getRawBuffer();
     bufferInfo.offset = 0;
     bufferInfo.range = sizeof(SceneBlock);
 
@@ -247,29 +237,12 @@ VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createEmptyDes
     return defaultLayout;
 }
 
-VkBuffer MiniEngine::Backend::VulkanPipelineBuilder::createDefaultTriangleBuffer()
-{
-	VkBuffer vertexBuffer;
-
-	VkBufferCreateInfo bufferCreateInfo{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-	bufferCreateInfo.size = mDefaultTriangleRenderableComponent.buffer.size() * sizeof(float);
-	bufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	bufferCreateInfo.queueFamilyIndexCount = 0;
-	bufferCreateInfo.pQueueFamilyIndices = nullptr;
-
-    vkCreateBuffer(mActiveDevice, &bufferCreateInfo, nullptr, &vertexBuffer);
-
-    return vertexBuffer;
-}
-
 void MiniEngine::Backend::VulkanPipelineBuilder::instantiateTriangleBuffer()
 {
-	mDefaultTriangleBuffer = createDefaultTriangleBuffer();
-    auto bufferMemory = mDriver->allocateBuffer(mDefaultTriangleBuffer);
-
-    mDriver->pushBufferMemory(mDefaultTriangleBuffer,
-                              bufferMemory,
-                              mDefaultTriangleRenderableComponent.buffer.data(),
-                              mDefaultTriangleRenderableComponent.buffer.size() * sizeof(float));
+    auto buffer = mDriver->createBuffer(mDefaultTriangleRenderableComponent.buffer.size()
+                                            * sizeof(float),
+                                        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+    buffer.Allocate();
+    buffer.Flush(mDefaultTriangleRenderableComponent.buffer.data(),
+                 mDefaultTriangleRenderableComponent.buffer.size() * sizeof(float));
 }

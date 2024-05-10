@@ -1,6 +1,7 @@
 #ifndef MINIENGINE_VULKAN_DRIVER
 #define MINIENGINE_VULKAN_DRIVER
 
+#include "VulkanBuffer.h"
 #include "VulkanHelper.h"
 #include "types/EngineTypes.h"
 #include "utils/DynamicArray.h"
@@ -126,8 +127,8 @@ private:
     void enumerateInstanceExtensionProperties();
     void enumerateInstanceLayerProperties();
     void enumerateDeviceExtensionProperties();
-    void getPhysicalDevice();
-    void getPhysicalDeviceQueueFamily();
+    void registerPhysicalDevice();
+    void registerPhysicalDeviceQueueFamily();
     void createDevice(const std::vector<const char *> &&requiredExtensions);
     void createSwapchain();
     void createSwapchainImageViews();
@@ -155,8 +156,7 @@ private:
     void acquireNextImage(uint32_t *image, uint32_t *displaySemaphoreIndex);
     uint32_t getMemoryTypeIndex(const VkMemoryRequirements *memReqs);
 
-    VkDeviceMemory allocateBuffer(VkBuffer buffer);
-    void pushBufferMemory(VkBuffer buffer, VkDeviceMemory bufferMemory, void *data, size_t size);
+    VulkanBuffer createBuffer(size_t memSize, VkBufferUsageFlags usageFlags);
 
     friend class VulkanPipelineBuilder;
 };

@@ -47,15 +47,15 @@ MiniEngine::Backend::VulkanDriver::~VulkanDriver()
 
 void MiniEngine::Backend::VulkanDriver::generateDevice()
 {
-	getPhysicalDevice();
-	getPhysicalDeviceQueueFamily();
-	enumerateDeviceExtensionProperties();
-	createDevice({ "VK_KHR_swapchain",
-				  "VK_KHR_dynamic_rendering",
-				  "VK_KHR_depth_stencil_resolve",
-				  "VK_KHR_create_renderpass2",
-				  "VK_KHR_multiview",
-				  "VK_KHR_maintenance2" });
+    registerPhysicalDevice();
+    registerPhysicalDeviceQueueFamily();
+    enumerateDeviceExtensionProperties();
+    createDevice({"VK_KHR_swapchain",
+                  "VK_KHR_dynamic_rendering",
+                  "VK_KHR_depth_stencil_resolve",
+                  "VK_KHR_create_renderpass2",
+                  "VK_KHR_multiview",
+                  "VK_KHR_maintenance2"});
 }
 
 void MiniEngine::Backend::VulkanDriver::generateSwapchain()
@@ -206,7 +206,7 @@ void MiniEngine::Backend::VulkanDriver::enumerateDeviceExtensionProperties()
 	}
 }
 
-void MiniEngine::Backend::VulkanDriver::getPhysicalDevice()
+void MiniEngine::Backend::VulkanDriver::registerPhysicalDevice()
 {
 	uint32_t gpuCount;
 
@@ -226,7 +226,7 @@ void MiniEngine::Backend::VulkanDriver::getPhysicalDevice()
 	vkGetPhysicalDeviceMemoryProperties(mActiveGpu, &mGpuMemoryProperties);
 }
 
-void MiniEngine::Backend::VulkanDriver::getPhysicalDeviceQueueFamily()
+void MiniEngine::Backend::VulkanDriver::registerPhysicalDeviceQueueFamily()
 {
 	uint32_t queueFamilyCount;
 	vkGetPhysicalDeviceQueueFamilyProperties(mActiveGpu, &queueFamilyCount, nullptr);
@@ -671,8 +671,8 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 		scissor.extent.width = mParams.screenWidth;
 		scissor.extent.height = mParams.screenHeight;
 
-		auto tBuffer = mPipelineBuilder->getDefaultTriangleBuffer();
-		VkDeviceSize offsets[1] = { 0 };
+        auto tBuffer = mPipelineBuilder->getDefaultTriangleBuffer().getRawBuffer();
+        VkDeviceSize offsets[1] = { 0 };
 		vkCmdBindVertexBuffers(cmd, 0, 1, &tBuffer, offsets);
 
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
@@ -973,49 +973,12 @@ uint32_t MiniEngine::Backend::VulkanDriver::getMemoryTypeIndex(const VkMemoryReq
 	return index;
 }
 
-VkDeviceMemory MiniEngine::Backend::VulkanDriver::allocateBuffer(VkBuffer buffer)
+MiniEngine::Backend::VulkanBuffer MiniEngine::Backend::VulkanDriver::createBuffer(
+    size_t memSize, VkBufferUsageFlags usageFlags)
 {
-	VkMemoryRequirements bufferMemRequirements;
-	VkDeviceMemory memory;
-
-	vkGetBufferMemoryRequirements(mActiveDevice, buffer, &bufferMemRequirements);
-
-	for (auto i = 0; i < mGpuMemoryProperties.memoryTypeCount; ++i) {
-		if ((bufferMemRequirements.memoryTypeBits & (1 << i))
-			&& (mGpuMemoryProperties.memoryTypes[i].propertyFlags
-				& VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)) {
-			VkMemoryAllocateInfo allocInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
-			allocInfo.allocationSize = bufferMemRequirements.size;
-			allocInfo.memoryTypeIndex = i;
-
-			vkAllocateMemory(mActiveDevice, &allocInfo, nullptr, &memory);
-			return memory;
-		}
-	}
-
-	Logger::eprint("Memory for buffer not allocated.");
-	return memory;
-}
-
-void MiniEngine::Backend::VulkanDriver::pushBufferMemory(VkBuffer buffer,
-	VkDeviceMemory bufferMemory,
-	void* data,
-	size_t size)
-{
-	vkBindBufferMemory(mActiveDevice, buffer, bufferMemory, 0);
-
-	void* bufferMemoryPointer;
-	vkMapMemory(mActiveDevice, bufferMemory, 0, VK_WHOLE_SIZE, 0, &bufferMemoryPointer);
-	memcpy(bufferMemoryPointer, data, size);
-
-	VkMappedMemoryRange flushRange{ VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
-	flushRange.memory = bufferMemory;
-	flushRange.offset = 0;
-	flushRange.size = VK_WHOLE_SIZE;
-
-	vkFlushMappedMemoryRanges(mActiveDevice, 1, &flushRange);
-
-	vkUnmapMemory(mActiveDevice, bufferMemory);
+    VulkanBuffer buffer{mActiveDevice, mGpuMemoryProperties};
+    buffer.Create(memSize, usageFlags);
+    return buffer;
 }
 
 // ==== Interface ====
