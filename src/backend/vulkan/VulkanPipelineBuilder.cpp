@@ -141,9 +141,9 @@ VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createSceneDes
 
     vkAllocateDescriptorSets(mActiveDevice, &allocInfo, &mSceneDescriptorSet);
 
-    auto buffer = mDriver->createBuffer(sizeof(SceneBlock), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-    buffer.Allocate();
-    buffer.Flush(&mDefaultSceneBlock, sizeof(SceneBlock));
+    mSceneBlockBuffer = mDriver->createBuffer(sizeof(SceneBlock), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+	mSceneBlockBuffer.Allocate();
+	mSceneBlockBuffer.Flush(&mDefaultSceneBlock, sizeof(SceneBlock));
 
     return layout;
 }
@@ -239,10 +239,10 @@ VkDescriptorSetLayout MiniEngine::Backend::VulkanPipelineBuilder::createEmptyDes
 
 void MiniEngine::Backend::VulkanPipelineBuilder::instantiateTriangleBuffer()
 {
-    auto buffer = mDriver->createBuffer(mDefaultTriangleRenderableComponent.buffer.size()
+    mTriangleBuffer = mDriver->createBuffer(mDefaultTriangleRenderableComponent.buffer.size()
                                             * sizeof(float),
                                         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-    buffer.Allocate();
-    buffer.Flush(mDefaultTriangleRenderableComponent.buffer.data(),
+	mTriangleBuffer.Allocate();
+	mTriangleBuffer.Flush(mDefaultTriangleRenderableComponent.buffer.data(),
                  mDefaultTriangleRenderableComponent.buffer.size() * sizeof(float));
 }

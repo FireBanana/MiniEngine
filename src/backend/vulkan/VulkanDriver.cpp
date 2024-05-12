@@ -55,7 +55,8 @@ void MiniEngine::Backend::VulkanDriver::generateDevice()
                   "VK_KHR_depth_stencil_resolve",
                   "VK_KHR_create_renderpass2",
                   "VK_KHR_multiview",
-                  "VK_KHR_maintenance2"});
+                  "VK_KHR_maintenance2",
+				  "VK_KHR_dynamic_rendering_local_read"});
 }
 
 void MiniEngine::Backend::VulkanDriver::generateSwapchain()
