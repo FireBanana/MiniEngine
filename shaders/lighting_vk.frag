@@ -8,6 +8,5 @@ layout(location = 4) out vec4 swapchainAttachment;
 
 void main()
 {
-
     swapchainAttachment = vec4(1.);
 }

@@ -25,10 +25,10 @@ namespace EnumExtension
 		for (; i >= 0; --i)
 		{
 			if (name[i] == '>') break;
-		}
+        }
 
-		char c1 = name[i - 2];
-		char c2 = name[i - 3];
+        char c1 = name[i - 2];
+        char c2 = name[i - 3];
 
 		if (c1 == 'x' || c2 == 'x') return false;
 
@@ -93,4 +93,4 @@ namespace EnumExtension
 
 		MiniEngine::Logger::print(res.c_str());
 	}
-}
+    } // namespace EnumExtension

@@ -6,7 +6,7 @@ MiniEngine::Backend::VulkanBuffer::VulkanBuffer(VkDevice device,
     , mMemoryProperties(memProperties)
 {}
 
-void MiniEngine::Backend::VulkanBuffer::Create(size_t memSize, VkBufferUsageFlags flags)
+void MiniEngine::Backend::VulkanBuffer::create(size_t memSize, VkBufferUsageFlags flags)
 {
     VkBufferCreateInfo bufferCreateInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
     bufferCreateInfo.size = memSize;
@@ -15,10 +15,12 @@ void MiniEngine::Backend::VulkanBuffer::Create(size_t memSize, VkBufferUsageFlag
     bufferCreateInfo.queueFamilyIndexCount = 0;
     bufferCreateInfo.pQueueFamilyIndices = nullptr;
 
+    mSize = memSize;
+
     vkCreateBuffer(mDevice, &bufferCreateInfo, nullptr, &mBuffer);
 }
 
-void MiniEngine::Backend::VulkanBuffer::Allocate()
+void MiniEngine::Backend::VulkanBuffer::allocate()
 {
     VkMemoryRequirements bufferMemRequirements;
     vkGetBufferMemoryRequirements(mDevice, mBuffer, &bufferMemRequirements);
@@ -39,7 +41,12 @@ void MiniEngine::Backend::VulkanBuffer::Allocate()
     Logger::eprint("Memory for buffer not allocated.");
 }
 
-void MiniEngine::Backend::VulkanBuffer::Flush(void *data, size_t size)
+void MiniEngine::Backend::VulkanBuffer::deallocate()
+{
+    vkFreeMemory(mDevice, mBufferMemory, nullptr);
+}
+
+void MiniEngine::Backend::VulkanBuffer::flush(void *data, size_t size)
 {
     vkBindBufferMemory(mDevice, mBuffer, mBufferMemory, 0);
 

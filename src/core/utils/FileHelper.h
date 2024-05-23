@@ -6,6 +6,8 @@
 
 #include "Logger.h"
 
+#define RELATIVE_PATH(path) DIR##path
+
 class FileHelper
 {
 public:

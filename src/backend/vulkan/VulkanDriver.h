@@ -3,6 +3,7 @@
 
 #include "VulkanBuffer.h"
 #include "VulkanHelper.h"
+#include "VulkanPipeline.h"
 #include "types/EngineTypes.h"
 #include "utils/DynamicArray.h"
 #include <vector>
@@ -23,9 +24,6 @@ namespace Components
 
 namespace Backend
 {
-
-class VulkanPipelineBuilder;
-
 class VulkanDriver
 {
 public:
@@ -104,17 +102,14 @@ public:
 private:
     MiniEngine::Types::EngineInitParams mParams;
 
-    VulkanPipelineBuilder *mPipelineBuilder;
-
     VkInstance mInstance;
     VkPhysicalDevice mActiveGpu;
     VkSurfaceKHR mSurface;
     VkDevice mActiveDevice;
     VkQueue mActiveDeviceQueue;
     VkSwapchainKHR mActiveSwapchain;
-    VkPipeline mGbufferPipeline;
-    VkPipeline mLightingPipeline;
-    VkPipelineLayout mDefaultPipelineLayout;
+    VulkanPipeline mGbufferPipeline;
+    VulkanPipeline mLightingPipeline;
     VkFormat mCurrentSwapchainFormat;
     VkFormat mCurrentSwapchainDepthFormat;
     int32_t mActiveQueue{-1};
@@ -123,6 +118,7 @@ private:
     std::vector<PerFrameData> mSwapchainPerImageData;
     std::array<ImageAttachmentData, 5> mImageAttachments;
     Utils::DynamicArray<DisplaySemaphore> mDisplaySemaphoreArray;
+    std::array<VkDescriptorPool, 2> mDescriptorPools; //change to enum
 
     void enumerateInstanceExtensionProperties();
     void enumerateInstanceLayerProperties();
@@ -132,6 +128,7 @@ private:
     void createDevice(const std::vector<const char *> &&requiredExtensions);
     void createSwapchain();
     void createSwapchainImageViews();
+    void createDescriptorPools();
     void createGBufferPipeline();
     void createLightingPipeline();
     void createDisplaySemaphores();
@@ -158,7 +155,8 @@ private:
 
     VulkanBuffer createBuffer(size_t memSize, VkBufferUsageFlags usageFlags);
 
-    friend class VulkanPipelineBuilder;
+    friend class VulkanPipeline;
+    friend class VulkanDescriptorSet;
 };
 }
 }
