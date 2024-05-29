@@ -515,7 +515,7 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
                            .addShaderState(DIR "/shaders/temp.vert", DIR "/shaders/temp.frag")
                            .addVertexAttributeState(0, {2, 3})       //point, color
                            .addVertexBuffer(std::move(vertexBuffer)) // this is bad, centralize
-                           .addDescriptorSet(&descriptorSet)
+                           .addDescriptorSet(std::move(descriptorSet))
                            .setDynamicState({VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR})
                            .setRasterState(true, true)
                            .setDepthState(true, true)
@@ -547,7 +547,8 @@ void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
 
     mLightingPipeline = VulkanPipeline::Builder(this)
                             .setAttachmentCount(5)
-                            .addShaderState("/shaders/lighting_vk.vert", "/shaders/lighting_vk.frag")
+                            .addShaderState(DIR "/shaders/lighting_vk.vert",
+                                            DIR "/shaders/lighting_vk.frag")
                             .addVertexAttributeState(0, {2, 3}) //point, color
                             .addVertexBuffer(std::move(vertexBuffer))
                             .setDynamicState({VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR})
@@ -707,17 +708,6 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
                               VK_IMAGE_LAYOUT_GENERAL,
                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-
-        mGbufferPipeline.bindDescriptors(cmd);
-        // auto descriptorSet = mPipelineBuilder->getSceneBlockDescriptorSet();
-        // vkCmdBindDescriptorSets(cmd,
-        //                         VK_PIPELINE_BIND_POINT_GRAPHICS,
-        //                         mDefaultPipelineLayout,
-        //                         0,
-        //                         1,
-        //                         &descriptorSet,
-        //                         0,
-        //                         nullptr);
 
         // GBuffer pass
         vkCmdBeginRendering(cmd, &gBufferRenderingInfo);

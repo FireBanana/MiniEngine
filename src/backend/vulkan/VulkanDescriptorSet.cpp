@@ -47,11 +47,6 @@ MiniEngine::Backend::VulkanDescriptorSet MiniEngine::Backend::VulkanDescriptorSe
     VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo{
         VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
 
-    vkCreateDescriptorSetLayout(mDriver->mActiveDevice,
-                                &descriptorLayoutInfo,
-                                nullptr,
-                                &set.mLayout);
-
     VkDescriptorSetLayoutBinding bindings{};
     bindings.binding = 0;
     bindings.descriptorCount = 1;
@@ -60,6 +55,11 @@ MiniEngine::Backend::VulkanDescriptorSet MiniEngine::Backend::VulkanDescriptorSe
 
     descriptorLayoutInfo.bindingCount = 1;
     descriptorLayoutInfo.pBindings = &bindings;
+
+    vkCreateDescriptorSetLayout(mDriver->mActiveDevice,
+                                &descriptorLayoutInfo,
+                                nullptr,
+                                &set.mLayout);
 
     VkDescriptorSetAllocateInfo allocInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
 
@@ -71,11 +71,6 @@ MiniEngine::Backend::VulkanDescriptorSet MiniEngine::Backend::VulkanDescriptorSe
 
     set.mDriver = mDriver;
     set.mType = mType;
-
-    // mSceneBlockBuffer = mDriver->createBuffer(sizeof(SceneBlock),
-    //                                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-    // mSceneBlockBuffer.allocate();
-    // mSceneBlockBuffer.flush(&mDefaultSceneBlock, sizeof(SceneBlock));
 
     return set;
 }

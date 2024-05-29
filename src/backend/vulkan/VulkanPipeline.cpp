@@ -4,28 +4,6 @@
 #include "VulkanDriver.h"
 #include <numeric>
 
-// createDescriptorPools();
-
-// mDefaultSceneBlock.cameraPosition = glm::vec3(0, 0, -5);
-// mDefaultSceneBlock.projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-// mDefaultSceneBlock.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f),
-//                                       glm::vec3(1.0f, 0.0f, 0.0f),
-//                                       glm::vec3(0.0f, -1.0f, 0.0f));
-
-// mDefaultTriangleRenderableComponent = Components::RenderableComponent{};
-// mDefaultTriangleRenderableComponent.buffer =
-// {
-//     //vertex     color
-//       0.5, -0.5,  1.0, 0.0, 0.0,
-//       0.5,  0.5,  1.0, 1.0, 0.0,
-//       -0.5, 0.5,  0.0, 0.0, 1.0
-// };
-
-// mDefaultTriangleRenderableComponent.indices = { 0, 1, 2 };
-
-// mDefaultTriangleRenderableComponent.attributes.push_back(2);
-// mDefaultTriangleRenderableComponent.attributes.push_back(3);
-
 MiniEngine::Backend::VulkanPipeline::Builder::Builder(VulkanDriver *driver)
     : mDriver(driver)
 {}
@@ -76,7 +54,7 @@ MiniEngine::Backend::VulkanPipeline::Builder::addVertexBuffer(VulkanBuffer &&buf
 }
 
 MiniEngine::Backend::VulkanPipeline::Builder &
-MiniEngine::Backend::VulkanPipeline::Builder::addDescriptorSet(VulkanDescriptorSet *set)
+MiniEngine::Backend::VulkanPipeline::Builder::addDescriptorSet(VulkanDescriptorSet &&set)
 {
     mDescriptors.push_back(set);
     return *this;
@@ -85,7 +63,8 @@ MiniEngine::Backend::VulkanPipeline::Builder::addDescriptorSet(VulkanDescriptorS
 MiniEngine::Backend::VulkanPipeline::Builder &
 MiniEngine::Backend::VulkanPipeline::Builder::addShaderState(const char *vert, const char *frag)
 {
-    mShaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    mShaderStages[0] = VkPipelineShaderStageCreateInfo{
+        VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};
     mShaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
     mShaderStages[0].module = MiniTools::GlslCompiler::loadShader(vert,
                                                                   VK_SHADER_STAGE_VERTEX_BIT,
@@ -93,7 +72,8 @@ MiniEngine::Backend::VulkanPipeline::Builder::addShaderState(const char *vert, c
 
     mShaderStages[0].pName = "main";
 
-    mShaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    mShaderStages[1] = VkPipelineShaderStageCreateInfo{
+        VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};
     mShaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
     mShaderStages[1].module = MiniTools::GlslCompiler::loadShader(frag,
                                                                   VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -165,8 +145,8 @@ MiniEngine::Backend::VulkanPipeline MiniEngine::Backend::VulkanPipeline::Builder
     std::vector<VkDescriptorSetLayout> setLayouts{};
     setLayouts.reserve(mDescriptors.size());
 
-    for (auto d : mDescriptors) {
-        setLayouts.push_back(*d->getDescriptorSetLayout());
+    for (auto &d : mDescriptors) {
+        setLayouts.push_back(*d.getDescriptorSetLayout());
     }
 
     layoutInfo.pSetLayouts = setLayouts.data();
@@ -216,7 +196,6 @@ MiniEngine::Backend::VulkanPipeline MiniEngine::Backend::VulkanPipeline::Builder
 
     VkGraphicsPipelineCreateInfo pipelineInfo{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
     pipelineInfo.stageCount = static_cast<uint32_t>(mShaderStages.size());
-    pipelineInfo.pStages = mShaderStages.data();
     pipelineInfo.pVertexInputState = &mVertexInputStateCreateInfo;
     pipelineInfo.pInputAssemblyState = &inputAssemblyInfo;
     pipelineInfo.pRasterizationState = &mRasterStateCreateInfo;
@@ -225,6 +204,7 @@ MiniEngine::Backend::VulkanPipeline MiniEngine::Backend::VulkanPipeline::Builder
     pipelineInfo.pViewportState = &viewportInfo;
     pipelineInfo.pDepthStencilState = &mDepthStencilStateCreateInfo;
     pipelineInfo.pDynamicState = &mDynamicStateCreateInfo;
+    pipelineInfo.pStages = mShaderStages.data();
     pipelineInfo.layout = mLayout;
     pipelineInfo.pNext = &renderingInfo;
 
@@ -252,13 +232,13 @@ void MiniEngine::Backend::VulkanPipeline::bind(VkCommandBuffer cmd)
 
 void MiniEngine::Backend::VulkanPipeline::bindDescriptors(VkCommandBuffer cmd)
 {
-    for (auto d : mDescriptors)
+    for (auto &d : mDescriptors)
         vkCmdBindDescriptorSets(cmd,
                                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                                 mPipelineLayout,
                                 0,
                                 1,
-                                d->getDescriptorSet(),
+                                d.getDescriptorSet(),
                                 0,
                                 nullptr);
 }

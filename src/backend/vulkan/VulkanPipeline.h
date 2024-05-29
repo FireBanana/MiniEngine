@@ -25,7 +25,7 @@ class VulkanDriver;
 
             Builder &addVertexAttributeState(int binding, std::vector<unsigned int> attr);
             Builder &addVertexBuffer(VulkanBuffer &&buffer);
-            Builder &addDescriptorSet(VulkanDescriptorSet *set);
+            Builder &addDescriptorSet(VulkanDescriptorSet &&set);
             Builder &addShaderState(const char *vert, const char *frag);
             Builder &setAttachmentCount(int count);
             Builder &setDepthState(bool depthTest, bool depthWrite);
@@ -39,7 +39,7 @@ class VulkanDriver;
             VulkanDriver *mDriver;
             int mAttachmentCount;
             std::vector<unsigned int> mVertexAttributes;
-            std::vector<VulkanDescriptorSet *> mDescriptors;
+            std::vector<VulkanDescriptorSet> mDescriptors;
             std::array<VkPipelineShaderStageCreateInfo, 2> mShaderStages;
             VkPipelineVertexInputStateCreateInfo mVertexInputStateCreateInfo;
             std::vector<VkVertexInputBindingDescription> mVertexBindingDescriptions;
@@ -54,7 +54,7 @@ class VulkanDriver;
         void bind(VkCommandBuffer buffer);        
 
     private:
-        std::vector<VulkanDescriptorSet *> mDescriptors;
+        std::vector<VulkanDescriptorSet> mDescriptors;
         VkPipeline mPipeline;
         VkPipelineLayout mPipelineLayout;
         VulkanBuffer mVertexBuffer;
