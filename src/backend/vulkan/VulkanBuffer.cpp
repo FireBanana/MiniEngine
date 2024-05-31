@@ -34,6 +34,7 @@ void MiniEngine::Backend::VulkanBuffer::allocate()
             allocInfo.memoryTypeIndex = i;
 
             vkAllocateMemory(mDevice, &allocInfo, nullptr, &mBufferMemory);
+            mIsValid = true;
             return;
         }
     }

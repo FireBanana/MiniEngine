@@ -5,7 +5,8 @@
 #include <numeric>
 
 MiniEngine::Backend::VulkanPipeline::Builder::Builder(VulkanDriver *driver)
-    : mDriver(driver)
+    : mDriver{driver}
+    , mVertexInputStateCreateInfo{VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO}
 {}
 
 MiniEngine::Backend::VulkanPipeline::Builder &
@@ -226,12 +227,7 @@ MiniEngine::Backend::VulkanPipeline MiniEngine::Backend::VulkanPipeline::Builder
 void MiniEngine::Backend::VulkanPipeline::bind(VkCommandBuffer cmd)
 {
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline);
-    bindDescriptors(cmd);
-    bindVertexBuffers(cmd);
-}
 
-void MiniEngine::Backend::VulkanPipeline::bindDescriptors(VkCommandBuffer cmd)
-{
     for (auto &d : mDescriptors)
         vkCmdBindDescriptorSets(cmd,
                                 VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -241,11 +237,10 @@ void MiniEngine::Backend::VulkanPipeline::bindDescriptors(VkCommandBuffer cmd)
                                 d.getDescriptorSet(),
                                 0,
                                 nullptr);
-}
 
-void MiniEngine::Backend::VulkanPipeline::bindVertexBuffers(VkCommandBuffer cmd)
-{
-    auto tBuffer = mVertexBuffer.getRawBuffer();
-    VkDeviceSize offsets[1] = {0};
-    vkCmdBindVertexBuffers(cmd, 0, 1, &tBuffer, offsets);
+    if (mVertexBuffer.isValid()) {
+        auto tBuffer = mVertexBuffer.getRawBuffer();
+        VkDeviceSize offsets[1] = {0};
+        vkCmdBindVertexBuffers(cmd, 0, 1, &tBuffer, offsets);
+    }
 }

@@ -60,9 +60,6 @@ class VulkanDriver;
         VulkanBuffer mVertexBuffer;
         VulkanDriver *mDriver;
 
-        void bindDescriptors(VkCommandBuffer cmd);
-        void bindVertexBuffers(VkCommandBuffer cmd);
-
         friend class VulkanDriver;
     };
 }

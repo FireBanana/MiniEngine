@@ -17,6 +17,7 @@ public:
 
     VkBuffer getRawBuffer() const { return mBuffer; }
     size_t getSize() const { return mSize; }
+    bool isValid() const { return mIsValid; }
 
 private:
     size_t mSize;
@@ -24,6 +25,7 @@ private:
     VkDevice mDevice;
     VkDeviceMemory mBufferMemory;
     VkPhysicalDeviceMemoryProperties mMemoryProperties;
+    bool mIsValid;
 
     VulkanBuffer(VkDevice device, VkPhysicalDeviceMemoryProperties memProperties);
     void create(size_t memSize, VkBufferUsageFlags flags);

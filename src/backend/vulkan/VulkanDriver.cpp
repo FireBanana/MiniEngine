@@ -524,33 +524,10 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 
 void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
 {
-    float tri[] = {//vertex     color
-                   0.5,
-                   -0.5,
-                   1.0,
-                   0.0,
-                   0.0,
-                   0.5,
-                   0.5,
-                   1.0,
-                   1.0,
-                   0.0,
-                   -0.5,
-                   0.5,
-                   0.0,
-                   0.0,
-                   1.0};
-
-    auto vertexBuffer = createBuffer(sizeof(tri), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-    vertexBuffer.allocate();
-    vertexBuffer.flush(tri, sizeof(tri));
-
     mLightingPipeline = VulkanPipeline::Builder(this)
                             .setAttachmentCount(5)
                             .addShaderState(DIR "/shaders/lighting_vk.vert",
                                             DIR "/shaders/lighting_vk.frag")
-                            .addVertexAttributeState(0, {2, 3}) //point, color
-                            .addVertexBuffer(std::move(vertexBuffer))
                             .setDynamicState({VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR})
                             .setRasterState(true, true)
                             .setDepthState(false, false)
@@ -596,36 +573,51 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 		gBufferColorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		gBufferColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		gBufferColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		gBufferColorAttachment.clearValue.color = { 1, 0, 0, 1 };
+        gBufferColorAttachment.clearValue.color = {mParams.clearColor.r(),
+                                                   mParams.clearColor.g(),
+                                                   mParams.clearColor.b(),
+                                                   mParams.clearColor.a()};
 
-		VkRenderingAttachmentInfo gBufferPositionAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-		gBufferPositionAttachment.imageView
-			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::POSITION)].imageView;
-		gBufferPositionAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		gBufferPositionAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        VkRenderingAttachmentInfo gBufferPositionAttachment{
+            VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+        gBufferPositionAttachment.imageView
+            = mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::POSITION)].imageView;
+        gBufferPositionAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        gBufferPositionAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		gBufferPositionAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		gBufferPositionAttachment.clearValue.color = { 1, 0, 0, 1 };
+        gBufferPositionAttachment.clearValue.color = {mParams.clearColor.r(),
+                                                      mParams.clearColor.g(),
+                                                      mParams.clearColor.b(),
+                                                      mParams.clearColor.a()};
 
-		VkRenderingAttachmentInfo gBufferNormalAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-		gBufferNormalAttachment.imageView
-			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::NORMAL)].imageView;
-		gBufferNormalAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        VkRenderingAttachmentInfo gBufferNormalAttachment{
+            VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+        gBufferNormalAttachment.imageView
+            = mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::NORMAL)].imageView;
+        gBufferNormalAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		gBufferNormalAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		gBufferNormalAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		gBufferNormalAttachment.clearValue.color = { 1, 0, 0, 1 };
+        gBufferNormalAttachment.clearValue.color = {mParams.clearColor.r(),
+                                                    mParams.clearColor.g(),
+                                                    mParams.clearColor.b(),
+                                                    mParams.clearColor.a()};
 
-		VkRenderingAttachmentInfo gBufferRoughnessAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-		gBufferRoughnessAttachment.imageView
-			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::ROUGHNESS)].imageView;
-		gBufferRoughnessAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        VkRenderingAttachmentInfo gBufferRoughnessAttachment{
+            VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+        gBufferRoughnessAttachment.imageView
+            = mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::ROUGHNESS)].imageView;
+        gBufferRoughnessAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		gBufferRoughnessAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		gBufferRoughnessAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		gBufferRoughnessAttachment.clearValue.color = { 1, 0, 0, 1 };
+        gBufferRoughnessAttachment.clearValue.color = {mParams.clearColor.r(),
+                                                       mParams.clearColor.g(),
+                                                       mParams.clearColor.b(),
+                                                       mParams.clearColor.a()};
 
-		VkRenderingAttachmentInfo depthAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-		depthAttachment.imageView
-			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::DEPTH)].imageView;
-		depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+        VkRenderingAttachmentInfo depthAttachment{VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+        depthAttachment.imageView
+            = mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::DEPTH)].imageView;
+        depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
 		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		depthAttachment.clearValue.depthStencil = { 1, 0 };
