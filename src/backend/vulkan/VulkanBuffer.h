@@ -25,7 +25,7 @@ private:
     VkDevice mDevice;
     VkDeviceMemory mBufferMemory;
     VkPhysicalDeviceMemoryProperties mMemoryProperties;
-    bool mIsValid;
+    bool mIsValid = false;
 
     VulkanBuffer(VkDevice device, VkPhysicalDeviceMemoryProperties memProperties);
     void create(size_t memSize, VkBufferUsageFlags flags);

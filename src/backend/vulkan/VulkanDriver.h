@@ -6,6 +6,7 @@
 #include "VulkanPipeline.h"
 #include "types/EngineTypes.h"
 #include "utils/DynamicArray.h"
+#include "VulkanImage.h"
 #include <vector>
 
 constexpr VkFormat PREFERRED_FORMAT = VK_FORMAT_R16G16B16A16_SFLOAT;
@@ -42,12 +43,6 @@ public:
         VkFence fence;
     };
 
-    struct ImageAttachmentData
-    {
-        VkImage rawImage;
-        VkImageView imageView;
-    };
-
     enum class ShaderType { VERTEX, FRAGMENT };
 
     enum class ImageAttachmentType : unsigned int {
@@ -64,8 +59,6 @@ public:
     inline const VkInstance &getInstance() const { return mInstance; }
 
     void initialize(MiniEngine::Types::EngineInitParams &params);
-
-    ~VulkanDriver();
 
     void createInstance(const std::vector<const char *> &requireInstanceExtensions,
                         const std::vector<const char *> &&requiredLayers);
@@ -116,7 +109,7 @@ private:
     VkPhysicalDeviceMemoryProperties mGpuMemoryProperties;
 
     std::vector<PerFrameData> mSwapchainPerImageData;
-    std::array<ImageAttachmentData, 5> mImageAttachments;
+    std::array<VulkanImage, 5> mImageAttachments;
     Utils::DynamicArray<DisplaySemaphore> mDisplaySemaphoreArray;
     std::array<VkDescriptorPool, 2> mDescriptorPools; //change to enum
 
@@ -133,11 +126,6 @@ private:
     void createLightingPipeline();
     void createDisplaySemaphores();
     void recordCommandBuffers();
-
-    ImageAttachmentData createImageAttachment(VkFormat imageFormat,
-                                              VkImageUsageFlags imageBits,
-                                              VkImageAspectFlags imageViewAspectFlags,
-                                              std::string debugName = {});
 
     void createPipelineBarrier(VkImage image,
                                VkCommandBuffer buffer,
@@ -157,6 +145,7 @@ private:
 
     friend class VulkanPipeline;
     friend class VulkanDescriptorSet;
+    friend class VulkanImage;
 };
 }
 }

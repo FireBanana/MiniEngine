@@ -3,6 +3,7 @@
 #include "GlslCompiler.h"
 #include "VulkanPipeline.h"
 #include "VulkanRenderDoc.h"
+#include "VulkanImage.h"
 #include <glm/gtc/matrix_transform.hpp>
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debugUtilsCallback(
@@ -40,11 +41,6 @@ void MiniEngine::Backend::VulkanDriver::initialize(MiniEngine::Types::EngineInit
 	enumerateInstanceLayerProperties();
 }
 
-MiniEngine::Backend::VulkanDriver::~VulkanDriver()
-{
-	
-}
-
 void MiniEngine::Backend::VulkanDriver::generateDevice()
 {
     registerPhysicalDevice();
@@ -76,41 +72,66 @@ void MiniEngine::Backend::VulkanDriver::generatePipelines()
 
 void MiniEngine::Backend::VulkanDriver::generateGbuffer()
 {
-	auto colorImageView = createImageAttachment(mCurrentSwapchainFormat,
-		VK_IMAGE_USAGE_SAMPLED_BIT
-		| VK_IMAGE_USAGE_STORAGE_BIT
-		| VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-		VK_IMAGE_ASPECT_COLOR_BIT,
-		"Color Target");
-	auto positionImageView = createImageAttachment(mCurrentSwapchainFormat,
-		VK_IMAGE_USAGE_SAMPLED_BIT
-		| VK_IMAGE_USAGE_STORAGE_BIT
-		| VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-		VK_IMAGE_ASPECT_COLOR_BIT,
-		"Position Target");
-	auto normalImageView = createImageAttachment(mCurrentSwapchainFormat,
-		VK_IMAGE_USAGE_SAMPLED_BIT
-		| VK_IMAGE_USAGE_STORAGE_BIT
-		| VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-		VK_IMAGE_ASPECT_COLOR_BIT,
-		"Normals Target");
-	auto roughnessImageView = createImageAttachment(mCurrentSwapchainFormat,
-		VK_IMAGE_USAGE_SAMPLED_BIT
-		| VK_IMAGE_USAGE_STORAGE_BIT
-		| VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-		VK_IMAGE_ASPECT_COLOR_BIT,
-		"Roughness Target");
-	auto depthImageView = createImageAttachment(mCurrentSwapchainDepthFormat,
-		VK_IMAGE_USAGE_SAMPLED_BIT
-		| VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-		VK_IMAGE_ASPECT_DEPTH_BIT,
-		"Depth Target");
+	auto color = VulkanImage::Builder(this)
+		.setWidth(mParams.screenWidth)
+		.setHeight(mParams.screenHeight)
+		.setChannels(4)
+		.setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+		.setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
+		.setFormat(mCurrentSwapchainFormat)
+		.setData(nullptr)
+		.setDebugName("Color Target")
+		.build();
 
-	mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::COLOR)] = colorImageView;
-	mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::POSITION)] = positionImageView;
-	mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::NORMAL)] = normalImageView;
-	mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::ROUGHNESS)] = roughnessImageView;
-	mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::DEPTH)] = depthImageView;
+	auto position = VulkanImage::Builder(this)
+		.setWidth(mParams.screenWidth)
+		.setHeight(mParams.screenHeight)
+		.setChannels(4)
+		.setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+		.setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
+		.setFormat(mCurrentSwapchainFormat)
+		.setData(nullptr)
+		.setDebugName("Position Target")
+		.build();
+
+	auto normal = VulkanImage::Builder(this)
+		.setWidth(mParams.screenWidth)
+		.setHeight(mParams.screenHeight)
+		.setChannels(4)
+		.setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+		.setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
+		.setFormat(mCurrentSwapchainFormat)
+		.setData(nullptr)
+		.setDebugName("Normal Target")
+		.build();
+
+	auto roughness = VulkanImage::Builder(this)
+		.setWidth(mParams.screenWidth)
+		.setHeight(mParams.screenHeight)
+		.setChannels(4)
+		.setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+		.setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
+		.setFormat(mCurrentSwapchainFormat)
+		.setData(nullptr)
+		.setDebugName("Roughness Target")
+		.build();
+
+	auto depth = VulkanImage::Builder(this)
+		.setWidth(mParams.screenWidth)
+		.setHeight(mParams.screenHeight)
+		.setChannels(4)
+		.setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+		.setAspectFlags(VK_IMAGE_ASPECT_DEPTH_BIT)
+		.setFormat(mCurrentSwapchainDepthFormat)
+		.setData(nullptr)
+		.setDebugName("Depth Target")
+		.build();
+
+	mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::COLOR)] = color;
+	mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::POSITION)] = position;
+	mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::NORMAL)] = normal;
+	mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::ROUGHNESS)] = roughness;
+	mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::DEPTH)] = depth;
 }
 
 void MiniEngine::Backend::VulkanDriver::createInstance(
@@ -490,21 +511,9 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
     descriptorSet.update();
 
     float tri[] = {//vertex     color
-                   0.5,
-                   -0.5,
-                   1.0,
-                   0.0,
-                   0.0,
-                   0.5,
-                   0.5,
-                   1.0,
-                   1.0,
-                   0.0,
-                   -0.5,
-                   0.5,
-                   0.0,
-                   0.0,
-                   1.0};
+                   0.5, -0.5, 1.0, 0.0, 0.0,
+                   0.5, 0.5, 0.0, 1.0, 0.0,
+                   -0.5, 0.5, 0.0, 0.0, 1.0};
 
     auto vertexBuffer = createBuffer(sizeof(tri), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
     vertexBuffer.allocate();
@@ -524,6 +533,16 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 
 void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
 {
+	auto descriptorSet = VulkanDescriptorSet::Builder(this)
+		.setBinding(0)
+		.setCount(1)
+		.setShaderStages(VK_SHADER_STAGE_FRAGMENT_BIT)
+		.setType(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+		.setPool(mDescriptorPools[1])
+		.build();
+
+	// TODO: Add support for images in VulkanBuffer
+
     mLightingPipeline = VulkanPipeline::Builder(this)
                             .setAttachmentCount(5)
                             .addShaderState(DIR "/shaders/lighting_vk.vert",
@@ -531,6 +550,7 @@ void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
                             .setDynamicState({VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR})
                             .setRasterState(true, true)
                             .setDepthState(false, false)
+							.addDescriptorSet(std::move(descriptorSet))
                             .build();
 }
 
@@ -562,14 +582,14 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 		vkBeginCommandBuffer(cmd, &beginInfo);
 
 		auto swapchainImage = mSwapchainPerImageData[i].rawImage;
-		auto colorImage = mImageAttachments[static_cast<int>(ImageAttachmentType::COLOR)].rawImage;
-		auto positionImage = mImageAttachments[static_cast<int>(ImageAttachmentType::POSITION)].rawImage;
-		auto normalImage = mImageAttachments[static_cast<int>(ImageAttachmentType::NORMAL)].rawImage;
-		auto roughnessImage = mImageAttachments[static_cast<int>(ImageAttachmentType::ROUGHNESS)].rawImage;
+		auto colorImage = mImageAttachments[static_cast<int>(ImageAttachmentType::COLOR)].getRawImage();
+		auto positionImage = mImageAttachments[static_cast<int>(ImageAttachmentType::POSITION)].getRawImage();
+		auto normalImage = mImageAttachments[static_cast<int>(ImageAttachmentType::NORMAL)].getRawImage();
+		auto roughnessImage = mImageAttachments[static_cast<int>(ImageAttachmentType::ROUGHNESS)].getRawImage();
 
 		VkRenderingAttachmentInfo gBufferColorAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
 		gBufferColorAttachment.imageView
-			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::COLOR)].imageView;
+			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::COLOR)].getImageView();
 		gBufferColorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		gBufferColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		gBufferColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -581,7 +601,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
         VkRenderingAttachmentInfo gBufferPositionAttachment{
             VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
         gBufferPositionAttachment.imageView
-            = mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::POSITION)].imageView;
+            = mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::POSITION)].getImageView();
         gBufferPositionAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         gBufferPositionAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		gBufferPositionAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -593,7 +613,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
         VkRenderingAttachmentInfo gBufferNormalAttachment{
             VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
         gBufferNormalAttachment.imageView
-            = mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::NORMAL)].imageView;
+            = mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::NORMAL)].getImageView();
         gBufferNormalAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		gBufferNormalAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		gBufferNormalAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -605,7 +625,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
         VkRenderingAttachmentInfo gBufferRoughnessAttachment{
             VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
         gBufferRoughnessAttachment.imageView
-            = mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::ROUGHNESS)].imageView;
+            = mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::ROUGHNESS)].getImageView();
         gBufferRoughnessAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		gBufferRoughnessAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		gBufferRoughnessAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -616,7 +636,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 
         VkRenderingAttachmentInfo depthAttachment{VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
         depthAttachment.imageView
-            = mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::DEPTH)].imageView;
+            = mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::DEPTH)].getImageView();
         depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
 		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -717,7 +737,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 
 		VkRenderingAttachmentInfo lightingColorAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
 		lightingColorAttachment.imageView
-			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::COLOR)].imageView;
+			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::COLOR)].getImageView();
 		lightingColorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		lightingColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 		lightingColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -725,7 +745,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 
 		VkRenderingAttachmentInfo lightingPositionAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
 		lightingPositionAttachment.imageView
-			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::POSITION)].imageView;
+			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::POSITION)].getImageView();
 		lightingPositionAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		lightingPositionAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 		lightingPositionAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -733,7 +753,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 
 		VkRenderingAttachmentInfo lightingNormalAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
 		lightingNormalAttachment.imageView
-			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::NORMAL)].imageView;
+			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::NORMAL)].getImageView();
 		lightingNormalAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		lightingNormalAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 		lightingNormalAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -741,7 +761,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 
 		VkRenderingAttachmentInfo lightingRoughnessAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
 		lightingRoughnessAttachment.imageView
-			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::ROUGHNESS)].imageView;
+			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::ROUGHNESS)].getImageView();
 		lightingRoughnessAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		lightingRoughnessAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 		lightingRoughnessAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -777,70 +797,6 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 
         vkEndCommandBuffer(cmd);
     }
-}
-
-MiniEngine::Backend::VulkanDriver::ImageAttachmentData
-MiniEngine::Backend::VulkanDriver::createImageAttachment(VkFormat imageFormat,
-	VkImageUsageFlags imageBits,
-	VkImageAspectFlags imageViewAspectFlags,
-	std::string debugName)
-{
-	VkImageCreateInfo attachmentImageInfo{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
-	attachmentImageInfo.imageType = VK_IMAGE_TYPE_2D;
-	attachmentImageInfo.format = imageFormat;
-	attachmentImageInfo.extent.width = mParams.screenWidth;
-	attachmentImageInfo.extent.height = mParams.screenHeight;
-	attachmentImageInfo.extent.depth = 1;
-	attachmentImageInfo.arrayLayers = 1;
-	attachmentImageInfo.mipLevels = 1;
-	attachmentImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-	attachmentImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-	attachmentImageInfo.usage = imageBits;
-
-	VkMemoryAllocateInfo attachmentAllocateInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
-	VkMemoryRequirements attachmentMemReqs;
-	VkImage attachmentImage;
-	VkImageView attachmentImageView;
-	VkDeviceMemory attachmentMemory;
-
-	vkCreateImage(mActiveDevice, &attachmentImageInfo, nullptr, &attachmentImage);
-	vkGetImageMemoryRequirements(mActiveDevice, attachmentImage, &attachmentMemReqs);
-
-	// Get memory info
-
-	uint32_t index = getMemoryTypeIndex(&attachmentMemReqs);
-
-	attachmentAllocateInfo.allocationSize = attachmentMemReqs.size;
-	attachmentAllocateInfo.memoryTypeIndex = index;
-	vkAllocateMemory(mActiveDevice, &attachmentAllocateInfo, nullptr, &attachmentMemory);
-	vkBindImageMemory(mActiveDevice, attachmentImage, attachmentMemory, 0);
-
-	VkImageViewCreateInfo colorImageViewInfo{ VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
-	colorImageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	colorImageViewInfo.format = imageFormat;
-	colorImageViewInfo.subresourceRange = {};
-	colorImageViewInfo.subresourceRange.aspectMask = imageViewAspectFlags;
-	colorImageViewInfo.subresourceRange.baseMipLevel = 0;
-	colorImageViewInfo.subresourceRange.levelCount = 1;
-	colorImageViewInfo.subresourceRange.baseArrayLayer = 0;
-	colorImageViewInfo.subresourceRange.layerCount = 1;
-	colorImageViewInfo.image = attachmentImage;
-	vkCreateImageView(mActiveDevice, &colorImageViewInfo, nullptr, &attachmentImageView);
-
-#ifdef GRAPHICS_DEBUG
-
-	VkDebugUtilsObjectNameInfoEXT imageNameInfo{};
-	imageNameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-	imageNameInfo.pNext = NULL;
-	imageNameInfo.objectType = VK_OBJECT_TYPE_IMAGE_VIEW;
-	imageNameInfo.objectHandle = (uint64_t)attachmentImageView;
-	imageNameInfo.pObjectName = debugName.c_str();
-
-	vkSetDebugUtilsObjectNameEXT(mActiveDevice, &imageNameInfo);
-
-#endif
-
-	return { attachmentImage, attachmentImageView };
 }
 
 void MiniEngine::Backend::VulkanDriver::createPipelineBarrier(VkImage image,
@@ -937,8 +893,6 @@ MiniEngine::Backend::VulkanBuffer MiniEngine::Backend::VulkanDriver::createBuffe
     return buffer;
 }
 
-// ==== Interface ====
-
 void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 {
 	uint32_t imgIndex, displaySemaphoreIndex;
@@ -976,46 +930,6 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 unsigned int MiniEngine::Backend::VulkanDriver::createTexture(
     int width, int height, int channels, void *data, TextureType type)
 {
-	VkImage image;
-    VkDeviceMemory mem;
-    VkImageView imageView;
-
-    VkImageCreateInfo createInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
-    createInfo.imageType = VK_IMAGE_TYPE_2D;
-    createInfo.extent.width = width;
-    createInfo.extent.height = height;
-    createInfo.extent.depth = 1;
-    createInfo.mipLevels = 1;
-    createInfo.arrayLayers = 1;
-    createInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    createInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-
-    vkCreateImage(mActiveDevice, &createInfo, nullptr, &image);
-
-    VkMemoryAllocateInfo memAllocInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
-    VkMemoryRequirements memReqs{};
-
-    vkGetImageMemoryRequirements(mActiveDevice, image, &memReqs);
-
-    memAllocInfo.allocationSize = memReqs.size;
-    memAllocInfo.memoryTypeIndex = getMemoryTypeIndex(&memReqs);
-
-    vkAllocateMemory(mActiveDevice, &memAllocInfo, nullptr, &mem);
-    vkBindImageMemory(mActiveDevice, image, mem, 0);
-
-    // Image view
-    VkImageViewCreateInfo imageViewInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
-    imageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    imageViewInfo.format = mCurrentSwapchainFormat;
-    imageViewInfo.subresourceRange = {};
-    imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    imageViewInfo.subresourceRange.levelCount = 1;
-    imageViewInfo.subresourceRange.layerCount = 1;
-	imageViewInfo.image = image;
-
-	vkCreateImageView(mActiveDevice, &imageViewInfo, nullptr, &imageView);
-
 	return 0; //todo: fix
 }
 
