@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef MINIENGINE_VULKAN_DRIVER
 #define MINIENGINE_VULKAN_DRIVER
 
@@ -8,8 +10,6 @@
 #include "utils/DynamicArray.h"
 #include "VulkanImage.h"
 #include <vector>
-
-constexpr VkFormat PREFERRED_FORMAT = VK_FORMAT_R16G16B16A16_SFLOAT;
 
 namespace MiniEngine
 {
@@ -146,6 +146,7 @@ private:
     friend class VulkanPipeline;
     friend class VulkanDescriptorSet;
     friend class VulkanImage;
+    friend class VulkanSwapchain;
 };
 }
 }

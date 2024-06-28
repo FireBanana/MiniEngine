@@ -13,9 +13,9 @@ namespace MiniEngine::Backend
 		class Builder 
 		{
 		public:
-			Builder(VulkanDriver* driver);
-			Builder(Builder&) = delete;
-			Builder operator=(Builder&) = delete;
+            Builder(VulkanDriver *driver);
+            Builder(Builder &) = delete;
+            Builder operator=(Builder&) = delete;
 			Builder(Builder&&) = delete;
 			Builder operator=(Builder&&) = delete;
 

@@ -80,22 +80,38 @@ void MiniEngine::Backend::VulkanDescriptorSet::loadData(VulkanBuffer &&buffer)
     mBuffers.push_back(buffer);
 }
 
+void MiniEngine::Backend::VulkanDescriptorSet::loadData(VulkanImage *images)
+{
+    mImages.push_back(images);
+}
+
 void MiniEngine::Backend::VulkanDescriptorSet::update()
 {
-    for (auto &buffer : mBuffers) {
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = buffer.getRawBuffer();
-        bufferInfo.offset = 0;
-        bufferInfo.range = buffer.getSize();
+    VkWriteDescriptorSet writeSet{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+    writeSet.dstSet = mDescriptorSet;
+    writeSet.dstBinding = 0;
+    writeSet.dstArrayElement = 0;
+    writeSet.descriptorCount = 1;
+    writeSet.descriptorType = mType;
 
-        VkWriteDescriptorSet writeSet{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
-        writeSet.dstSet = mDescriptorSet;
-        writeSet.dstBinding = 0;
-        writeSet.dstArrayElement = 0;
-        writeSet.descriptorCount = 1;
-        writeSet.descriptorType = mType;
-        writeSet.pBufferInfo = &bufferInfo;
-
-        vkUpdateDescriptorSets(mDriver->mActiveDevice, 1, &writeSet, 0, nullptr);
+    if (mType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
+        for (auto &buffer : mBuffers) {
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = buffer.getRawBuffer();
+            bufferInfo.offset = 0;
+            bufferInfo.range = buffer.getSize();
+            writeSet.pBufferInfo = &bufferInfo;
+        }
+    } else if (mType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE) {
+        for (auto &image : mImages) {
+            VkDescriptorImageInfo imageInfo{};
+            imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            imageInfo.imageView = image->getImageView();
+            writeSet.pImageInfo = &imageInfo;
+        }
+    } else {
+        MiniEngine::Logger::eprint("Descriptor type error during update");
     }
+
+    vkUpdateDescriptorSets(mDriver->mActiveDevice, 1, &writeSet, 0, nullptr);
 }

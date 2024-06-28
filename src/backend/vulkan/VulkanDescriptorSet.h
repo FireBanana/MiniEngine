@@ -8,6 +8,7 @@ namespace MiniEngine::Backend {
 
 class VulkanPipeline;
 class VulkanDriver;
+class VulkanImage;
 
 class VulkanDescriptorSet
 {
@@ -25,7 +26,7 @@ public:
         Builder &setCount(int count);
         Builder &setType(VkDescriptorType type);
         Builder &setShaderStages(VkShaderStageFlags flags);
-        Builder &setPool(VkDescriptorPool pool);
+        Builder &setPool(VkDescriptorPool pool); // autoselect based on type?
         VulkanDescriptorSet build();
 
     private:
@@ -38,6 +39,7 @@ public:
     };
 
     void loadData(VulkanBuffer &&buffer);
+    void loadData(VulkanImage *images);
     void update();
 
     VkDescriptorSet *getDescriptorSet() { return &mDescriptorSet; }
@@ -45,6 +47,7 @@ public:
 
 private:
     std::vector<VulkanBuffer> mBuffers;
+    std::vector<VulkanImage *> mImages;
     VkDescriptorSet mDescriptorSet;
     VkDescriptorSetLayout mLayout;
     VkDescriptorType mType;

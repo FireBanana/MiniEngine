@@ -4,6 +4,7 @@
 #include "VulkanPipeline.h"
 #include "VulkanRenderDoc.h"
 #include "VulkanImage.h"
+#include "VulkanSwapchain.h"
 #include <glm/gtc/matrix_transform.hpp>
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debugUtilsCallback(
@@ -314,90 +315,16 @@ void MiniEngine::Backend::VulkanDriver::createDevice(const std::vector<const cha
 
 void MiniEngine::Backend::VulkanDriver::createSwapchain()
 {
-	VkSurfaceCapabilitiesKHR surfaceProperties;
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(mActiveGpu, mSurface, &surfaceProperties);
+    auto swapchain = VulkanSwapchain::Builder(this)
+                         .setHeight(mParams.screenHeight)
+                         .setWidth(mParams.screenWidth)
+                         .setPreferredDepthFormat(VK_FORMAT_D32_SFLOAT)
+                         .setPreferredFormat(VK_FORMAT_R16G16B16A16_SFLOAT)
+                         .setPresentMode(VK_PRESENT_MODE_FIFO_KHR)
+                         .setSurface(mSurface)
+                         .build();
 
-	// Preferred format VK_FORMAT_R16G16B16A16_SFLOAT
-	uint32_t surfaceFormatCount;
-	vkGetPhysicalDeviceSurfaceFormatsKHR(mActiveGpu, mSurface, &surfaceFormatCount, nullptr);
-	std::vector<VkSurfaceFormatKHR> supportedFormatList(surfaceFormatCount);
-	vkGetPhysicalDeviceSurfaceFormatsKHR(mActiveGpu,
-		mSurface,
-		&surfaceFormatCount,
-		supportedFormatList.data());
-
-	auto iter = std::find_if(supportedFormatList.begin(),
-		supportedFormatList.end(),
-		[](VkSurfaceFormatKHR currFormat) {
-			return currFormat.format == PREFERRED_FORMAT;
-		});
-
-	if (iter == supportedFormatList.end()) {
-		iter = supportedFormatList.begin();
-		MiniEngine::Logger::wprint("{} not found as a supported format. Defaulting to {}",
-			PREFERRED_FORMAT,
-			(*iter).format);
-	}
-
-	auto format = *iter;
-
-	mCurrentSwapchainFormat = format.format;
-
-	// Choose desired depth as well
-	constexpr VkFormat depthList[] = { VK_FORMAT_D32_SFLOAT,
-									  VK_FORMAT_D32_SFLOAT_S8_UINT,
-									  VK_FORMAT_D24_UNORM_S8_UINT };
-
-	mCurrentSwapchainDepthFormat = depthList[0];
-
-	for (auto dFormat : depthList) {
-		VkFormatProperties dProps;
-		vkGetPhysicalDeviceFormatProperties(mActiveGpu, dFormat, &dProps);
-
-		if (dProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
-			mCurrentSwapchainDepthFormat = dFormat;
-			break;
-		}
-	}
-
-	VkExtent2D swapchainSize;
-
-	if (surfaceProperties.currentExtent.width == 0xFFFFFFFF) {
-		swapchainSize.width = mParams.screenWidth;
-		swapchainSize.height = mParams.screenHeight;
-	}
-	else {
-		swapchainSize = surfaceProperties.currentExtent;
-		mParams.screenHeight = swapchainSize.height;
-		mParams.screenWidth = swapchainSize.width;
-	}
-
-	VkPresentModeKHR swapchainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-
-	uint32_t desiredSwapchainImages = surfaceProperties.minImageCount + 1;
-
-	if ((surfaceProperties.maxImageCount > 0)
-		&& desiredSwapchainImages > surfaceProperties.maxImageCount)
-		desiredSwapchainImages = surfaceProperties.maxImageCount;
-
-	VkCompositeAlphaFlagBitsKHR composite = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-
-	VkSwapchainCreateInfoKHR swapchainInfo{ VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
-	swapchainInfo.surface = mSurface;
-	swapchainInfo.minImageCount = desiredSwapchainImages;
-	swapchainInfo.imageFormat = format.format;
-	swapchainInfo.imageColorSpace = format.colorSpace;
-	swapchainInfo.imageExtent.width = swapchainSize.width;
-	swapchainInfo.imageExtent.height = swapchainSize.height;
-	swapchainInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-	swapchainInfo.imageArrayLayers = 1;
-	swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
-	swapchainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	swapchainInfo.compositeAlpha = composite;
-	swapchainInfo.presentMode = swapchainPresentMode;
-	swapchainInfo.clipped = true;
-
-	vkCreateSwapchainKHR(mActiveDevice, &swapchainInfo, nullptr, &mActiveSwapchain);
+    mActiveSwapchain = swapchain.getSwapchain();
 }
 
 void MiniEngine::Backend::VulkanDriver::createSwapchainImageViews()
@@ -541,7 +468,8 @@ void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
 		.setPool(mDescriptorPools[1])
 		.build();
 
-	// TODO: Add support for images in VulkanBuffer
+    descriptorSet.loadData(&mImageAttachments[0]);
+    descriptorSet.update();
 
     mLightingPipeline = VulkanPipeline::Builder(this)
                             .setAttachmentCount(5)
@@ -587,16 +515,19 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 		auto normalImage = mImageAttachments[static_cast<int>(ImageAttachmentType::NORMAL)].getRawImage();
 		auto roughnessImage = mImageAttachments[static_cast<int>(ImageAttachmentType::ROUGHNESS)].getRawImage();
 
-		VkRenderingAttachmentInfo gBufferColorAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-		gBufferColorAttachment.imageView
+        auto clearColor = VkClearColorValue{mParams.clearColor.r(),
+                                            mParams.clearColor.g(),
+                                            mParams.clearColor.b(),
+                                            mParams.clearColor.a()};
+
+        VkRenderingAttachmentInfo gBufferColorAttachment{
+            VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+        gBufferColorAttachment.imageView
 			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::COLOR)].getImageView();
 		gBufferColorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		gBufferColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		gBufferColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        gBufferColorAttachment.clearValue.color = {mParams.clearColor.r(),
-                                                   mParams.clearColor.g(),
-                                                   mParams.clearColor.b(),
-                                                   mParams.clearColor.a()};
+        gBufferColorAttachment.clearValue.color = clearColor;
 
         VkRenderingAttachmentInfo gBufferPositionAttachment{
             VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
@@ -605,10 +536,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
         gBufferPositionAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         gBufferPositionAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		gBufferPositionAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        gBufferPositionAttachment.clearValue.color = {mParams.clearColor.r(),
-                                                      mParams.clearColor.g(),
-                                                      mParams.clearColor.b(),
-                                                      mParams.clearColor.a()};
+        gBufferPositionAttachment.clearValue.color = clearColor;
 
         VkRenderingAttachmentInfo gBufferNormalAttachment{
             VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
@@ -617,10 +545,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
         gBufferNormalAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		gBufferNormalAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		gBufferNormalAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        gBufferNormalAttachment.clearValue.color = {mParams.clearColor.r(),
-                                                    mParams.clearColor.g(),
-                                                    mParams.clearColor.b(),
-                                                    mParams.clearColor.a()};
+        gBufferNormalAttachment.clearValue.color = clearColor;
 
         VkRenderingAttachmentInfo gBufferRoughnessAttachment{
             VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
@@ -629,10 +554,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
         gBufferRoughnessAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		gBufferRoughnessAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		gBufferRoughnessAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        gBufferRoughnessAttachment.clearValue.color = {mParams.clearColor.r(),
-                                                       mParams.clearColor.g(),
-                                                       mParams.clearColor.b(),
-                                                       mParams.clearColor.a()};
+        gBufferRoughnessAttachment.clearValue.color = clearColor;
 
         VkRenderingAttachmentInfo depthAttachment{VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
         depthAttachment.imageView
@@ -777,6 +699,16 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
         lightingRenderingInfo.colorAttachmentCount = 5;
         lightingRenderingInfo.pColorAttachments = lightingAttachmentArray.begin();
         lightingRenderingInfo.renderArea = {0, 0, mParams.screenWidth, mParams.screenHeight};
+
+        createPipelineBarrier(colorImage,
+                              cmd,
+                              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                              VK_ACCESS_SHADER_READ_BIT,
+                              VK_IMAGE_ASPECT_COLOR_BIT,
+                              VK_IMAGE_LAYOUT_GENERAL,
+                              VK_IMAGE_LAYOUT_GENERAL,
+                              VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
         // Create new attachment array here with different load store
         // Lighting pass

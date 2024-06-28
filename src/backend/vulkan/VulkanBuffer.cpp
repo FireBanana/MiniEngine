@@ -2,9 +2,9 @@
 
 MiniEngine::Backend::VulkanBuffer::VulkanBuffer(VkDevice device,
                                                 VkPhysicalDeviceMemoryProperties memProperties)
-    : mDevice(device),
-    mMemoryProperties(memProperties),
-    mIsValid(false)
+    : mDevice(device)
+    , mMemoryProperties(memProperties)
+    , mIsValid(false)
 {}
 
 void MiniEngine::Backend::VulkanBuffer::create(size_t memSize, VkBufferUsageFlags flags)
