@@ -50,6 +50,7 @@ MiniEngine::Backend::VulkanSwapchain::Builder::setHeight(float height)
 MiniEngine::Backend::VulkanSwapchain MiniEngine::Backend::VulkanSwapchain::Builder::build()
 {
     VulkanSwapchain vSwapchain{};
+    vSwapchain.mDriver = mDriver;
 
     VkSurfaceCapabilitiesKHR surfaceProperties;
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(mDriver->mActiveGpu, mSurface, &surfaceProperties);
@@ -68,7 +69,7 @@ MiniEngine::Backend::VulkanSwapchain MiniEngine::Backend::VulkanSwapchain::Build
 
     auto iter = std::find_if(supportedFormatList.begin(),
                              supportedFormatList.end(),
-                             [](VkSurfaceFormatKHR currFormat) {
+                             [this](VkSurfaceFormatKHR currFormat) {
                                  return currFormat.format == mColorFormat;
                              });
 
@@ -81,14 +82,14 @@ MiniEngine::Backend::VulkanSwapchain MiniEngine::Backend::VulkanSwapchain::Build
 
     auto format = *iter;
 
-    mColorFormat = format.format;
+    vSwapchain.mColorFormat = format.format;
 
     // Choose desired depth as well
     constexpr VkFormat depthList[] = {VK_FORMAT_D32_SFLOAT,
                                       VK_FORMAT_D32_SFLOAT_S8_UINT,
                                       VK_FORMAT_D24_UNORM_S8_UINT};
 
-    mDepthFormat = depthList[0];
+    vSwapchain.mDepthFormat = depthList[0];
 
     for (auto dFormat : depthList) {
         VkFormatProperties dProps;
@@ -138,4 +139,58 @@ MiniEngine::Backend::VulkanSwapchain MiniEngine::Backend::VulkanSwapchain::Build
     swapchainInfo.clipped = true;
 
     vkCreateSwapchainKHR(mDriver->mActiveDevice, &swapchainInfo, nullptr, &vSwapchain.mSwapchain);
+
+    vSwapchain.createPerFrameData();
+
+    return vSwapchain;
+}
+
+void MiniEngine::Backend::VulkanSwapchain::createPerFrameData()
+{
+    vkGetSwapchainImagesKHR(mDriver->mActiveDevice, this->getSwapchain(), &mSwapchainCount, nullptr);
+
+    std::vector<VkImage> swapchainImages(mSwapchainCount);
+    vkGetSwapchainImagesKHR(mDriver->mActiveDevice,
+                            this->getSwapchain(),
+                            &mSwapchainCount,
+                            swapchainImages.data());
+
+    mSwapchainPerFrameData = std::vector<PerFrameData>(mSwapchainCount, PerFrameData{});
+
+    // Initialize a command pool per swapchain image
+    for (uint32_t i = 0; i < mSwapchainCount; ++i) {
+        VkCommandPool commandPool;
+        VkCommandBuffer commandBuffer;
+        VkImageView imageView;
+
+        VkCommandPoolCreateInfo cmdPoolInfo{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+        cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+        cmdPoolInfo.queueFamilyIndex = mDriver->mActiveQueue;
+        vkCreateCommandPool(mDriver->mActiveDevice, &cmdPoolInfo, nullptr, &commandPool);
+
+        VkCommandBufferAllocateInfo cmdBuffInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+        cmdBuffInfo.commandPool = commandPool;
+        cmdBuffInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        cmdBuffInfo.commandBufferCount = 1;
+        vkAllocateCommandBuffers(mDriver->mActiveDevice, &cmdBuffInfo, &commandBuffer);
+
+        mSwapchainPerFrameData[i].imageCommandPool = commandPool;
+        mSwapchainPerFrameData[i].imageCommandBuffer = commandBuffer;
+
+        VkImageViewCreateInfo viewInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
+        viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        viewInfo.format = this->getFormat();
+        viewInfo.image = swapchainImages[i];
+        viewInfo.subresourceRange.levelCount = 1;
+        viewInfo.subresourceRange.layerCount = 1;
+        viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        viewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
+        viewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
+        viewInfo.components.b = VK_COMPONENT_SWIZZLE_B;
+        viewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
+
+        vkCreateImageView(mDriver->mActiveDevice, &viewInfo, nullptr, &imageView);
+        mSwapchainPerFrameData[i].imageView = imageView;
+        mSwapchainPerFrameData[i].rawImage = swapchainImages[i];
+    }
 }

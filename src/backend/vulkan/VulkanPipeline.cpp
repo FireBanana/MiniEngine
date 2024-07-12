@@ -188,12 +188,12 @@ MiniEngine::Backend::VulkanPipeline MiniEngine::Backend::VulkanPipeline::Builder
     std::vector<VkFormat> colorFormatList;
 
     for (int i = 0; i < mAttachmentCount; ++i)
-        colorFormatList.push_back(mDriver->mCurrentSwapchainFormat);
+        colorFormatList.push_back(mDriver->mActiveSwapchain.getFormat());
 
     VkPipelineRenderingCreateInfo renderingInfo{VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO};
     renderingInfo.colorAttachmentCount = colorFormatList.size();
     renderingInfo.pColorAttachmentFormats = colorFormatList.data();
-    renderingInfo.depthAttachmentFormat = mDriver->mCurrentSwapchainDepthFormat;
+    renderingInfo.depthAttachmentFormat = mDriver->mActiveSwapchain.getDepthFormat();
 
     VkGraphicsPipelineCreateInfo pipelineInfo{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
     pipelineInfo.stageCount = static_cast<uint32_t>(mShaderStages.size());

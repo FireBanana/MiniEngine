@@ -5,10 +5,11 @@
 
 #include "VulkanBuffer.h"
 #include "VulkanHelper.h"
+#include "VulkanImage.h"
 #include "VulkanPipeline.h"
+#include "VulkanSwapchain.h"
 #include "types/EngineTypes.h"
 #include "utils/DynamicArray.h"
-#include "VulkanImage.h"
 #include <vector>
 
 namespace MiniEngine
@@ -28,14 +29,6 @@ namespace Backend
 class VulkanDriver
 {
 public:
-    struct PerFrameData
-    {
-        VkImage rawImage;
-        VkImageView imageView;
-        VkCommandPool imageCommandPool;
-        VkCommandBuffer imageCommandBuffer;
-    };
-
     struct DisplaySemaphore
     {
         VkSemaphore acquisitionSemaphore;
@@ -100,15 +93,12 @@ private:
     VkSurfaceKHR mSurface;
     VkDevice mActiveDevice;
     VkQueue mActiveDeviceQueue;
-    VkSwapchainKHR mActiveSwapchain;
+    VulkanSwapchain mActiveSwapchain;
     VulkanPipeline mGbufferPipeline;
     VulkanPipeline mLightingPipeline;
-    VkFormat mCurrentSwapchainFormat;
-    VkFormat mCurrentSwapchainDepthFormat;
     int32_t mActiveQueue{-1};
     VkPhysicalDeviceMemoryProperties mGpuMemoryProperties;
 
-    std::vector<PerFrameData> mSwapchainPerImageData;
     std::array<VulkanImage, 5> mImageAttachments;
     Utils::DynamicArray<DisplaySemaphore> mDisplaySemaphoreArray;
     std::array<VkDescriptorPool, 2> mDescriptorPools; //change to enum
@@ -120,7 +110,6 @@ private:
     void registerPhysicalDeviceQueueFamily();
     void createDevice(const std::vector<const char *> &&requiredExtensions);
     void createSwapchain();
-    void createSwapchainImageViews();
     void createDescriptorPools();
     void createGBufferPipeline();
     void createLightingPipeline();

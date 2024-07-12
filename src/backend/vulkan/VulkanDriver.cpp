@@ -57,9 +57,8 @@ void MiniEngine::Backend::VulkanDriver::generateDevice()
 
 void MiniEngine::Backend::VulkanDriver::generateSwapchain()
 {
-	createSwapchain();
-	createSwapchainImageViews();
-	createDisplaySemaphores();
+    createSwapchain();
+    createDisplaySemaphores();
 }
 
 void MiniEngine::Backend::VulkanDriver::generatePipelines()
@@ -73,66 +72,71 @@ void MiniEngine::Backend::VulkanDriver::generatePipelines()
 
 void MiniEngine::Backend::VulkanDriver::generateGbuffer()
 {
-	auto color = VulkanImage::Builder(this)
-		.setWidth(mParams.screenWidth)
-		.setHeight(mParams.screenHeight)
-		.setChannels(4)
-		.setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-		.setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
-		.setFormat(mCurrentSwapchainFormat)
-		.setData(nullptr)
-		.setDebugName("Color Target")
-		.build();
+    auto color = VulkanImage::Builder(this)
+                     .setWidth(mParams.screenWidth)
+                     .setHeight(mParams.screenHeight)
+                     .setChannels(4)
+                     .setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT
+                                    | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+                     .setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
+                     .setFormat(mActiveSwapchain.getFormat())
+                     .setData(nullptr)
+                     .setDebugName("Color Target")
+                     .build();
 
-	auto position = VulkanImage::Builder(this)
-		.setWidth(mParams.screenWidth)
-		.setHeight(mParams.screenHeight)
-		.setChannels(4)
-		.setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-		.setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
-		.setFormat(mCurrentSwapchainFormat)
-		.setData(nullptr)
-		.setDebugName("Position Target")
-		.build();
+    auto position = VulkanImage::Builder(this)
+                        .setWidth(mParams.screenWidth)
+                        .setHeight(mParams.screenHeight)
+                        .setChannels(4)
+                        .setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT
+                                       | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+                        .setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
+                        .setFormat(mActiveSwapchain.getFormat())
+                        .setData(nullptr)
+                        .setDebugName("Position Target")
+                        .build();
 
-	auto normal = VulkanImage::Builder(this)
-		.setWidth(mParams.screenWidth)
-		.setHeight(mParams.screenHeight)
-		.setChannels(4)
-		.setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-		.setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
-		.setFormat(mCurrentSwapchainFormat)
-		.setData(nullptr)
-		.setDebugName("Normal Target")
-		.build();
+    auto normal = VulkanImage::Builder(this)
+                      .setWidth(mParams.screenWidth)
+                      .setHeight(mParams.screenHeight)
+                      .setChannels(4)
+                      .setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT
+                                     | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+                      .setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
+                      .setFormat(mActiveSwapchain.getFormat())
+                      .setData(nullptr)
+                      .setDebugName("Normal Target")
+                      .build();
 
-	auto roughness = VulkanImage::Builder(this)
-		.setWidth(mParams.screenWidth)
-		.setHeight(mParams.screenHeight)
-		.setChannels(4)
-		.setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-		.setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
-		.setFormat(mCurrentSwapchainFormat)
-		.setData(nullptr)
-		.setDebugName("Roughness Target")
-		.build();
+    auto roughness = VulkanImage::Builder(this)
+                         .setWidth(mParams.screenWidth)
+                         .setHeight(mParams.screenHeight)
+                         .setChannels(4)
+                         .setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT
+                                        | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+                         .setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
+                         .setFormat(mActiveSwapchain.getFormat())
+                         .setData(nullptr)
+                         .setDebugName("Roughness Target")
+                         .build();
 
-	auto depth = VulkanImage::Builder(this)
-		.setWidth(mParams.screenWidth)
-		.setHeight(mParams.screenHeight)
-		.setChannels(4)
-		.setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
-		.setAspectFlags(VK_IMAGE_ASPECT_DEPTH_BIT)
-		.setFormat(mCurrentSwapchainDepthFormat)
-		.setData(nullptr)
-		.setDebugName("Depth Target")
-		.build();
+    auto depth = VulkanImage::Builder(this)
+                     .setWidth(mParams.screenWidth)
+                     .setHeight(mParams.screenHeight)
+                     .setChannels(4)
+                     .setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT
+                                    | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+                     .setAspectFlags(VK_IMAGE_ASPECT_DEPTH_BIT)
+                     .setFormat(mActiveSwapchain.getDepthFormat())
+                     .setData(nullptr)
+                     .setDebugName("Depth Target")
+                     .build();
 
-	mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::COLOR)] = color;
-	mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::POSITION)] = position;
-	mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::NORMAL)] = normal;
-	mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::ROUGHNESS)] = roughness;
-	mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::DEPTH)] = depth;
+    mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::COLOR)] = color;
+    mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::POSITION)] = position;
+    mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::NORMAL)] = normal;
+    mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::ROUGHNESS)] = roughness;
+    mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::DEPTH)] = depth;
 }
 
 void MiniEngine::Backend::VulkanDriver::createInstance(
@@ -324,56 +328,7 @@ void MiniEngine::Backend::VulkanDriver::createSwapchain()
                          .setSurface(mSurface)
                          .build();
 
-    mActiveSwapchain = swapchain.getSwapchain();
-}
-
-void MiniEngine::Backend::VulkanDriver::createSwapchainImageViews()
-{
-	uint32_t imageCount;
-	vkGetSwapchainImagesKHR(mActiveDevice, mActiveSwapchain, &imageCount, nullptr);
-
-	std::vector<VkImage> swapchainImages(imageCount);
-	vkGetSwapchainImagesKHR(mActiveDevice, mActiveSwapchain, &imageCount, swapchainImages.data());
-
-	mSwapchainPerImageData = std::vector<PerFrameData>(imageCount, PerFrameData{});
-
-	// Initialize a command pool per swapchain image
-	for (uint32_t i = 0; i < imageCount; ++i) {
-		VkCommandPool commandPool;
-		VkCommandBuffer commandBuffer;
-		VkImageView imageView;
-
-		VkCommandPoolCreateInfo cmdPoolInfo{ VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
-		cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-		cmdPoolInfo.queueFamilyIndex = mActiveQueue;
-		vkCreateCommandPool(mActiveDevice, &cmdPoolInfo, nullptr, &commandPool);
-
-		VkCommandBufferAllocateInfo cmdBuffInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
-		cmdBuffInfo.commandPool = commandPool;
-		cmdBuffInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		cmdBuffInfo.commandBufferCount = 1;
-		vkAllocateCommandBuffers(mActiveDevice, &cmdBuffInfo, &commandBuffer);
-
-		mSwapchainPerImageData[i].imageCommandPool = commandPool;
-		mSwapchainPerImageData[i].imageCommandBuffer = commandBuffer;
-
-		VkImageViewCreateInfo viewInfo{ VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
-		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		viewInfo.format = mCurrentSwapchainFormat;
-		viewInfo.image = swapchainImages[i];
-		viewInfo.subresourceRange.levelCount = 1;
-		viewInfo.subresourceRange.layerCount = 1;
-		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		viewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
-		viewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
-		viewInfo.components.b = VK_COMPONENT_SWIZZLE_B;
-		viewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
-
-		vkCreateImageView(mActiveDevice, &viewInfo, nullptr, &imageView);
-		mSwapchainPerImageData[i].imageView = imageView;
-
-		mSwapchainPerImageData[i].rawImage = swapchainImages[i];
-	}
+    mActiveSwapchain = swapchain;
 }
 
 void MiniEngine::Backend::VulkanDriver::createDescriptorPools()
@@ -484,35 +439,39 @@ void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
 
 void MiniEngine::Backend::VulkanDriver::createDisplaySemaphores()
 {
-	mDisplaySemaphoreArray = Utils::DynamicArray<DisplaySemaphore>(mSwapchainPerImageData.size());
+    mDisplaySemaphoreArray = Utils::DynamicArray<DisplaySemaphore>(
+        mActiveSwapchain.getSwapchainSize());
 
-	auto arrayPtr = mDisplaySemaphoreArray.get();
+    auto arrayPtr = mDisplaySemaphoreArray.get();
 
-	VkSemaphoreCreateInfo info{ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
-	VkFenceCreateInfo fInfo{ VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+    VkSemaphoreCreateInfo info{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+    VkFenceCreateInfo fInfo{ VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
 	fInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-	for (int i = 0; i < mSwapchainPerImageData.size(); ++i) {
-		vkCreateSemaphore(mActiveDevice, &info, nullptr, &(arrayPtr[i].acquisitionSemaphore));
-		vkCreateSemaphore(mActiveDevice, &info, nullptr, &(arrayPtr[i].presentationSemaphore));
-		vkCreateFence(mActiveDevice, &fInfo, nullptr, &(arrayPtr[i].fence));
-	}
+    for (int i = 0; i < mActiveSwapchain.getSwapchainSize(); ++i) {
+        vkCreateSemaphore(mActiveDevice, &info, nullptr, &(arrayPtr[i].acquisitionSemaphore));
+        vkCreateSemaphore(mActiveDevice, &info, nullptr, &(arrayPtr[i].presentationSemaphore));
+        vkCreateFence(mActiveDevice, &fInfo, nullptr, &(arrayPtr[i].fence));
+    }
 }
 
 void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 {
-	VkCommandBufferBeginInfo beginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+    // TODO: refactor into renderpass
+    VkCommandBufferBeginInfo beginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+    auto perFrameData = mActiveSwapchain.getPerFrameData();
 
-	for (auto i = 0; i < mSwapchainPerImageData.size(); ++i)
-	{
-		auto& cmd = mSwapchainPerImageData[i].imageCommandBuffer;
+    for (auto i = 0; i < mActiveSwapchain.getSwapchainSize(); ++i) {
+        auto &cmd = perFrameData[i].imageCommandBuffer;
 
-		vkBeginCommandBuffer(cmd, &beginInfo);
+        vkBeginCommandBuffer(cmd, &beginInfo);
 
-		auto swapchainImage = mSwapchainPerImageData[i].rawImage;
-		auto colorImage = mImageAttachments[static_cast<int>(ImageAttachmentType::COLOR)].getRawImage();
-		auto positionImage = mImageAttachments[static_cast<int>(ImageAttachmentType::POSITION)].getRawImage();
-		auto normalImage = mImageAttachments[static_cast<int>(ImageAttachmentType::NORMAL)].getRawImage();
+        auto swapchainImage = perFrameData[i].rawImage;
+        auto colorImage = mImageAttachments[static_cast<int>(ImageAttachmentType::COLOR)]
+                              .getRawImage();
+        auto positionImage = mImageAttachments[static_cast<int>(ImageAttachmentType::POSITION)]
+                                 .getRawImage();
+        auto normalImage = mImageAttachments[static_cast<int>(ImageAttachmentType::NORMAL)].getRawImage();
 		auto roughnessImage = mImageAttachments[static_cast<int>(ImageAttachmentType::ROUGHNESS)].getRawImage();
 
         auto clearColor = VkClearColorValue{mParams.clearColor.r(),
@@ -651,10 +610,10 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 		// ================ LIGHTING ==================================================================================
 
 		VkRenderingAttachmentInfo lightingSwapChainAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-		lightingSwapChainAttachment.imageView = mSwapchainPerImageData[i].imageView;
-		lightingSwapChainAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		lightingSwapChainAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		lightingSwapChainAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        lightingSwapChainAttachment.imageView = perFrameData[i].imageView;
+        lightingSwapChainAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        lightingSwapChainAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        lightingSwapChainAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		lightingSwapChainAttachment.clearValue.color = { 1, 0, 0, 1 };
 
 		VkRenderingAttachmentInfo lightingColorAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
@@ -786,15 +745,15 @@ void MiniEngine::Backend::VulkanDriver::acquireNextImage(uint32_t* image,
 		}
 	}
 
-	auto status = vkAcquireNextImageKHR(mActiveDevice,
-		mActiveSwapchain,
-		UINT64_MAX,
-		dSemaphore,
-		VK_NULL_HANDLE,
-		image);
+    auto status = vkAcquireNextImageKHR(mActiveDevice,
+                                        mActiveSwapchain.getSwapchain(),
+                                        UINT64_MAX,
+                                        dSemaphore,
+                                        VK_NULL_HANDLE,
+                                        image);
 
-	if (status != VK_SUCCESS)
-		MiniEngine::Logger::eprint("Acquire error: {}", status);
+    if (status != VK_SUCCESS)
+        MiniEngine::Logger::eprint("Acquire error: {}", status);
 }
 
 uint32_t MiniEngine::Backend::VulkanDriver::getMemoryTypeIndex(const VkMemoryRequirements* memReqs)
@@ -829,12 +788,13 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 {
 	uint32_t imgIndex, displaySemaphoreIndex;
 	acquireNextImage(&imgIndex, &displaySemaphoreIndex);
+    auto perFrameData = mActiveSwapchain.getPerFrameData();
 
-	auto& cmd = mSwapchainPerImageData[imgIndex].imageCommandBuffer;
+    auto &cmd = perFrameData[imgIndex].imageCommandBuffer;
 
-	VkPipelineStageFlags waitStageFlags{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    VkPipelineStageFlags waitStageFlags{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
-	VkSubmitInfo submitInfo{ VK_STRUCTURE_TYPE_SUBMIT_INFO };
+    VkSubmitInfo submitInfo{ VK_STRUCTURE_TYPE_SUBMIT_INFO };
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &cmd;
 	submitInfo.waitSemaphoreCount = 1;
@@ -848,15 +808,18 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 		&submitInfo,
 		mDisplaySemaphoreArray.get()[displaySemaphoreIndex].fence);
 
-	// Present
-	VkPresentInfoKHR presentInfo{ VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
-	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = &mActiveSwapchain;
-	presentInfo.pImageIndices = &imgIndex;
-	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = &(mDisplaySemaphoreArray.get()[displaySemaphoreIndex].presentationSemaphore);
+    auto swapChain = mActiveSwapchain.getSwapchain();
 
-	vkQueuePresentKHR(mActiveDeviceQueue, &presentInfo);
+    // Present
+    VkPresentInfoKHR presentInfo{VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = &swapChain;
+    presentInfo.pImageIndices = &imgIndex;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = &(
+        mDisplaySemaphoreArray.get()[displaySemaphoreIndex].presentationSemaphore);
+
+    vkQueuePresentKHR(mActiveDeviceQueue, &presentInfo);
 }
 
 unsigned int MiniEngine::Backend::VulkanDriver::createTexture(
