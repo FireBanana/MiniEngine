@@ -1,13 +1,10 @@
 #version 450 core
-
-layout(input_attachment_index = 0, binding = 0) uniform subpassInput colorAttachment;
-layout(location = 1) out vec4 positionAttachment;
-layout(location = 2) out vec4 normalAttachment;
-layout(location = 3) out vec4 roughnessAttachment;
 layout(location = 4) out vec4 swapchainAttachment;
+layout (set = 0, binding = 0, rgba8) uniform image2D color;
+
+// These attachments not needed
 
 void main()
 {
-
-    swapchainAttachment = vec4(1.);
+    swapchainAttachment = imageLoad(color, ivec2(gl_FragCoord.x, gl_FragCoord.y));
 }

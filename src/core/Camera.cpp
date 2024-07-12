@@ -21,11 +21,11 @@ namespace MiniEngine
 		return *this;
 	}
 
-	Camera::Builder& Camera::Builder::setNearFarPlane(float near, float far)
-	{
-		mNearPlane = near;
-		mFarPlane = far;
-		return *this;
+    Camera::Builder &Camera::Builder::setNearFarPlane(float _near, float _far)
+    {
+        mNearPlane = _near;
+        mFarPlane = _far;
+        return *this;
 	}
 
 	Components::CameraComponent* Camera::Builder::build(Scene* scene, Entity* entity)

@@ -1,10 +1,9 @@
 #include "Engine.h"
 #include "Entity.h"
-#include "Renderable.h"
-#include "Scene.h"
 #include "Loader.h"
 #include "Logger.h"
-#include "OpenGLPlatform.h"
+#include "Renderable.h"
+#include "Scene.h"
 #include "VulkanPlatform.h"
 #include <memory>
 
@@ -14,11 +13,7 @@ namespace MiniEngine
 	{
 		MiniEngine::Logger::print("Initializing engine...");
 
-#ifdef USING_OPENGL
-		mGraphicsPlatform = std::make_unique<Backend::OpenGLPlatform>();
-#else
-		mGraphicsPlatform = std::make_unique<Backend::VulkanPlatform>();
-#endif
+        mGraphicsPlatform = std::make_unique<Backend::VulkanPlatform>();
 		
 		mGraphicsPlatform->initialize(params, this);
 
@@ -48,9 +43,15 @@ namespace MiniEngine
 	{
 		auto results = MiniTools::ImageLoader::load(path, type == Texture::TextureType::CubeMap, flipYAxis);
 
-		auto id = mGraphicsPlatform.get()->getDriver()->createTexture(results.width, results.height, results.channels, results.data, type);
+        auto id = mGraphicsPlatform.get()
+                      ->getDriver()
+                      ->createTexture(results.width,
+                                      results.height,
+                                      results.channels,
+                                      results.data,
+                                      (Backend::VulkanDriver::TextureType) type);
 
-		return { results.width, results.height, results.channels, id };
+        return { results.width, results.height, results.channels, id };
 	}
 
 	void Engine::addSlider(const char* name, float* value, float min, float max, std::function<void()> cb)

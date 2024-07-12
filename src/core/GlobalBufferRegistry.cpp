@@ -2,15 +2,14 @@
 
 namespace MiniEngine
 {
-	GlobalBufferRegistry::GlobalBufferRegistry(const Backend::IDriver* driver)
-		: mDriver(driver)
-	{
-	}
+GlobalBufferRegistry::GlobalBufferRegistry(const Backend::VulkanDriver *driver)
+    : mDriver(driver)
+{}
 
-	void GlobalBufferRegistry::createNewBinding(BlockType block, unsigned int bindIndex)
-	{
-		auto uniformBufferId = mDriver->createUniformBlock(parseBlockSize(block), bindIndex);
-		mBindingPoints.insert({ block, uniformBufferId });
+void GlobalBufferRegistry::createNewBinding(BlockType block, unsigned int bindIndex)
+{
+    auto uniformBufferId = mDriver->createUniformBlock(parseBlockSize(block), bindIndex);
+    mBindingPoints.insert({block, uniformBufferId});
 	}
 
 	void GlobalBufferRegistry::updateUniformData(BlockType block, unsigned int offset, size_t size, void* data)

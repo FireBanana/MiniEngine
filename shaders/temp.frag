@@ -1,4 +1,4 @@
-#version 450 core
+#version 450 core 
 
 precision mediump float;
 
@@ -13,9 +13,7 @@ layout(location = 3) out vec4 roughnessAttachment;
 
 void main()
 {
-    vec4 c = gl_FragCoord;
-    c.x /= 800;
-    c.y /= 600;
+    vec3 c = in_color;
 
     colorAttachment = vec4(c.x, c.y, 0, 1.);
     positionAttachment = vec4(c.y, c.x, 0, 1.);

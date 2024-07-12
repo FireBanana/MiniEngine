@@ -1,4 +1,4 @@
-#version 450 core
+#version 450 core 
 
 vec2 triangle_positions[6] = vec2[](
     vec2(0.5, -0.5),
