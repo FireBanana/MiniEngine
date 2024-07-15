@@ -55,8 +55,6 @@ namespace MiniEngine
 			m.materialInstance = builderResults->getMaterialInstance();
 		}
 
-#ifdef USING_OPENGL
-
 		unsigned int stride = 0;
 
 		for (auto i = 0; i < m.attributes.size(); ++i)
@@ -67,8 +65,6 @@ namespace MiniEngine
 		m.stride = stride;
 
 		mEngine->getGraphicsDriver()->setupMesh(&m);
-
-#endif // USING_OPENGL
 
 		mRenderableComponentDatabase.push(std::move(m));
 		return &(mRenderableComponentDatabase.getLast());

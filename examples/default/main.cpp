@@ -16,32 +16,32 @@
 int main(void)
 {
 	MiniEngine::Types::EngineInitParams params{};
-    params.screenWidth = 16;
-    params.screenHeight = 16;
+    params.screenWidth = 512;
+    params.screenHeight = 512;
     params.clearColor = { 0.1f, 0.15f, 0.2f, 0.0f };
 	params.enablePostProcess = false;
 	MiniEngine::Engine engine{ params };
 
 	auto scene = MiniEngine::Scene{ &engine };
 
-	//auto meshEntity = scene.createEntity();
+	auto meshEntity = scene.createEntity();
 	//auto skyBoxEntity = scene.createEntity();
 	//auto cameraEntity2 = scene.createEntity();
 	//auto mainLightEntity = scene.createEntity();
 
-	//MiniEngine::Texture texture = engine.loadTexture(RESOLVE_PATH("/assets/color.jpg"), MiniEngine::Texture::TextureType::Default, false);
+	MiniEngine::Texture texture = engine.loadTexture(RESOLVE_PATH("/assets/color.jpg"), MiniEngine::Texture::TextureType::Default, false);
 	//MiniEngine::Texture normal = engine.loadTexture(RESOLVE_PATH("/assets/normal.jpg"), MiniEngine::Texture::TextureType::Default, false);
 	//MiniEngine::Texture roughness = engine.loadTexture(RESOLVE_PATH("/assets/roughness.jpg"), MiniEngine::Texture::TextureType::Default, false);
 	//MiniEngine::Texture texture2 = engine.loadTexture(RESOLVE_PATH("/assets/hdri.hdr"), MiniEngine::Texture::TextureType::CubeMap, true);
 
-	//auto material = MiniEngine::Material::Creator()
-	//	.addTexture(MiniEngine::Types::TextureType::Diffuse, texture)
-	//	.addTexture(MiniEngine::Types::TextureType::Normal, normal)
-	//	.addTexture(MiniEngine::Types::TextureType::Roughness, roughness)
-	//	.addShader(engine.getShaderRegistry()->getDeferredShader())
-	//	.addMaterialProperty(MiniEngine::Material::PropertyType::Roughness, 0.15f)
-	//	.addMaterialProperty(MiniEngine::Material::PropertyType::Metallic, 0.f)
-	//	.create();
+	auto material = MiniEngine::Material::Creator()
+		.addTexture(MiniEngine::Types::TextureType::Diffuse, texture)
+		//.addTexture(MiniEngine::Types::TextureType::Normal, normal)
+		//.addTexture(MiniEngine::Types::TextureType::Roughness, roughness)
+		.addShader(engine.getShaderRegistry()->getDeferredShader())
+		.addMaterialProperty(MiniEngine::Material::PropertyType::Roughness, 0.15f)
+		.addMaterialProperty(MiniEngine::Material::PropertyType::Metallic, 0.f)
+		.create();
 
 	//auto mesh = MiniEngine::Renderable::Builder()
 	//	.addModel(RESOLVE_PATH("/assets/sphere.glb"))
@@ -69,21 +69,20 @@ int main(void)
 	////	.addMaterialInstance(&material)
 	////	.build(&scene, meshEntity);
 
-	////auto mesh = MiniEngine::Renderable::Builder()
-	////	.addBufferData(
-	////		{
-	////			-0.0f, -1.0f, -2.0f, 0.0f, 0.0f,
-	////			-1.0f, 0.0f, -2.0f,  0.0f, 1.0f,
-	////			0.0f, 1.0f, -2.0f,   1.0f, 1.0f,
-	////			1.0f, -0.0f, -2.0f,  1.0f, 0.0f
-	////		})
-	////	.addIndices(
-	////		{
-	////			0, 1, 2,
-	////			0, 2, 3
-	////		})
-	////	.addBufferAttributes({ 3, 2 })
-	////	.build(&scene, meshEntity);
+	auto mesh = MiniEngine::Renderable::Builder()
+		.addBufferData(
+			{
+				0.5, -0.5, 1.0, 0.0, 0.0,
+			   0.5, 0.5, 0.0, 1.0, 0.0,
+			   -0.5, 0.5, 0.0, 0.0, 1.0
+			})
+		.addIndices(
+			{
+				0, 1, 2,
+				0, 2, 3
+			})
+		.addBufferAttributes({ 3, 2 })
+		.build(&scene, meshEntity);
 
 	//auto camera = MiniEngine::Camera::Builder()
 	//	.setPosition({3, 0, 3 })

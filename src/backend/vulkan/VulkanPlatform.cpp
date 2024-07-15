@@ -54,7 +54,6 @@ void MiniEngine::Backend::VulkanPlatform::createWindow(uint16_t width, uint16_t 
     mDriver->generatePipelines();
 
     glfwMakeContextCurrent(mWindow);
-    glfwSwapInterval(1);
 }
 
 void MiniEngine::Backend::VulkanPlatform::createDriver(MiniEngine::Types::EngineInitParams& params)
@@ -68,11 +67,11 @@ void MiniEngine::Backend::VulkanPlatform::makeCurrent()
 
 void MiniEngine::Backend::VulkanPlatform::execute(Scene* scene)
 {
+    mDriver->recordCommandBuffers();
+
     while (!glfwWindowShouldClose(mWindow)) //run separate thread
     {
         mDriver->draw(scene);
-
-        glfwSwapBuffers(mWindow);
         glfwPollEvents();
     }
 }

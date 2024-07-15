@@ -5,6 +5,7 @@
 #include "VulkanRenderDoc.h"
 #include "VulkanImage.h"
 #include "VulkanSwapchain.h"
+#include "Scene.h"
 #include <glm/gtc/matrix_transform.hpp>
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debugUtilsCallback(
@@ -66,8 +67,6 @@ void MiniEngine::Backend::VulkanDriver::generatePipelines()
     createDescriptorPools();
     createGBufferPipeline();
     createLightingPipeline();
-
-    recordCommandBuffers();
 }
 
 void MiniEngine::Backend::VulkanDriver::generateGbuffer()
@@ -392,20 +391,10 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
     descriptorSet.loadData(std::move(sceneBlockBuffer));
     descriptorSet.update();
 
-    float tri[] = {//vertex     color
-                   0.5, -0.5, 1.0, 0.0, 0.0,
-                   0.5, 0.5, 0.0, 1.0, 0.0,
-                   -0.5, 0.5, 0.0, 0.0, 1.0};
-
-    auto vertexBuffer = createBuffer(sizeof(tri), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-    vertexBuffer.allocate();
-    vertexBuffer.flush(tri, sizeof(tri));
-
     mGbufferPipeline = VulkanPipeline::Builder(this)
                            .setAttachmentCount(4)
                            .addShaderState(DIR "/shaders/temp.vert", DIR "/shaders/temp.frag")
                            .addVertexAttributeState(0, {2, 3})       //point, color
-                           .addVertexBuffer(std::move(vertexBuffer)) // this is bad, centralize
                            .addDescriptorSet(std::move(descriptorSet))
                            .setDynamicState({VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR})
                            .setRasterState(true, true)
@@ -828,6 +817,20 @@ unsigned int MiniEngine::Backend::VulkanDriver::createTexture(
 	return 0; //todo: fix
 }
 
+void MiniEngine::Backend::VulkanDriver::setupMesh(MiniEngine::Components::RenderableComponent* component)
+{
+    float tri[] = {//vertex     color
+               0.5, -0.5, 1.0, 0.0, 0.0,
+               0.5, 0.5, 0.0, 1.0, 0.0,
+               -0.5, 0.5, 0.0, 0.0, 1.0 };
+
+    auto vertexBuffer = createBuffer(component->buffer.size() * sizeof(float), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+    vertexBuffer.allocate();
+    vertexBuffer.flush(component->buffer.data(), component->buffer.size() * sizeof(float));
+
+    mGbufferPipeline.setVertexBuffer(std::move(vertexBuffer));
+}
+
 unsigned int MiniEngine::Backend::VulkanDriver::createUniformBlock(size_t dataSize, unsigned int bindIndex) const
 {
 	return 0;
@@ -838,10 +841,6 @@ void MiniEngine::Backend::VulkanDriver::updateUniformData(unsigned int bufferId,
 }
 
 void MiniEngine::Backend::VulkanDriver::registerUniformBlock(const char* blockName, const Shader* program, unsigned int layoutIndex) const
-{
-}
-
-void MiniEngine::Backend::VulkanDriver::setupMesh(MiniEngine::Components::RenderableComponent* component)
 {
 }
 

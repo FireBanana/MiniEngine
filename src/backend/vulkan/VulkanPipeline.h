@@ -24,7 +24,6 @@ class VulkanDriver;
             Builder operator=(Builder &&) = delete;
 
             Builder &addVertexAttributeState(int binding, std::vector<unsigned int> attr);
-            Builder &addVertexBuffer(VulkanBuffer &&buffer);
             Builder &addDescriptorSet(VulkanDescriptorSet &&set);
             Builder &addShaderState(const char *vert, const char *frag);
             Builder &setAttachmentCount(int count);
@@ -47,10 +46,10 @@ class VulkanDriver;
             VkPipelineDepthStencilStateCreateInfo mDepthStencilStateCreateInfo;
             VkPipelineRasterizationStateCreateInfo mRasterStateCreateInfo;
             VkPipelineDynamicStateCreateInfo mDynamicStateCreateInfo;
-            VulkanBuffer mVertexBuffer;
         };
 
     public:
+        void setVertexBuffer(VulkanBuffer&& buffer );
         void bind(VkCommandBuffer buffer);        
 
     private:

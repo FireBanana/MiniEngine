@@ -18,10 +18,6 @@ namespace MiniEngine::Components
 		Shader					   shader;
 		Vector3					   worldPosition;
 		Vector3					   rotation;
-
-//#ifdef USING_OPENGL
-		unsigned int			  vaoId;
 		unsigned int			  stride;
-//#endif
 	};
 }

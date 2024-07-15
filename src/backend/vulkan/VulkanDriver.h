@@ -85,6 +85,8 @@ public:
     void setVec3(unsigned int program, const char *name, Vector3 value) const;
     void setMat4(unsigned int program, const char *name, Matrix4x4 value) const;
 
+    void recordCommandBuffers();
+
 private:
     MiniEngine::Types::EngineInitParams mParams;
 
@@ -114,7 +116,6 @@ private:
     void createGBufferPipeline();
     void createLightingPipeline();
     void createDisplaySemaphores();
-    void recordCommandBuffers();
 
     void createPipelineBarrier(VkImage image,
                                VkCommandBuffer buffer,

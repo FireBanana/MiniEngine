@@ -47,14 +47,6 @@ MiniEngine::Backend::VulkanPipeline::Builder::addVertexAttributeState(int bindin
 }
 
 MiniEngine::Backend::VulkanPipeline::Builder &
-MiniEngine::Backend::VulkanPipeline::Builder::addVertexBuffer(VulkanBuffer &&buffer)
-{
-    // Add more bindings above to use more vertxBuffers
-    mVertexBuffer = std::move(buffer);
-    return *this;
-}
-
-MiniEngine::Backend::VulkanPipeline::Builder &
 MiniEngine::Backend::VulkanPipeline::Builder::addDescriptorSet(VulkanDescriptorSet &&set)
 {
     mDescriptors.push_back(set);
@@ -218,10 +210,14 @@ MiniEngine::Backend::VulkanPipeline MiniEngine::Backend::VulkanPipeline::Builder
 
     pipeline.mDescriptors = std::move(mDescriptors);
     pipeline.mPipelineLayout = mLayout;
-    pipeline.mVertexBuffer = std::move(mVertexBuffer);
     pipeline.mDriver = mDriver;
 
     return pipeline;
+}
+
+void MiniEngine::Backend::VulkanPipeline::setVertexBuffer(VulkanBuffer&& buffer)
+{
+    mVertexBuffer = std::move(buffer);
 }
 
 void MiniEngine::Backend::VulkanPipeline::bind(VkCommandBuffer cmd)
