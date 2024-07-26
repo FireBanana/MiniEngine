@@ -1,6 +1,7 @@
 #include "VulkanPipeline.h"
 #include "EnumExtension.h"
 #include "GlslCompiler.h"
+#include "Logger.h"
 #include "VulkanDriver.h"
 #include <numeric>
 
@@ -215,11 +216,6 @@ MiniEngine::Backend::VulkanPipeline MiniEngine::Backend::VulkanPipeline::Builder
     return pipeline;
 }
 
-void MiniEngine::Backend::VulkanPipeline::setVertexBuffer(VulkanBuffer&& buffer)
-{
-    mVertexBuffer = std::move(buffer);
-}
-
 void MiniEngine::Backend::VulkanPipeline::bind(VkCommandBuffer cmd)
 {
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline);
@@ -233,10 +229,4 @@ void MiniEngine::Backend::VulkanPipeline::bind(VkCommandBuffer cmd)
                                 d.getDescriptorSet(),
                                 0,
                                 nullptr);
-
-    if (mVertexBuffer.isValid()) {
-        auto tBuffer = mVertexBuffer.getRawBuffer();
-        VkDeviceSize offsets[1] = {0};
-        vkCmdBindVertexBuffers(cmd, 0, 1, &tBuffer, offsets);
-    }
 }

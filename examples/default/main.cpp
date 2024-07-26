@@ -25,9 +25,10 @@ int main(void)
 	auto scene = MiniEngine::Scene{ &engine };
 
 	auto meshEntity = scene.createEntity();
-	//auto skyBoxEntity = scene.createEntity();
-	//auto cameraEntity2 = scene.createEntity();
-	//auto mainLightEntity = scene.createEntity();
+    auto meshEntity2 = scene.createEntity();
+    //auto skyBoxEntity = scene.createEntity();
+    auto cameraEntity2 = scene.createEntity();
+    //auto mainLightEntity = scene.createEntity();
 
 	MiniEngine::Texture texture = engine.loadTexture(RESOLVE_PATH("/assets/color.jpg"), MiniEngine::Texture::TextureType::Default, false);
 	//MiniEngine::Texture normal = engine.loadTexture(RESOLVE_PATH("/assets/normal.jpg"), MiniEngine::Texture::TextureType::Default, false);
@@ -69,29 +70,29 @@ int main(void)
 	////	.addMaterialInstance(&material)
 	////	.build(&scene, meshEntity);
 
-	auto mesh = MiniEngine::Renderable::Builder()
-		.addBufferData(
-			{
-				0.5, -0.5, 1.0, 0.0, 0.0,
-			   0.5, 0.5, 0.0, 1.0, 0.0,
-			   -0.5, 0.5, 0.0, 0.0, 1.0
-			})
-		.addIndices(
-			{
-				0, 1, 2,
-				0, 2, 3
-			})
-		.addBufferAttributes({ 3, 2 })
-		.build(&scene, meshEntity);
+    auto mesh = MiniEngine::Renderable::Builder()
+                    .addBufferData(
+                        {0.0, -0.5, 1.0, 0.0, 0.0, 0.5, -0.5, 0.0, 1.0, 0.0, 0.5, 0.0, 0.0, 0.0, 1.0})
+                    .addIndices({0, 1, 2, 0, 2, 3})
+                    .addBufferAttributes({3, 2})
+                    .build(&scene, meshEntity);
 
-	//auto camera = MiniEngine::Camera::Builder()
-	//	.setPosition({3, 0, 3 })
-	//	.setAspectRatio((float)params.screenWidth / (float)params.screenHeight)
-	//	.setNearFarPlane(0.1f, 1000.0f)
-	//	.setFOV(45)
-	//	.build(&scene, cameraEntity2);
+    auto mesh2
+        = MiniEngine::Renderable::Builder()
+              .addBufferData(
+                  {0.0, 0.5, 1.0, 0.0, 0.0, -0.5, 0.5, 0.0, 1.0, 0.0, -0.5, 0.0, 0.0, 0.0, 1.0})
+              .addIndices({0, 1, 2, 0, 2, 3})
+              .addBufferAttributes({3, 2})
+              .build(&scene, meshEntity2);
 
-	//auto light = MiniEngine::Light::Builder()
+    auto camera = MiniEngine::Camera::Builder()
+                      .setPosition({3, 0, 3})
+                      .setAspectRatio((float) params.screenWidth / (float) params.screenHeight)
+                      .setNearFarPlane(0.1f, 1000.0f)
+                      .setFOV(45)
+                      .build(&scene, cameraEntity2);
+
+    //auto light = MiniEngine::Light::Builder()
 	//	.setPosition({ 0,0,0 })
 	//	.setIntensity(1.0f)
 	//	.build(&scene, mainLightEntity);

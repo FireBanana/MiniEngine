@@ -15,6 +15,6 @@ layout(location = 0) out vec3 out_color;
 
 void main()
 {
-    gl_Position = vec4(in_pos, 0., 1.0);
+    gl_Position = projection * view * vec4(in_pos, 0., 1.0);
     out_color = in_col;
 }

@@ -371,8 +371,8 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
     SceneBlock sceneBlock{};
     sceneBlock.cameraPosition = glm::vec3(0, 0, -5);
     sceneBlock.projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    sceneBlock.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f),
-                                  glm::vec3(1.0f, 0.0f, 0.0f),
+    sceneBlock.view = glm::lookAt(glm::vec3(2.0f, 0.0f, 1.0f),
+                                  glm::vec3(0.0f, 0.0f, 0.0f),
                                   glm::vec3(0.0f, -1.0f, 0.0f));
 
     auto sceneBlockBuffer = createBuffer(sizeof(SceneBlock), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
@@ -444,7 +444,7 @@ void MiniEngine::Backend::VulkanDriver::createDisplaySemaphores()
     }
 }
 
-void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
+void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene *scene)
 {
     // TODO: refactor into renderpass
     VkCommandBufferBeginInfo beginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
@@ -593,7 +593,13 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
 
         // GBuffer pass
         vkCmdBeginRendering(cmd, &gBufferRenderingInfo);
-        vkCmdDraw(cmd, 3, 1, 0, 0);
+        auto renderables = scene->getRenderableComponentDatabase();
+        for (size_t i = 0; i < renderables.size(); ++i) {
+            VkDeviceSize offset = {0};
+            auto buffer = renderables[i].vbuffer.getRawBuffer();
+            vkCmdBindVertexBuffers(cmd, 0, 1, &buffer, &offset);
+            vkCmdDraw(cmd, 3, 1, 0, 0);
+        }
         vkCmdEndRendering(cmd);
 
 		// ================ LIGHTING ==================================================================================
@@ -661,7 +667,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers()
         // Create new attachment array here with different load store
         // Lighting pass
         vkCmdBeginRendering(cmd, &lightingRenderingInfo);
-        vkCmdDraw(cmd, 3, 1, 0, 0);
+        vkCmdDraw(cmd, 6, 1, 0, 0);
         vkCmdEndRendering(cmd);
 
         // swapchain present
@@ -819,16 +825,12 @@ unsigned int MiniEngine::Backend::VulkanDriver::createTexture(
 
 void MiniEngine::Backend::VulkanDriver::setupMesh(MiniEngine::Components::RenderableComponent* component)
 {
-    float tri[] = {//vertex     color
-               0.5, -0.5, 1.0, 0.0, 0.0,
-               0.5, 0.5, 0.0, 1.0, 0.0,
-               -0.5, 0.5, 0.0, 0.0, 1.0 };
-
-    auto vertexBuffer = createBuffer(component->buffer.size() * sizeof(float), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+    auto vertexBuffer = createBuffer(component->buffer.size() * sizeof(float),
+                                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
     vertexBuffer.allocate();
     vertexBuffer.flush(component->buffer.data(), component->buffer.size() * sizeof(float));
 
-    mGbufferPipeline.setVertexBuffer(std::move(vertexBuffer));
+    component->vbuffer = std::move(vertexBuffer);
 }
 
 unsigned int MiniEngine::Backend::VulkanDriver::createUniformBlock(size_t dataSize, unsigned int bindIndex) const

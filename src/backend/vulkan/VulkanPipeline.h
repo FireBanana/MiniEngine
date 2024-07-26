@@ -49,14 +49,12 @@ class VulkanDriver;
         };
 
     public:
-        void setVertexBuffer(VulkanBuffer&& buffer );
         void bind(VkCommandBuffer buffer);        
 
     private:
         std::vector<VulkanDescriptorSet> mDescriptors;
         VkPipeline mPipeline;
         VkPipelineLayout mPipelineLayout;
-        VulkanBuffer mVertexBuffer;
         VulkanDriver *mDriver;
 
         friend class VulkanDriver;

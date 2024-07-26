@@ -85,7 +85,7 @@ public:
     void setVec3(unsigned int program, const char *name, Vector3 value) const;
     void setMat4(unsigned int program, const char *name, Matrix4x4 value) const;
 
-    void recordCommandBuffers();
+    void recordCommandBuffers(MiniEngine::Scene *scene);
 
 private:
     MiniEngine::Types::EngineInitParams mParams;

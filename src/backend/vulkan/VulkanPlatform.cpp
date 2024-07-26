@@ -67,7 +67,7 @@ void MiniEngine::Backend::VulkanPlatform::makeCurrent()
 
 void MiniEngine::Backend::VulkanPlatform::execute(Scene* scene)
 {
-    mDriver->recordCommandBuffers();
+    mDriver->recordCommandBuffers(scene);
 
     while (!glfwWindowShouldClose(mWindow)) //run separate thread
     {
