@@ -8,7 +8,6 @@
 #include <iostream>
 #include <functional>
 
-#include <vulkan/vulkan.h>
 #include "GlslCompiler.h"
 
 #define RESOLVE_PATH(path) DIR##path

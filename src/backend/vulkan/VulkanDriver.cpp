@@ -1,11 +1,11 @@
 #include "VulkanDriver.h"
 #include "FileHelper.h"
 #include "GlslCompiler.h"
+#include "Scene.h"
+#include "VulkanImage.h"
 #include "VulkanPipeline.h"
 #include "VulkanRenderDoc.h"
-#include "VulkanImage.h"
 #include "VulkanSwapchain.h"
-#include "Scene.h"
 #include <glm/gtc/matrix_transform.hpp>
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debugUtilsCallback(
@@ -173,6 +173,14 @@ void MiniEngine::Backend::VulkanDriver::createInstance(
 	VkDebugUtilsMessengerEXT messenger;
 	vkCreateDebugUtilsMessengerEXT(mInstance, &debugInfo, nullptr, &messenger);
 #endif
+
+    VmaAllocatorCreateInfo vmaInfo{};
+    vmaInfo.device = mActiveDevice;
+    vmaInfo.instance = mInstance;
+    vmaInfo.physicalDevice = mActiveGpu;
+    vmaInfo.vulkanApiVersion = VK_MAKE_API_VERSION(0, 1, 3, 261);
+
+    vmaCreateAllocator(&vmaInfo, &mMemoryAllocator);
 }
 
 

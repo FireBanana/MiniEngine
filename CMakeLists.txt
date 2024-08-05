@@ -93,6 +93,12 @@ FetchContent_Declare(
         GIT_TAG main
 )
 
+FetchContent_Declare(
+        vma
+        GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+        GIT_TAG master
+)
+
 FetchContent_GetProperties(glm)
 if(NOT glm_POPULATED)
   FetchContent_Populate(glm)
@@ -117,6 +123,11 @@ endif()
 FetchContent_GetProperties(glslang)
 if(NOT glslang_POPULATED)
   FetchContent_Populate(glslang)
+endif()
+
+FetchContent_GetProperties(vma)
+if(NOT vma_POPULATED)
+  FetchContent_Populate(vma)
 endif()
 
 target_include_directories(MiniEngine PUBLIC ${glm_SOURCE_DIR}/glm)
@@ -160,6 +171,9 @@ target_link_libraries(MiniEngine glslang OSDependent SPIRV glslang-default-resou
 
 target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3.lib)
 target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3dll.lib)
+
+target_include_directories(MiniEngine PUBLIC ${vma_SOURCE_DIR}/include)
+add_subdirectory(${vma_SOURCE_DIR} ${vma_BINARY_DIR})
 
 # Add secondary tools
 

@@ -98,6 +98,7 @@ private:
     VulkanSwapchain mActiveSwapchain;
     VulkanPipeline mGbufferPipeline;
     VulkanPipeline mLightingPipeline;
+    VmaAllocator mMemoryAllocator;
     int32_t mActiveQueue{-1};
     VkPhysicalDeviceMemoryProperties mGpuMemoryProperties;
 
