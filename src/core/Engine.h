@@ -6,7 +6,6 @@
 #include "Color.h"
 #include "EngineTypes.h"
 #include "Entity.h"
-#include "GlobalBufferRegistry.h"
 #include "Material.h"
 #include "Mesh.h"
 #include "RenderableComponent.h"
@@ -31,8 +30,7 @@ namespace MiniEngine
 
 		Texture loadTexture(const char* path, Texture::TextureType type, bool flipYAxis);
 
-		inline ShaderRegistry* getShaderRegistry() const { return mShaderRegistry.get(); }
-		inline GlobalBufferRegistry* getGlobalBufferRegistry() const { return mGlobalBufferRegistry.get(); }
+        inline ShaderRegistry *getShaderRegistry() const { return mShaderRegistry.get(); }
         inline Backend::VulkanDriver *getGraphicsDriver() const
         {
             return mGraphicsPlatform.get()->getDriver();
@@ -43,9 +41,7 @@ namespace MiniEngine
 		void addSlider(const char* name, float* value, float min, float max, std::function<void()> cb = nullptr);
 		void addCheckbox(const char* name, bool& flag, std::function<void()> cb = nullptr);
 
-	private:
-
-		std::unique_ptr<GlobalBufferRegistry> mGlobalBufferRegistry;
+    private:
         std::unique_ptr<Backend::VulkanPlatform> mGraphicsPlatform;
         std::unique_ptr<ShaderRegistry> mShaderRegistry;
 

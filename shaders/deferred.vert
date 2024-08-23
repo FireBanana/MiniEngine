@@ -1,32 +1,20 @@
-#version 450 core
+#version 450 core 
 
-layout (std140, binding = 0) uniform SceneBlock
+precision mediump float;
+
+layout(set=0, binding=0) uniform SceneBlock
 {
-	mat4 view;
-	mat4 projection;
-    vec3 cameraPos;
-
-	vec3 lightPos1;
-    float lightIntensity1;
-
-    float roughness;
-    float metallic;
+    mat4 view;
+    mat4 projection;
+    vec3 camPos;
 };
 
-uniform mat4 _model;
-
-layout (location = 0) in vec3 iPos;
-layout (location = 1) in vec2 iUv;
-layout (location = 2) in vec3 iNormal;
-
-out vec2 fUv;
-out vec3 fNormal;
-out vec3 fPosition;
+layout(location = 0) in vec2 in_pos;
+layout(location = 1) in vec3 in_col;
+layout(location = 0) out vec3 out_color;
 
 void main()
 {
-	fUv = iUv;
-	fNormal = (mat4(mat3(_model)) * vec4(iNormal, 1.0)).xyz;
-	fPosition = (_model * vec4(iPos, 1.0)).xyz;
-	gl_Position = projection * view * _model * vec4(iPos, 1.0);
+    gl_Position = projection * view * vec4(in_pos, 0., 1.0);
+    out_color = in_col;
 }

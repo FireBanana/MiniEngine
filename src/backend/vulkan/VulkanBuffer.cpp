@@ -4,64 +4,31 @@ MiniEngine::Backend::VulkanBuffer::VulkanBuffer(VkDevice device,
                                                 VkPhysicalDeviceMemoryProperties memProperties)
     : mDevice(device)
     , mMemoryProperties(memProperties)
-    , mIsValid(false)
 {}
 
-void MiniEngine::Backend::VulkanBuffer::create(size_t memSize, VkBufferUsageFlags flags)
+void MiniEngine::Backend::VulkanBuffer::create(VmaAllocator &allocator,
+                                               size_t memSize,
+                                               void *data,
+                                               VkBufferUsageFlags flags)
 {
-    VkBufferCreateInfo bufferCreateInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
-    bufferCreateInfo.size = memSize;
-    bufferCreateInfo.usage = flags;
-    bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    bufferCreateInfo.queueFamilyIndexCount = 0;
-    bufferCreateInfo.pQueueFamilyIndices = nullptr;
-
     mSize = memSize;
 
-    vkCreateBuffer(mDevice, &bufferCreateInfo, nullptr, &mBuffer);
-}
+    VkBufferCreateInfo bufferInfo = {VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
+    bufferInfo.size = memSize;
+    bufferInfo.usage = flags;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    bufferInfo.queueFamilyIndexCount = 0;
+    bufferInfo.pQueueFamilyIndices = nullptr;
 
-void MiniEngine::Backend::VulkanBuffer::allocate()
-{
-    VkMemoryRequirements bufferMemRequirements;
-    vkGetBufferMemoryRequirements(mDevice, mBuffer, &bufferMemRequirements);
+    VmaAllocationCreateInfo allocInfo = {};
+    allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+    allocInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+    allocInfo.preferredFlags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+                               | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+    allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT
+                      | VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
-    for (auto i = 0; i < mMemoryProperties.memoryTypeCount; ++i) {
-        if ((bufferMemRequirements.memoryTypeBits & (1 << i))
-            && (mMemoryProperties.memoryTypes[i].propertyFlags
-                & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)) {
-            VkMemoryAllocateInfo allocInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
-            allocInfo.allocationSize = bufferMemRequirements.size;
-            allocInfo.memoryTypeIndex = i;
-
-            vkAllocateMemory(mDevice, &allocInfo, nullptr, &mBufferMemory);
-            mIsValid = true;
-            return;
-        }
-    }
-
-    Logger::eprint("Memory for buffer not allocated.");
-}
-
-void MiniEngine::Backend::VulkanBuffer::deallocate()
-{
-    vkFreeMemory(mDevice, mBufferMemory, nullptr);
-}
-
-void MiniEngine::Backend::VulkanBuffer::flush(void *data, size_t size)
-{
-    vkBindBufferMemory(mDevice, mBuffer, mBufferMemory, 0);
-
-    void *bufferMemoryPointer;
-    vkMapMemory(mDevice, mBufferMemory, 0, VK_WHOLE_SIZE, 0, &bufferMemoryPointer);
-    memcpy(bufferMemoryPointer, data, size);
-
-    VkMappedMemoryRange flushRange{VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE};
-    flushRange.memory = mBufferMemory;
-    flushRange.offset = 0;
-    flushRange.size = VK_WHOLE_SIZE;
-
-    vkFlushMappedMemoryRanges(mDevice, 1, &flushRange);
-
-    vkUnmapMemory(mDevice, mBufferMemory);
+    VmaAllocation allocation;
+    vmaCreateBuffer(allocator, &bufferInfo, &allocInfo, &mBuffer, &allocation, nullptr);
+    vmaCopyMemoryToAllocation(allocator, data, allocation, 0, memSize);
 }

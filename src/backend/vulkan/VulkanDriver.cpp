@@ -2,6 +2,7 @@
 #include "FileHelper.h"
 #include "GlslCompiler.h"
 #include "Scene.h"
+#include "ShaderData.h"
 #include "VulkanImage.h"
 #include "VulkanPipeline.h"
 #include "VulkanRenderDoc.h"
@@ -14,7 +15,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugUtilsCallback(
 	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 	void* pUserData)
 {
-	return VK_FALSE;
 	if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
 		MiniEngine::Logger::print("MiniVkVerbose: {}\n", pCallbackData->pMessage);
 	}
@@ -54,6 +54,8 @@ void MiniEngine::Backend::VulkanDriver::generateDevice()
                   "VK_KHR_create_renderpass2",
                   "VK_KHR_multiview",
                   "VK_KHR_maintenance2"});
+
+    initializeMemoryAllocator();
 }
 
 void MiniEngine::Backend::VulkanDriver::generateSwapchain()
@@ -173,14 +175,6 @@ void MiniEngine::Backend::VulkanDriver::createInstance(
 	VkDebugUtilsMessengerEXT messenger;
 	vkCreateDebugUtilsMessengerEXT(mInstance, &debugInfo, nullptr, &messenger);
 #endif
-
-    VmaAllocatorCreateInfo vmaInfo{};
-    vmaInfo.device = mActiveDevice;
-    vmaInfo.instance = mInstance;
-    vmaInfo.physicalDevice = mActiveGpu;
-    vmaInfo.vulkanApiVersion = VK_MAKE_API_VERSION(0, 1, 3, 261);
-
-    vmaCreateAllocator(&vmaInfo, &mMemoryAllocator);
 }
 
 
@@ -369,25 +363,19 @@ void MiniEngine::Backend::VulkanDriver::createDescriptorPools()
 
 void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 {
-    struct SceneBlock
-    {
-        glm::mat4 view;
-        glm::mat4 projection;
-        glm::vec3 cameraPosition;
-    };
-
     SceneBlock sceneBlock{};
-    sceneBlock.cameraPosition = glm::vec3(0, 0, -5);
+    sceneBlock.cameraPosition = glm::vec3(0, 0, 2);
     sceneBlock.projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    sceneBlock.view = glm::lookAt(glm::vec3(2.0f, 0.0f, 1.0f),
+    sceneBlock.view = glm::lookAt(sceneBlock.cameraPosition,
                                   glm::vec3(0.0f, 0.0f, 0.0f),
                                   glm::vec3(0.0f, -1.0f, 0.0f));
 
-    auto sceneBlockBuffer = createBuffer(sizeof(SceneBlock), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-    sceneBlockBuffer.allocate();
-    sceneBlockBuffer.flush(&sceneBlock, sizeof(sceneBlock));
+    auto sceneBlockBuffer = createBuffer(sizeof(sceneBlock),
+                                         &sceneBlock,
+                                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
+                                             | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
-    auto descriptorSet = VulkanDescriptorSet::Builder(this)
+    auto sceneDescriptorSet = VulkanDescriptorSet::Builder(this)
                              .setBinding(0)
                              .setCount(1)
                              .setShaderStages(VK_SHADER_STAGE_VERTEX_BIT
@@ -396,14 +384,24 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
                              .setPool(mDescriptorPools[0])
                              .build();
 
-    descriptorSet.loadData(std::move(sceneBlockBuffer));
-    descriptorSet.update();
+    auto imageBufferDescriptorSet = VulkanDescriptorSet::Builder(this)
+                                        .setBinding(1)
+                                        .setCount(3)
+                                        .setShaderStages(VK_SHADER_STAGE_FRAGMENT_BIT)
+                                        .setType(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                                        .setPool(mDescriptorPools[1])
+                                        .build();
+
+    sceneDescriptorSet.loadData(std::move(sceneBlockBuffer));
+    sceneDescriptorSet.update();
 
     mGbufferPipeline = VulkanPipeline::Builder(this)
                            .setAttachmentCount(4)
-                           .addShaderState(DIR "/shaders/temp.vert", DIR "/shaders/temp.frag")
-                           .addVertexAttributeState(0, {2, 3})       //point, color
-                           .addDescriptorSet(std::move(descriptorSet))
+                           .addShaderState(DIR "/shaders/deferred.vert",
+                                           DIR "/shaders/deferred.frag")
+                           .addVertexAttributeState(0, {2, 3}) //point, color
+                           .addDescriptorSet(std::move(sceneDescriptorSet))
+                           .addDescriptorSet(std::move(imageBufferDescriptorSet))
                            .setDynamicState({VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR})
                            .setRasterState(true, true)
                            .setDepthState(true, true)
@@ -420,7 +418,7 @@ void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
 		.setPool(mDescriptorPools[1])
 		.build();
 
-    descriptorSet.loadData(&mImageAttachments[0]);
+    //descriptorSet.loadData(&mImageAttachments[0]);
     descriptorSet.update();
 
     mLightingPipeline = VulkanPipeline::Builder(this)
@@ -450,6 +448,38 @@ void MiniEngine::Backend::VulkanDriver::createDisplaySemaphores()
         vkCreateSemaphore(mActiveDevice, &info, nullptr, &(arrayPtr[i].presentationSemaphore));
         vkCreateFence(mActiveDevice, &fInfo, nullptr, &(arrayPtr[i].fence));
     }
+}
+
+void MiniEngine::Backend::VulkanDriver::initializeMemoryAllocator()
+{
+    VmaVulkanFunctions vulkFuncs{};
+    vulkFuncs.vkGetPhysicalDeviceProperties = vkGetPhysicalDeviceProperties;
+    vulkFuncs.vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties;
+    vulkFuncs.vkAllocateMemory = vkAllocateMemory;
+    vulkFuncs.vkFreeMemory = vkFreeMemory;
+    vulkFuncs.vkMapMemory = vkMapMemory;
+    vulkFuncs.vkUnmapMemory = vkUnmapMemory;
+    vulkFuncs.vkFlushMappedMemoryRanges = vkFlushMappedMemoryRanges;
+    vulkFuncs.vkInvalidateMappedMemoryRanges = vkInvalidateMappedMemoryRanges;
+    vulkFuncs.vkBindBufferMemory = vkBindBufferMemory;
+    vulkFuncs.vkBindImageMemory = vkBindImageMemory;
+    vulkFuncs.vkGetBufferMemoryRequirements = vkGetBufferMemoryRequirements;
+    vulkFuncs.vkGetImageMemoryRequirements = vkGetImageMemoryRequirements,
+    vulkFuncs.vkCreateBuffer = vkCreateBuffer;
+    vulkFuncs.vkDestroyBuffer = vkDestroyBuffer;
+    vulkFuncs.vkCreateImage = vkCreateImage;
+    vulkFuncs.vkDestroyImage = vkDestroyImage;
+    vulkFuncs.vkCmdCopyBuffer = vkCmdCopyBuffer;
+    vulkFuncs.vkGetBufferMemoryRequirements2KHR = vkGetBufferMemoryRequirements2KHR;
+    vulkFuncs.vkGetImageMemoryRequirements2KHR = vkGetImageMemoryRequirements2KHR;
+
+    VmaAllocatorCreateInfo vmaInfo{};
+    vmaInfo.device = mActiveDevice;
+    vmaInfo.instance = mInstance;
+    vmaInfo.physicalDevice = mActiveGpu;
+    vmaInfo.pVulkanFunctions = &vulkFuncs;
+
+    vmaCreateAllocator(&vmaInfo, &mMemoryAllocator);
 }
 
 void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene *scene)
@@ -598,6 +628,28 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene *
                               VK_IMAGE_LAYOUT_GENERAL,
                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+        auto firstCamera = scene->getCameraComponentDatabase()[0]; //TODO: fix
+
+        SceneBlock sceneBlock{};
+        sceneBlock.cameraPosition = glm::vec3(firstCamera.position.x,
+                                              firstCamera.position.y,
+                                              firstCamera.position.z);
+        sceneBlock.projection = glm::perspective(glm::radians(firstCamera.fov),
+                                                 firstCamera.aspectRatio,
+                                                 firstCamera.nearPlane,
+                                                 firstCamera.farPlane);
+        sceneBlock.view = glm::lookAt(glm::vec3(firstCamera.position.x,
+                                                firstCamera.position.y,
+                                                firstCamera.position.z),
+                                      glm::vec3(0.0f, 0.0f, 0.0f),
+                                      glm::vec3(0.0f, -1.0f, 0.0f));
+
+        vkCmdUpdateBuffer(cmd,
+                          mGbufferPipeline.mDescriptors[0].mBuffers[0].getRawBuffer(),
+                          0,
+                          sizeof(SceneBlock),
+                          &sceneBlock);
 
         // GBuffer pass
         vkCmdBeginRendering(cmd, &gBufferRenderingInfo);
@@ -780,10 +832,10 @@ uint32_t MiniEngine::Backend::VulkanDriver::getMemoryTypeIndex(const VkMemoryReq
 }
 
 MiniEngine::Backend::VulkanBuffer MiniEngine::Backend::VulkanDriver::createBuffer(
-    size_t memSize, VkBufferUsageFlags usageFlags)
+    size_t memSize, void *data, VkBufferUsageFlags usageFlags)
 {
     VulkanBuffer buffer{mActiveDevice, mGpuMemoryProperties};
-    buffer.create(memSize, usageFlags);
+    buffer.create(mMemoryAllocator, memSize, data, usageFlags);
     return buffer;
 }
 
@@ -834,9 +886,10 @@ unsigned int MiniEngine::Backend::VulkanDriver::createTexture(
 void MiniEngine::Backend::VulkanDriver::setupMesh(MiniEngine::Components::RenderableComponent* component)
 {
     auto vertexBuffer = createBuffer(component->buffer.size() * sizeof(float),
+                                     component->buffer.data(),
                                      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-    vertexBuffer.allocate();
-    vertexBuffer.flush(component->buffer.data(), component->buffer.size() * sizeof(float));
+    // vertexBuffer.allocate();
+    // vertexBuffer.flush(component->buffer.data(), component->buffer.size() * sizeof(float));
 
     component->vbuffer = std::move(vertexBuffer);
 }

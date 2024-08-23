@@ -94,20 +94,23 @@ void MiniEngine::Backend::VulkanDescriptorSet::update()
     writeSet.descriptorCount = 1;
     writeSet.descriptorType = mType;
 
-    if (mType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
+    if (mType
+        == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) { // TODO mtype should be individual to each descriptor
         for (auto &buffer : mBuffers) {
-            VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = buffer.getRawBuffer();
-            bufferInfo.offset = 0;
-            bufferInfo.range = buffer.getSize();
-            writeSet.pBufferInfo = &bufferInfo;
+            mBufferInfos.push_back({});
+            auto last = mBufferInfos.back();
+            last.buffer = buffer.getRawBuffer();
+            last.offset = 0;
+            last.range = buffer.getSize();
+            writeSet.pBufferInfo = &last;
         }
     } else if (mType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE) {
         for (auto &image : mImages) {
-            VkDescriptorImageInfo imageInfo{};
-            imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-            imageInfo.imageView = image->getImageView();
-            writeSet.pImageInfo = &imageInfo;
+            mImageInfos.push_back({});
+            auto last = mImageInfos.back();
+            last.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            last.imageView = image->getImageView();
+            writeSet.pImageInfo = &last;
         }
     } else {
         MiniEngine::Logger::eprint("Descriptor type error during update");

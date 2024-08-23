@@ -48,6 +48,8 @@ public:
 private:
     std::vector<VulkanBuffer> mBuffers;
     std::vector<VulkanImage *> mImages;
+    std::vector<VkDescriptorBufferInfo> mBufferInfos;
+    std::vector<VkDescriptorImageInfo> mImageInfos;
     VkDescriptorSet mDescriptorSet;
     VkDescriptorSetLayout mLayout;
     VkDescriptorType mType;

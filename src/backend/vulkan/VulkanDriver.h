@@ -10,6 +10,7 @@
 #include "VulkanSwapchain.h"
 #include "types/EngineTypes.h"
 #include "utils/DynamicArray.h"
+#include <VulkanMemory.h>
 #include <vector>
 
 namespace MiniEngine
@@ -117,6 +118,7 @@ private:
     void createGBufferPipeline();
     void createLightingPipeline();
     void createDisplaySemaphores();
+    void initializeMemoryAllocator();
 
     void createPipelineBarrier(VkImage image,
                                VkCommandBuffer buffer,
@@ -132,7 +134,7 @@ private:
     void acquireNextImage(uint32_t *image, uint32_t *displaySemaphoreIndex);
     uint32_t getMemoryTypeIndex(const VkMemoryRequirements *memReqs);
 
-    VulkanBuffer createBuffer(size_t memSize, VkBufferUsageFlags usageFlags);
+    VulkanBuffer createBuffer(size_t memSize, void *data, VkBufferUsageFlags usageFlags);
 
     friend class VulkanPipeline;
     friend class VulkanDescriptorSet;

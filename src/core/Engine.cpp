@@ -18,9 +18,6 @@ namespace MiniEngine
 		mGraphicsPlatform->initialize(params, this);
 
 		mShaderRegistry = std::make_unique<ShaderRegistry>(mGraphicsPlatform->getDriver());
-		mGlobalBufferRegistry = std::make_unique<GlobalBufferRegistry>(mGraphicsPlatform->getDriver());
-
-		mGlobalBufferRegistry->createNewBinding(GlobalBufferRegistry::BlockType::SceneBlock, 0);
 
 		mShaderRegistry->loadDeferredShader();
 		mShaderRegistry->loadPbrShader();

@@ -34,21 +34,21 @@ int main(void)
 	//MiniEngine::Texture roughness = engine.loadTexture(RESOLVE_PATH("/assets/roughness.jpg"), MiniEngine::Texture::TextureType::Default, false);
 	//MiniEngine::Texture texture2 = engine.loadTexture(RESOLVE_PATH("/assets/hdri.hdr"), MiniEngine::Texture::TextureType::CubeMap, true);
 
-	auto material = MiniEngine::Material::Creator()
-		.addTexture(MiniEngine::Types::TextureType::Diffuse, texture)
-		//.addTexture(MiniEngine::Types::TextureType::Normal, normal)
-		//.addTexture(MiniEngine::Types::TextureType::Roughness, roughness)
-		.addShader(engine.getShaderRegistry()->getDeferredShader())
-		.addMaterialProperty(MiniEngine::Material::PropertyType::Roughness, 0.15f)
-		.addMaterialProperty(MiniEngine::Material::PropertyType::Metallic, 0.f)
-		.create();
+    auto material = MiniEngine::Material::Creator()
+                        .addTexture(MiniEngine::Types::TextureType::Diffuse, texture)
+                        //.addTexture(MiniEngine::Types::TextureType::Normal, normal)
+                        //.addTexture(MiniEngine::Types::TextureType::Roughness, roughness)
+                        .addShader(engine.getShaderRegistry()->getDeferredShader())
+                        .addMaterialProperty(MiniEngine::Material::PropertyType::Roughness, 0.15f)
+                        .addMaterialProperty(MiniEngine::Material::PropertyType::Metallic, 0.f)
+                        .create();
 
-	//auto mesh = MiniEngine::Renderable::Builder()
-	//	.addModel(RESOLVE_PATH("/assets/sphere.glb"))
-	//	.addMaterialInstance(&material)
-	//	.build(&scene, meshEntity);
+    //auto mesh = MiniEngine::Renderable::Builder()
+    //	.addModel(RESOLVE_PATH("/assets/sphere.glb"))
+    //	.addMaterialInstance(&material)
+    //	.build(&scene, meshEntity);
 
-	//auto skyBox = MiniEngine::Skybox::Builder()
+    //auto skyBox = MiniEngine::Skybox::Builder()
 	//	.setTexture(texture2)
 	//	.build(&scene, skyBoxEntity);
 
@@ -70,6 +70,7 @@ int main(void)
 	////	.build(&scene, meshEntity);
 
     auto mesh = MiniEngine::Renderable::Builder()
+                    .addMaterialInstance(&material)
                     .addBufferData(
                         {0.0, -0.5, 1.0, 0.0, 0.0, 0.5, -0.5, 0.0, 1.0, 0.0, 0.5, 0.0, 0.0, 0.0, 1.0})
                     .addIndices({0, 1, 2, 0, 2, 3})
@@ -85,10 +86,10 @@ int main(void)
               .build(&scene, meshEntity2);
 
     auto camera = MiniEngine::Camera::Builder()
-                      .setPosition({3, 0, 3})
+                      .setPosition({0, 0, 2})
                       .setAspectRatio((float) params.screenWidth / (float) params.screenHeight)
                       .setNearFarPlane(0.1f, 1000.0f)
-                      .setFOV(45)
+                      .setFOV(120)
                       .build(&scene, cameraEntity2);
 
     //auto light = MiniEngine::Light::Builder()
@@ -97,8 +98,8 @@ int main(void)
 	//	.build(&scene, mainLightEntity);
 
 	//// todo, hides when x/z 0. Need to set forward vector etc.
-	//scene.setCameraActive(camera);
-	//
+    scene.setCameraActive(camera);
+    //
 	////scene.addLight(light);
 	//scene.setSkyboxActive(&skyBox);
 	////scene.addLight(light);

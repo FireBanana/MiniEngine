@@ -108,42 +108,42 @@ namespace MiniEngine
 
 	void Scene::setCameraActive(const Components::CameraComponent* camera)
 	{
-		glm::vec3 pos = { camera->position.x, camera->position.y, camera->position.z };
-		auto sceneBlock = mEngine->getGlobalBufferRegistry()->getSceneBlockInstance();
+        // glm::vec3 pos = { camera->position.x, camera->position.y, camera->position.z };
+        // auto sceneBlock = mEngine->getGlobalBufferRegistry()->getSceneBlockInstance();
 
-		auto view = glm::lookAt(pos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		auto projection =
-			glm::perspective(
-				glm::radians(camera->fov),
-				camera->aspectRatio, camera->nearPlane,
-				camera->farPlane);
+        // auto view = glm::lookAt(pos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        // auto projection =
+        // 	glm::perspective(
+        // 		glm::radians(camera->fov),
+        // 		camera->aspectRatio, camera->nearPlane,
+        // 		camera->farPlane);
 
-		sceneBlock->view = view;
-		sceneBlock->projection = projection;
-		sceneBlock->cameraPos = { camera->position.x, camera->position.y, camera->position.z };
+        // sceneBlock->view = view;
+        // sceneBlock->projection = projection;
+        // sceneBlock->cameraPos = { camera->position.x, camera->position.y, camera->position.z };
 
-		mEngine->getGlobalBufferRegistry()->updateUniformData(
-			GlobalBufferRegistry::BlockType::SceneBlock,
-			offsetof(GlobalBufferRegistry::SceneBlock, GlobalBufferRegistry::SceneBlock::view),
-			sizeof(sceneBlock->view) + sizeof(sceneBlock->projection) + sizeof(sceneBlock->cameraPos), &(sceneBlock->view));
+        // mEngine->getGlobalBufferRegistry()->updateUniformData(
+        // 	GlobalBufferRegistry::BlockType::SceneBlock,
+        // 	offsetof(GlobalBufferRegistry::SceneBlock, GlobalBufferRegistry::SceneBlock::view),
+        // 	sizeof(sceneBlock->view) + sizeof(sceneBlock->projection) + sizeof(sceneBlock->cameraPos), &(sceneBlock->view));
 
-		mEngine->getShaderRegistry()->bindGlobalBufferToAll("SceneBlock", 0);
-	}
-	
-	void Scene::addLight(const Components::LightComponent* light)
+        // mEngine->getShaderRegistry()->bindGlobalBufferToAll("SceneBlock", 0);
+    }
+
+    void Scene::addLight(const Components::LightComponent* light)
 	{
-		auto sceneBlock = mEngine->getGlobalBufferRegistry()->getSceneBlockInstance();
-		sceneBlock->lightPos1 = light->position;
-		sceneBlock->lightIntensity1 = light->intensity;
+        // auto sceneBlock = mEngine->getGlobalBufferRegistry()->getSceneBlockInstance();
+        // sceneBlock->lightPos1 = light->position;
+        // sceneBlock->lightIntensity1 = light->intensity;
 
-		mEngine->getGlobalBufferRegistry()->updateUniformData(
-			GlobalBufferRegistry::BlockType::SceneBlock,
-			offsetof(GlobalBufferRegistry::SceneBlock, GlobalBufferRegistry::SceneBlock::lightPos1),
-			sizeof(Vector3) + sizeof(float),
-			&(sceneBlock->lightPos1));
+        // mEngine->getGlobalBufferRegistry()->updateUniformData(
+        // 	GlobalBufferRegistry::BlockType::SceneBlock,
+        // 	offsetof(GlobalBufferRegistry::SceneBlock, GlobalBufferRegistry::SceneBlock::lightPos1),
+        // 	sizeof(Vector3) + sizeof(float),
+        // 	&(sceneBlock->lightPos1));
 
-		mEngine->getShaderRegistry()->bindGlobalBufferToAll("SceneBlock", 0);
-	}
+        // mEngine->getShaderRegistry()->bindGlobalBufferToAll("SceneBlock", 0);
+    }
 
 	void Scene::setSkyboxActive(Components::SkyboxComponent* skybox)
 	{

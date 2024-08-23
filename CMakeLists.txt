@@ -173,7 +173,7 @@ target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3.
 target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3dll.lib)
 
 target_include_directories(MiniEngine PUBLIC ${vma_SOURCE_DIR}/include)
-add_subdirectory(${vma_SOURCE_DIR} ${vma_BINARY_DIR})
+#add_subdirectory(${vma_SOURCE_DIR} ${vma_BINARY_DIR})
 
 # Add secondary tools
 
