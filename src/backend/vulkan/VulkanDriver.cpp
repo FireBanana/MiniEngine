@@ -339,10 +339,10 @@ void MiniEngine::Backend::VulkanDriver::createDescriptorPools()
 
     // view, projection, and camera position
     uniformScenePoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    uniformScenePoolSize.descriptorCount = 1;
+    uniformScenePoolSize.descriptorCount = 2;
 
     imagePoolSize.type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-    imagePoolSize.descriptorCount = 1;
+    imagePoolSize.descriptorCount = 2;
 
     VkDescriptorPoolCreateInfo uniformDescriptorPoolInfo{
         VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
@@ -350,11 +350,11 @@ void MiniEngine::Backend::VulkanDriver::createDescriptorPools()
         VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
 
     uniformDescriptorPoolInfo.poolSizeCount = 1;
-    uniformDescriptorPoolInfo.maxSets = 1;
+    uniformDescriptorPoolInfo.maxSets = 2;
     uniformDescriptorPoolInfo.pPoolSizes = &uniformScenePoolSize;
 
     imageDescriptorPoolInfo.poolSizeCount = 1;
-    imageDescriptorPoolInfo.maxSets = 1;
+    imageDescriptorPoolInfo.maxSets = 2;
     imageDescriptorPoolInfo.pPoolSizes = &imagePoolSize;
 
     vkCreateDescriptorPool(mActiveDevice, &uniformDescriptorPoolInfo, nullptr, &mDescriptorPools[0]);
@@ -418,7 +418,7 @@ void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
 		.setPool(mDescriptorPools[1])
 		.build();
 
-    //descriptorSet.loadData(&mImageAttachments[0]);
+    descriptorSet.loadData(&mImageAttachments[0]);
     descriptorSet.update();
 
     mLightingPipeline = VulkanPipeline::Builder(this)
