@@ -47,14 +47,21 @@ MiniEngine::Backend::VulkanDescriptorSet MiniEngine::Backend::VulkanDescriptorSe
     VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo{
         VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
 
-    VkDescriptorSetLayoutBinding bindings{};
-    bindings.binding = 0;
-    bindings.descriptorCount = 1;
-    bindings.stageFlags = mStageFlags;
-    bindings.descriptorType = mType;
+    std::vector<VkDescriptorSetLayoutBinding> bindings{};
 
-    descriptorLayoutInfo.bindingCount = 1;
-    descriptorLayoutInfo.pBindings = &bindings;
+    for (auto i = 0; i < mCount; ++i) {
+        VkDescriptorSetLayoutBinding binding{};
+
+        binding.binding = i;
+        binding.descriptorCount = 1;
+        binding.stageFlags = mStageFlags;
+        binding.descriptorType = mType;
+
+        bindings.push_back(binding);
+    }
+
+    descriptorLayoutInfo.bindingCount = mCount;
+    descriptorLayoutInfo.pBindings = bindings.data();
 
     vkCreateDescriptorSetLayout(mDriver->mActiveDevice,
                                 &descriptorLayoutInfo,

@@ -25,8 +25,9 @@ layout(location = 3) out vec4 roughnessAttachment;
 void main()
 {
     vec3 c = in_position;
+    vec4 d = imageLoad(_diffuse, ivec2(c.x, c.y));
 
-    colorAttachment = vec4(c.x, c.y, 0, 1.);
+    colorAttachment = vec4(d.x, d.y, 0, 1.);
     positionAttachment = vec4(c.y, c.x, 0, 1.);
     normalAttachment = vec4(c.x, c.x, 0, 1.);
     roughnessAttachment = vec4(c.y, c.y, 0, 1.);

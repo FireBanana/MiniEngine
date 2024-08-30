@@ -49,7 +49,9 @@ namespace MiniEngine::Backend
 		VkImage mImage;
 		VkDeviceMemory mMemory;
 		VkImageView mImageView;
-	};
+
+        friend class VulkanDriver;
+    };
 }
 
 #endif

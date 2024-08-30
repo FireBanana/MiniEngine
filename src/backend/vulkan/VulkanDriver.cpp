@@ -578,6 +578,28 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene *
         gBufferRenderingInfo.pDepthAttachment = &depthAttachment;
         gBufferRenderingInfo.renderArea = {0, 0, mParams.screenWidth, mParams.screenHeight};
 
+        auto firstCamera = scene->getCameraComponentDatabase()[0]; //TODO: fix
+
+        SceneBlock sceneBlock{};
+        sceneBlock.cameraPosition = glm::vec3(firstCamera.position.x,
+                                              firstCamera.position.y,
+                                              firstCamera.position.z);
+        sceneBlock.projection = glm::perspective(glm::radians(firstCamera.fov),
+                                                 firstCamera.aspectRatio,
+                                                 firstCamera.nearPlane,
+                                                 firstCamera.farPlane);
+        sceneBlock.view = glm::lookAt(glm::vec3(firstCamera.position.x,
+                                                firstCamera.position.y,
+                                                firstCamera.position.z),
+                                      glm::vec3(0.0f, 0.0f, 0.0f),
+                                      glm::vec3(0.0f, -1.0f, 0.0f));
+
+        vkCmdUpdateBuffer(cmd,
+                          mGbufferPipeline.mDescriptors[0].mBuffers[0].getRawBuffer(),
+                          0,
+                          sizeof(SceneBlock),
+                          &sceneBlock);
+
         createPipelineBarrier(swapchainImage,
                               cmd,
                               VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -598,6 +620,16 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene *
                               VK_IMAGE_LAYOUT_GENERAL,
                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+        createPipelineBarrier(colorImage,
+                              cmd,
+                              VK_ACCESS_TRANSFER_WRITE_BIT,
+                              VK_ACCESS_TRANSFER_READ_BIT,
+                              VK_IMAGE_ASPECT_COLOR_BIT,
+                              VK_IMAGE_LAYOUT_GENERAL,
+                              VK_IMAGE_LAYOUT_GENERAL,
+                              VK_PIPELINE_STAGE_TRANSFER_BIT,
+                              VK_PIPELINE_STAGE_VERTEX_SHADER_BIT);
 
         createPipelineBarrier(positionImage,
                               cmd,
@@ -628,28 +660,6 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene *
                               VK_IMAGE_LAYOUT_GENERAL,
                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-
-        auto firstCamera = scene->getCameraComponentDatabase()[0]; //TODO: fix
-
-        SceneBlock sceneBlock{};
-        sceneBlock.cameraPosition = glm::vec3(firstCamera.position.x,
-                                              firstCamera.position.y,
-                                              firstCamera.position.z);
-        sceneBlock.projection = glm::perspective(glm::radians(firstCamera.fov),
-                                                 firstCamera.aspectRatio,
-                                                 firstCamera.nearPlane,
-                                                 firstCamera.farPlane);
-        sceneBlock.view = glm::lookAt(glm::vec3(firstCamera.position.x,
-                                                firstCamera.position.y,
-                                                firstCamera.position.z),
-                                      glm::vec3(0.0f, 0.0f, 0.0f),
-                                      glm::vec3(0.0f, -1.0f, 0.0f));
-
-        vkCmdUpdateBuffer(cmd,
-                          mGbufferPipeline.mDescriptors[0].mBuffers[0].getRawBuffer(),
-                          0,
-                          sizeof(SceneBlock),
-                          &sceneBlock);
 
         // GBuffer pass
         vkCmdBeginRendering(cmd, &gBufferRenderingInfo);
@@ -880,16 +890,29 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 unsigned int MiniEngine::Backend::VulkanDriver::createTexture(
     int width, int height, int channels, void *data, TextureType type)
 {
-	return 0; //todo: fix
+    auto texture = VulkanImage::Builder(this)
+                       .setWidth(mParams.screenWidth)
+                       .setHeight(mParams.screenHeight)
+                       .setChannels(4)
+                       .setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT
+                                      | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+                       .setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
+                       .setFormat(mActiveSwapchain.getFormat()) // todo change
+                       .setData(data)
+                       .build();
+
+    // todo remove, always adding to gbuffer textures
+    mGbufferPipeline.mDescriptors[1].loadData(&texture);
+
+    return 0;
 }
 
 void MiniEngine::Backend::VulkanDriver::setupMesh(MiniEngine::Components::RenderableComponent* component)
 {
     auto vertexBuffer = createBuffer(component->buffer.size() * sizeof(float),
                                      component->buffer.data(),
-                                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-    // vertexBuffer.allocate();
-    // vertexBuffer.flush(component->buffer.data(), component->buffer.size() * sizeof(float));
+                                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
+                                         | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
     component->vbuffer = std::move(vertexBuffer);
 }

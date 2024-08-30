@@ -70,35 +70,32 @@ MiniEngine::Backend::VulkanImage MiniEngine::Backend::VulkanImage::Builder::buil
 	attachmentImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 	attachmentImageInfo.usage = mUsageFlags;
 
-	VkMemoryAllocateInfo attachmentAllocateInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
-	VkMemoryRequirements attachmentMemReqs;
-	VkImage attachmentImage;
-	VkImageView attachmentImageView;
-	VkDeviceMemory attachmentMemory;
+    VkImage attachmentImage;
+    VkImageView attachmentImageView;
 
-	vkCreateImage(mDriver->mActiveDevice, &attachmentImageInfo, nullptr, &attachmentImage);
-	vkGetImageMemoryRequirements(mDriver->mActiveDevice, attachmentImage, &attachmentMemReqs);
+    VmaAllocationCreateInfo allocInfo = {};
+    allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+    allocInfo.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
 
-	// Get memory info
+    VmaAllocation allocation;
+    vmaCreateImage(mDriver->mMemoryAllocator,
+                   &attachmentImageInfo,
+                   &allocInfo,
+                   &attachmentImage,
+                   &allocation,
+                   nullptr);
 
-	uint32_t index = mDriver->getMemoryTypeIndex(&attachmentMemReqs);
-
-	attachmentAllocateInfo.allocationSize = attachmentMemReqs.size;
-	attachmentAllocateInfo.memoryTypeIndex = index;
-	vkAllocateMemory(mDriver->mActiveDevice, &attachmentAllocateInfo, nullptr, &attachmentMemory);
-	vkBindImageMemory(mDriver->mActiveDevice, attachmentImage, attachmentMemory, 0);
-
-	VkImageViewCreateInfo colorImageViewInfo{ VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
-	colorImageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	colorImageViewInfo.format = mFormat;
-	colorImageViewInfo.subresourceRange = {};
-	colorImageViewInfo.subresourceRange.aspectMask = mAspectFlags;
-	colorImageViewInfo.subresourceRange.baseMipLevel = 0;
-	colorImageViewInfo.subresourceRange.levelCount = 1;
-	colorImageViewInfo.subresourceRange.baseArrayLayer = 0;
-	colorImageViewInfo.subresourceRange.layerCount = 1;
-	colorImageViewInfo.image = attachmentImage;
-	vkCreateImageView(mDriver->mActiveDevice, &colorImageViewInfo, nullptr, &attachmentImageView);
+    VkImageViewCreateInfo colorImageViewInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
+    colorImageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    colorImageViewInfo.format = mFormat;
+    colorImageViewInfo.subresourceRange = {};
+    colorImageViewInfo.subresourceRange.aspectMask = mAspectFlags;
+    colorImageViewInfo.subresourceRange.baseMipLevel = 0;
+    colorImageViewInfo.subresourceRange.levelCount = 1;
+    colorImageViewInfo.subresourceRange.baseArrayLayer = 0;
+    colorImageViewInfo.subresourceRange.layerCount = 1;
+    colorImageViewInfo.image = attachmentImage;
+    vkCreateImageView(mDriver->mActiveDevice, &colorImageViewInfo, nullptr, &attachmentImageView);
 
 #ifdef GRAPHICS_DEBUG
 
@@ -114,8 +111,7 @@ MiniEngine::Backend::VulkanImage MiniEngine::Backend::VulkanImage::Builder::buil
 #endif
 
 	image.mImage = attachmentImage;
-	image.mImageView = attachmentImageView;
-	image.mMemory = attachmentMemory;
+    image.mImageView = attachmentImageView;
 
-	return image;
+    return image;
 }
