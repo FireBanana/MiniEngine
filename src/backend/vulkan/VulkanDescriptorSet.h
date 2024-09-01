@@ -27,6 +27,7 @@ public:
         Builder &setType(VkDescriptorType type);
         Builder &setShaderStages(VkShaderStageFlags flags);
         Builder &setPool(VkDescriptorPool pool); // autoselect based on type?
+        Builder &setDebugName(std::string &&name);
         VulkanDescriptorSet build();
 
     private:
@@ -34,6 +35,7 @@ public:
         VkDescriptorPool mPool;
         int mBinding;
         int mCount;
+        std::string mDebugName;
         VkDescriptorType mType;
         VkShaderStageFlags mStageFlags;
     };

@@ -1,15 +1,17 @@
 #include "VulkanBuffer.h"
+#include "VulkanDriver.h"
 
-MiniEngine::Backend::VulkanBuffer::VulkanBuffer(VkDevice device,
+MiniEngine::Backend::VulkanBuffer::VulkanBuffer(VulkanDriver *driver,
                                                 VkPhysicalDeviceMemoryProperties memProperties)
-    : mDevice(device)
+    : mDriver(driver)
     , mMemoryProperties(memProperties)
 {}
 
 void MiniEngine::Backend::VulkanBuffer::create(VmaAllocator &allocator,
                                                size_t memSize,
                                                void *data,
-                                               VkBufferUsageFlags flags)
+                                               VkBufferUsageFlags flags, 
+                                               std::string&& debugName)
 {
     mSize = memSize;
 
@@ -30,5 +32,20 @@ void MiniEngine::Backend::VulkanBuffer::create(VmaAllocator &allocator,
 
     VmaAllocation allocation;
     vmaCreateBuffer(allocator, &bufferInfo, &allocInfo, &mBuffer, &allocation, nullptr);
+
+#ifdef GRAPHICS_DEBUG
+
+    if (!debugName.empty()) {
+        VkDebugUtilsObjectNameInfoEXT debugNameInfo{};
+        debugNameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        debugNameInfo.pNext = NULL;
+        debugNameInfo.objectType = VK_OBJECT_TYPE_BUFFER;
+        debugNameInfo.objectHandle = (uint64_t)mBuffer;
+        debugNameInfo.pObjectName = debugName.c_str();
+
+        vkSetDebugUtilsObjectNameEXT(mDriver->mActiveDevice, &debugNameInfo);
+    }
+#endif
+
     vmaCopyMemoryToAllocation(allocator, data, allocation, 0, memSize);
 }

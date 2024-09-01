@@ -134,12 +134,13 @@ private:
     void acquireNextImage(uint32_t *image, uint32_t *displaySemaphoreIndex);
     uint32_t getMemoryTypeIndex(const VkMemoryRequirements *memReqs);
 
-    VulkanBuffer createBuffer(size_t memSize, void *data, VkBufferUsageFlags usageFlags);
+    VulkanBuffer createBuffer(size_t memSize, void *data, VkBufferUsageFlags usageFlags, std::string &&debugName = "");
 
     friend class VulkanPipeline;
     friend class VulkanDescriptorSet;
     friend class VulkanImage;
     friend class VulkanSwapchain;
+    friend class VulkanBuffer;
 };
 }
 }

@@ -5,6 +5,9 @@
 #include "VulkanMemory.h"
 
 namespace MiniEngine::Backend {
+
+    class VulkanDriver;
+
 class VulkanBuffer
 {
 public:
@@ -22,12 +25,12 @@ public:
 private:
     size_t mSize;
     VkBuffer mBuffer;
-    VkDevice mDevice;
+    VulkanDriver *mDriver;
     VkDeviceMemory mBufferMemory;
     VkPhysicalDeviceMemoryProperties mMemoryProperties;
 
-    VulkanBuffer(VkDevice device, VkPhysicalDeviceMemoryProperties memProperties);
-    void create(VmaAllocator &allocator, size_t memSize, void *data, VkBufferUsageFlags flags);
+    VulkanBuffer(VulkanDriver* driver, VkPhysicalDeviceMemoryProperties memProperties);
+    void create(VmaAllocator &allocator, size_t memSize, void *data, VkBufferUsageFlags flags, std::string &&debugName = "");
 
     friend class VulkanDriver;
 };

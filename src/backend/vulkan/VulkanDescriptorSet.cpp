@@ -40,6 +40,13 @@ MiniEngine::Backend::VulkanDescriptorSet::Builder::setPool(VkDescriptorPool pool
     return *this;
 }
 
+MiniEngine::Backend::VulkanDescriptorSet::Builder&
+MiniEngine::Backend::VulkanDescriptorSet::Builder::setDebugName(std::string&& name) 
+{
+    mDebugName = name;
+    return *this;
+}
+
 MiniEngine::Backend::VulkanDescriptorSet MiniEngine::Backend::VulkanDescriptorSet::Builder::build()
 {
     VulkanDescriptorSet set{};
@@ -75,6 +82,20 @@ MiniEngine::Backend::VulkanDescriptorSet MiniEngine::Backend::VulkanDescriptorSe
     allocInfo.pSetLayouts = &set.mLayout;
 
     vkAllocateDescriptorSets(mDriver->mActiveDevice, &allocInfo, &set.mDescriptorSet);
+
+#ifdef GRAPHICS_DEBUG
+
+    if (!mDebugName.empty()) {
+        VkDebugUtilsObjectNameInfoEXT debugNameInfo{};
+        debugNameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        debugNameInfo.pNext = NULL;
+        debugNameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET;
+        debugNameInfo.objectHandle = (uint64_t)(set.mDescriptorSet);
+        debugNameInfo.pObjectName = mDebugName.c_str();
+
+        vkSetDebugUtilsObjectNameEXT(mDriver->mActiveDevice, &debugNameInfo);
+    }
+#endif
 
     set.mDriver = mDriver;
     set.mType = mType;
