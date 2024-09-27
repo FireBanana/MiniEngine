@@ -102,6 +102,7 @@ private:
     VmaAllocator mMemoryAllocator;
     int32_t mActiveQueue{-1};
     VkPhysicalDeviceMemoryProperties mGpuMemoryProperties;
+    VulkanImage mPlaceholderImage;
 
     std::array<VulkanImage, 5> mImageAttachments;
     Utils::DynamicArray<DisplaySemaphore> mDisplaySemaphoreArray;
@@ -119,16 +120,6 @@ private:
     void createLightingPipeline();
     void createDisplaySemaphores();
     void initializeMemoryAllocator();
-
-    void createPipelineBarrier(VkImage image,
-                               VkCommandBuffer buffer,
-                               VkAccessFlags srcAccessMask,
-                               VkAccessFlags dstAccessMask,
-                               VkImageAspectFlags aspectMask,
-                               VkImageLayout oldLayout,
-                               VkImageLayout newLayout,
-                               VkPipelineStageFlags srcStageMask,
-                               VkPipelineStageFlags dstStageMask);
 
     void loadShaderModule();
     void acquireNextImage(uint32_t *image, uint32_t *displaySemaphoreIndex);
