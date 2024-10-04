@@ -112,8 +112,6 @@ MiniEngine::Backend::VulkanSwapchain MiniEngine::Backend::VulkanSwapchain::Build
         mWidth = swapchainSize.width;
     }
 
-    VkPresentModeKHR swapchainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-
     uint32_t desiredSwapchainImages = surfaceProperties.minImageCount + 1;
 
     if ((surfaceProperties.maxImageCount > 0)
@@ -135,7 +133,7 @@ MiniEngine::Backend::VulkanSwapchain MiniEngine::Backend::VulkanSwapchain::Build
                                | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
     swapchainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     swapchainInfo.compositeAlpha = composite;
-    swapchainInfo.presentMode = swapchainPresentMode;
+    swapchainInfo.presentMode = mPresentMode;
     swapchainInfo.clipped = true;
 
     vkCreateSwapchainKHR(mDriver->mActiveDevice, &swapchainInfo, nullptr, &vSwapchain.mSwapchain);

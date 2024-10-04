@@ -331,16 +331,16 @@ void MiniEngine::Backend::VulkanDriver::createDevice(const std::vector<const cha
 
 void MiniEngine::Backend::VulkanDriver::createSwapchain()
 {
-	auto swapchain = VulkanSwapchain::Builder(this)
-		.setHeight(mParams.screenHeight)
-		.setWidth(mParams.screenWidth)
-		.setPreferredDepthFormat(VK_FORMAT_D32_SFLOAT)
-		.setPreferredFormat(VK_FORMAT_R16G16B16A16_SFLOAT)
-		.setPresentMode(VK_PRESENT_MODE_FIFO_KHR)
-		.setSurface(mSurface)
-		.build();
+    auto swapchain = VulkanSwapchain::Builder(this)
+                         .setHeight(mParams.screenHeight)
+                         .setWidth(mParams.screenWidth)
+                         .setPreferredDepthFormat(VK_FORMAT_D32_SFLOAT)
+                         .setPreferredFormat(VK_FORMAT_R16G16B16A16_SFLOAT)
+                         .setPresentMode(VK_PRESENT_MODE_IMMEDIATE_KHR)
+                         .setSurface(mSurface)
+                         .build();
 
-	mActiveSwapchain = swapchain;
+    mActiveSwapchain = swapchain;
 }
 
 void MiniEngine::Backend::VulkanDriver::createDescriptorPools()
