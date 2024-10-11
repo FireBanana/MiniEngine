@@ -72,7 +72,7 @@ FetchContent_Declare(
 FetchContent_Declare(
         imgui
         GIT_REPOSITORY https://github.com/ocornut/imgui
-        GIT_TAG v1.89.6
+        GIT_TAG v1.91.3
 )
 
 FetchContent_Declare(
@@ -146,7 +146,7 @@ target_include_directories(MiniEngine PUBLIC ${spdlog_SOURCE_DIR}/include/)
 
 add_library(IMGUI EXCLUDE_FROM_ALL
         ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
-        ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp
         ${imgui_SOURCE_DIR}/imgui.cpp
         ${imgui_SOURCE_DIR}/imgui_demo.cpp
         ${imgui_SOURCE_DIR}/imgui_draw.cpp
@@ -156,6 +156,8 @@ add_library(IMGUI EXCLUDE_FROM_ALL
 target_include_directories(IMGUI PUBLIC libs/glfw/include)
 target_include_directories(IMGUI PUBLIC ${imgui_SOURCE_DIR}/backends)
 target_include_directories(IMGUI PUBLIC ${imgui_SOURCE_DIR}/)
+target_include_directories(IMGUI PUBLIC ${volk_SOURCE_DIR}/)
+target_include_directories(IMGUI PUBLIC "$ENV{VULKAN_SDK}\\Include")
 target_link_libraries(MiniEngine IMGUI)
 
 target_include_directories(MiniEngine PUBLIC ${glslang_SOURCE_DIR}/glslang)
@@ -180,6 +182,7 @@ target_include_directories(MiniEngine PUBLIC ${vma_SOURCE_DIR}/include)
 add_subdirectory(tools/Loader)
 add_subdirectory(tools/GlslCompiler)
 add_subdirectory(examples/default)
+add_subdirectory(editor)
 
 target_include_directories(MiniEngine PUBLIC tools/Loader/src)
 target_include_directories(MiniEngine PUBLIC tools/GlslCompiler/src)
