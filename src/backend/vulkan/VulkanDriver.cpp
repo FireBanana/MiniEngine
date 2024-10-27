@@ -636,53 +636,22 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene* 
             .setDstStageMask(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
             .build();
 
-        VulkanBarrier::Builder()
-            .setCmdBuffer(&cmd)
-            .setImage(colorImage)
-            .setSrcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-            .setDstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-            .setAspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
-            .setOldLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-            .setNewLayout(VK_IMAGE_LAYOUT_GENERAL)
-            .setSrcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-            .setDstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-            .build();
-
-        VulkanBarrier::Builder()
-            .setCmdBuffer(&cmd)
-            .setImage(positionImage)
-            .setSrcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-            .setDstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-            .setAspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
-            .setOldLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-            .setNewLayout(VK_IMAGE_LAYOUT_GENERAL)
-            .setSrcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-            .setDstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-            .build();
-
-        VulkanBarrier::Builder()
-            .setCmdBuffer(&cmd)
-            .setImage(normalImage)
-            .setSrcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-            .setDstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-            .setAspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
-            .setOldLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-            .setNewLayout(VK_IMAGE_LAYOUT_GENERAL)
-            .setSrcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-            .setDstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-            .build();
-
-        VulkanBarrier::Builder()
-            .setCmdBuffer(&cmd)
-            .setImage(roughnessImage)
-            .setSrcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-            .setDstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-            .setAspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
-            .setOldLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-            .setNewLayout(VK_IMAGE_LAYOUT_GENERAL)
-            .setSrcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-            .setDstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-            .build();
+		// Create barrier for all attachments
+		// The last two are swapchain and depth, hence not needed here
+		for (int i = 0; i < EnumExtension::elementCount<ImageAttachmentType>() - 2; ++i) 
+		{
+			VulkanBarrier::Builder()
+				.setCmdBuffer(&cmd)
+				.setImage(mImageAttachments[i].getRawImage())
+				.setSrcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+				.setDstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+				.setAspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
+				.setOldLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+				.setNewLayout(VK_IMAGE_LAYOUT_GENERAL)
+				.setSrcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+				.setDstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+				.build();
+		}
 
         // GBuffer pass
         vkCmdUpdateBuffer(cmd,
@@ -691,6 +660,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene* 
                           sizeof(SceneBlock),
                           &sceneBlock);
 
+		// Uniform buffer barrier
         VulkanBarrier::Builder()
             .setCmdBuffer(&cmd)
             .setBuffer(mGbufferPipeline.mDescriptors[0].mBuffers[0].getRawBuffer())
@@ -767,17 +737,20 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene* 
 		lightingRenderingInfo.pColorAttachments = lightingAttachmentArray.begin();
 		lightingRenderingInfo.renderArea = { 0, 0, mParams.screenWidth, mParams.screenHeight };
 
-        VulkanBarrier::Builder()
-            .setCmdBuffer(&cmd)
-            .setImage(colorImage)
-            .setSrcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-            .setDstAccessMask(VK_ACCESS_SHADER_READ_BIT)
-            .setAspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
-            .setOldLayout(VK_IMAGE_LAYOUT_GENERAL)
-            .setNewLayout(VK_IMAGE_LAYOUT_GENERAL)
-            .setSrcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-            .setDstStageMask(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
-            .build();
+		for (int i = 0; i < EnumExtension::elementCount<ImageAttachmentType>() - 2; ++i)
+		{
+			VulkanBarrier::Builder()
+				.setCmdBuffer(&cmd)
+				.setImage(mImageAttachments[i].getRawImage())
+				.setSrcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+				.setDstAccessMask(VK_ACCESS_SHADER_READ_BIT)
+				.setAspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
+				.setOldLayout(VK_IMAGE_LAYOUT_GENERAL)
+				.setNewLayout(VK_IMAGE_LAYOUT_GENERAL)
+				.setSrcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+				.setDstStageMask(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
+				.build();
+		}
 
         // Create new attachment array here with different load store
         // Lighting pass
