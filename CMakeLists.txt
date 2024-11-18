@@ -41,10 +41,10 @@ target_include_directories(MiniEngine PUBLIC src/core/utils)
 target_include_directories(MiniEngine PUBLIC src/core/types)
 target_include_directories(MiniEngine PUBLIC shaders/)
 
-target_include_directories(MiniEngine PUBLIC "$ENV{VULKAN_SDK}\\Include")
+target_include_directories(MiniEngine PUBLIC SYSTEM "$ENV{VULKAN_SDK}\\Include")
 
 if(GRAPHICS_DEBUG)
-    target_include_directories(MiniEngine PUBLIC $ENV{RENDERDOC}/) # Make sure RenderDoc installation is added to env var(RENDERDOC)
+    target_include_directories(MiniEngine PUBLIC SYSTEM $ENV{RENDERDOC}/) # Make sure RenderDoc installation is added to env var(RENDERDOC)
 endif()
 
 if(MSVC)
@@ -130,18 +130,18 @@ if(NOT vma_POPULATED)
   FetchContent_Populate(vma)
 endif()
 
-target_include_directories(MiniEngine PUBLIC ${glm_SOURCE_DIR}/glm)
+target_include_directories(MiniEngine PUBLIC SYSTEM ${glm_SOURCE_DIR}/glm)
 target_link_libraries(MiniEngine glm)
 
-target_include_directories(MiniEngine PUBLIC ${volk_SOURCE_DIR}/)
+target_include_directories(MiniEngine PUBLIC SYSTEM ${volk_SOURCE_DIR}/)
 target_sources( MiniEngine PRIVATE ${volk_SOURCE_DIR}/volk.c)
 
-target_include_directories(MiniEngine PUBLIC ${imgui_SOURCE_DIR}/)
-target_include_directories(MiniEngine PUBLIC ${imgui_SOURCE_DIR}/backends)
+target_include_directories(MiniEngine PUBLIC SYSTEM ${imgui_SOURCE_DIR}/)
+target_include_directories(MiniEngine PUBLIC SYSTEM ${imgui_SOURCE_DIR}/backends)
 
 set(SPDLOG_BUILD_SHARED ON CACHE BOOL "Build spdlog shared lib")
 add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR})
-target_include_directories(MiniEngine PUBLIC ${spdlog_SOURCE_DIR}/include/)
+target_include_directories(MiniEngine PUBLIC SYSTEM ${spdlog_SOURCE_DIR}/include/)
 #target_link_libraries(MiniEngine spdlog)
 
 add_library(IMGUI EXCLUDE_FROM_ALL
@@ -153,12 +153,12 @@ add_library(IMGUI EXCLUDE_FROM_ALL
         ${imgui_SOURCE_DIR}/imgui_tables.cpp
         ${imgui_SOURCE_DIR}/imgui_widgets.cpp)
 
-target_include_directories(IMGUI PUBLIC libs/glfw/include)
-target_include_directories(IMGUI PUBLIC ${imgui_SOURCE_DIR}/backends)
-target_include_directories(IMGUI PUBLIC ${imgui_SOURCE_DIR}/)
+target_include_directories(IMGUI PUBLIC SYSTEM libs/glfw/include)
+target_include_directories(IMGUI PUBLIC SYSTEM ${imgui_SOURCE_DIR}/backends)
+target_include_directories(IMGUI PUBLIC SYSTEM ${imgui_SOURCE_DIR}/)
 target_link_libraries(MiniEngine IMGUI)
 
-target_include_directories(MiniEngine PUBLIC ${glslang_SOURCE_DIR}/glslang)
+target_include_directories(MiniEngine PUBLIC SYSTEM ${glslang_SOURCE_DIR}/glslang)
 
 set(ENABLE_SPVREMAPPER OFF CACHE BOOL "")
 set(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "")
@@ -172,7 +172,7 @@ target_link_libraries(MiniEngine glslang OSDependent SPIRV glslang-default-resou
 target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3.lib)
 target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3dll.lib)
 
-target_include_directories(MiniEngine PUBLIC ${vma_SOURCE_DIR}/include)
+target_include_directories(MiniEngine PUBLIC SYSTEM ${vma_SOURCE_DIR}/include)
 #add_subdirectory(${vma_SOURCE_DIR} ${vma_BINARY_DIR})
 
 # Add secondary tools

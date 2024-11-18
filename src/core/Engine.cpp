@@ -40,23 +40,24 @@ namespace MiniEngine
 	{
 		auto results = MiniTools::ImageLoader::load(path, type == Texture::TextureType::CubeMap, flipYAxis);
 
-        auto id = mGraphicsPlatform.get()
-                      ->getDriver()
-                      ->createTexture(results.width,
-                                      results.height,
-                                      results.channels,
-                                      results.data,
-                                      (Backend::VulkanDriver::TextureType) type);
+        auto img = mGraphicsPlatform.get()
+                       ->getDriver()
+                       ->createTexture(results.width,
+                                       results.height,
+                                       results.channels,
+                                       results.data,
+                                       (Backend::VulkanDriver::TextureType) type);
 
-        return { results.width, results.height, results.channels, id };
-	}
+        return img;
+    }
 
-	void Engine::addSlider(const char* name, float* value, float min, float max, std::function<void()> cb)
-	{
-		mGraphicsPlatform->getUiInterface()->createSliderPanel(name, value, min, max, cb);
-	}
+    void Engine::addSlider(
+        const char *name, float *value, float min, float max, std::function<void()> cb)
+    {
+        mGraphicsPlatform->getUiInterface()->createSliderPanel(name, value, min, max, cb);
+    }
 
-	void Engine::addCheckbox(const char* name, bool& flag, std::function<void()> cb)
+    void Engine::addCheckbox(const char* name, bool& flag, std::function<void()> cb)
 	{
 		mGraphicsPlatform->getUiInterface()->createBooleanPanel(name, flag, cb);
 	}

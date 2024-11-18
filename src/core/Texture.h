@@ -5,8 +5,7 @@ namespace MiniEngine
 {
 	class Texture
 	{
-	public:
-
+	public:        
 		enum class TextureType : int
 		{
 			Default = 0,
@@ -14,19 +13,19 @@ namespace MiniEngine
 		};
 
 		Texture() {}
-		Texture(int width, int height, int channels, unsigned int id);
-		~Texture() { /*free();*/ }
+        Texture(int width, int height, int channels);
+        ~Texture() { /*free();*/ }
 
 		inline int getHeight() const { return mHeight; }
 		inline int getWidth() const { return mWidth; }
 		inline unsigned int getId() const { return mId; }
 
-	private:
+    private:
+        static unsigned int sResourceIdCounter;
 
-		int mWidth;
+        int mWidth;
 		int mHeight;
 		int mChannels;
-		unsigned int mId;
-
-	};
+        unsigned int mId;
+    };
 }

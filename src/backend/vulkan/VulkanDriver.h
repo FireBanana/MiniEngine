@@ -40,10 +40,6 @@ public:
     enum class ShaderType { VERTEX, FRAGMENT };
 
     enum class ImageAttachmentType : unsigned int {
-        COLOR,
-        POSITION,
-        NORMAL,
-        ROUGHNESS,
         DEPTH,
         SWAPCHAIN
     };
@@ -65,7 +61,7 @@ public:
 
     inline void updateSurface(VkSurfaceKHR s) { mSurface = s; }
 
-    unsigned int createTexture(int width, int height, int channels, void *data, TextureType type);
+    Texture createTexture(int width, int height, int channels, void *data, TextureType type);
     unsigned int createUniformBlock(size_t dataSize, unsigned int bindIndex) const;
     void updateUniformData(unsigned int bufferId,
                            unsigned int offset,
@@ -98,13 +94,13 @@ private:
     VkQueue mActiveDeviceQueue;
     VulkanSwapchain mActiveSwapchain;
     VulkanPipeline mGbufferPipeline;
-    VulkanPipeline mLightingPipeline;
     VmaAllocator mMemoryAllocator;
     int32_t mActiveQueue{-1};
     VkPhysicalDeviceMemoryProperties mGpuMemoryProperties;
     VulkanImage mPlaceholderImage;
 
-    std::array<VulkanImage, 5> mImageAttachments;
+    std::vector<VulkanImage> mVulkanImageCache;
+    std::array<VulkanImage, 2> mMainFrameBuffer;
     Utils::DynamicArray<DisplaySemaphore> mDisplaySemaphoreArray;
     std::array<VkDescriptorPool, 2> mDescriptorPools; //change to enum
 
@@ -117,7 +113,6 @@ private:
     void createSwapchain();
     void createDescriptorPools();
     void createGBufferPipeline();
-    void createLightingPipeline();
     void createDisplaySemaphores();
     void initializeMemoryAllocator();
 

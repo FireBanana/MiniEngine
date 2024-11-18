@@ -79,6 +79,7 @@ int main(void)
 
     auto mesh2
         = MiniEngine::Renderable::Builder()
+              .addMaterialInstance(&material)
               .addBufferData(
                   {0.0, 0.5, 1.0, 0.0, 0.0, -0.5, 0.5, 0.0, 1.0, 0.0, -0.5, 0.0, 0.0, 0.0, 1.0})
               .addIndices({0, 1, 2, 0, 2, 3})
@@ -89,15 +90,17 @@ int main(void)
                       .setPosition({0, 0, 2})
                       .setAspectRatio((float) params.screenWidth / (float) params.screenHeight)
                       .setNearFarPlane(0.1f, 1000.0f)
-                      .setFOV(120)
+                      .setFOV(90)
                       .build(&scene, cameraEntity2);
 
-    //auto light = MiniEngine::Light::Builder()
-	//	.setPosition({ 0,0,0 })
-	//	.setIntensity(1.0f)
-	//	.build(&scene, mainLightEntity);
+    mesh->worldPosition = {1, 0, 0};
 
-	//// todo, hides when x/z 0. Need to set forward vector etc.
+    //auto light = MiniEngine::Light::Builder()
+    //	.setPosition({ 0,0,0 })
+    //	.setIntensity(1.0f)
+    //	.build(&scene, mainLightEntity);
+
+    //// todo, hides when x/z 0. Need to set forward vector etc.
     scene.setCameraActive(camera);
     //
 	////scene.addLight(light);

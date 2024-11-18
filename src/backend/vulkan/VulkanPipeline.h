@@ -25,6 +25,7 @@ class VulkanDriver;
 
             Builder &addVertexAttributeState(int binding, std::vector<unsigned int> attr);
             Builder &addDescriptorSet(VulkanDescriptorSet &&set);
+            Builder &addPushConstant(size_t size);
             Builder &addShaderState(const char *vert, const char *frag);
             Builder &setAttachmentCount(int count);
             Builder &setDepthState(bool depthTest, bool depthWrite);
@@ -46,6 +47,9 @@ class VulkanDriver;
             VkPipelineDepthStencilStateCreateInfo mDepthStencilStateCreateInfo;
             VkPipelineRasterizationStateCreateInfo mRasterStateCreateInfo;
             VkPipelineDynamicStateCreateInfo mDynamicStateCreateInfo;
+
+            // Push constant
+            size_t mPushConstantSize = 0;
         };
 
     public:

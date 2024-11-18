@@ -68,72 +68,23 @@ void MiniEngine::Backend::VulkanDriver::generateSwapchain()
 
 void MiniEngine::Backend::VulkanDriver::generatePipelines()
 {
-	createDescriptorPools();
-	createGBufferPipeline();
-	createLightingPipeline();
+    createDescriptorPools();
+    createGBufferPipeline();
 }
 
 void MiniEngine::Backend::VulkanDriver::generateGbuffer()
 {
-	auto color = VulkanImage::Builder(this)
-		.setWidth(mParams.screenWidth)
-		.setHeight(mParams.screenHeight)
-		.setChannels(4)
-		.setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT
-			| VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-		.setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
-		.setFormat(mActiveSwapchain.getFormat())
-		.setData(nullptr)
-		.setDebugName("Color Target")
-		.build();
-
-	auto position = VulkanImage::Builder(this)
-		.setWidth(mParams.screenWidth)
-		.setHeight(mParams.screenHeight)
-		.setChannels(4)
-		.setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT
-			| VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-		.setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
-		.setFormat(mActiveSwapchain.getFormat())
-		.setData(nullptr)
-		.setDebugName("Position Target")
-		.build();
-
-	auto normal = VulkanImage::Builder(this)
-		.setWidth(mParams.screenWidth)
-		.setHeight(mParams.screenHeight)
-		.setChannels(4)
-		.setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT
-			| VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-		.setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
-		.setFormat(mActiveSwapchain.getFormat())
-		.setData(nullptr)
-		.setDebugName("Normal Target")
-		.build();
-
-	auto roughness = VulkanImage::Builder(this)
-		.setWidth(mParams.screenWidth)
-		.setHeight(mParams.screenHeight)
-		.setChannels(4)
-		.setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT
-			| VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-		.setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
-		.setFormat(mActiveSwapchain.getFormat())
-		.setData(nullptr)
-		.setDebugName("Roughness Target")
-		.build();
-
-	auto depth = VulkanImage::Builder(this)
-		.setWidth(mParams.screenWidth)
-		.setHeight(mParams.screenHeight)
-		.setChannels(4)
-		.setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT
-			| VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
-		.setAspectFlags(VK_IMAGE_ASPECT_DEPTH_BIT)
-		.setFormat(mActiveSwapchain.getDepthFormat())
-		.setData(nullptr)
-		.setDebugName("Depth Target")
-		.build();
+    auto depth = VulkanImage::Builder(this)
+                     .setWidth(mParams.screenWidth)
+                     .setHeight(mParams.screenHeight)
+                     .setChannels(4)
+                     .setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT
+                                    | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+                     .setAspectFlags(VK_IMAGE_ASPECT_DEPTH_BIT)
+                     .setFormat(mActiveSwapchain.getDepthFormat())
+                     .setData(nullptr)
+                     .setDebugName("Depth Target")
+                     .build();
 
     mPlaceholderImage = VulkanImage::Builder(this)
                             .setWidth(1)
@@ -144,11 +95,7 @@ void MiniEngine::Backend::VulkanDriver::generateGbuffer()
                             .setDebugName("Placeholder Image")
                             .build();
 
-    mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::COLOR)] = color;
-    mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::POSITION)] = position;
-    mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::NORMAL)] = normal;
-    mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::ROUGHNESS)] = roughness;
-    mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::DEPTH)] = depth;
+    mMainFrameBuffer[static_cast<unsigned int>(ImageAttachmentType::DEPTH)] = depth;
 }
 
 void MiniEngine::Backend::VulkanDriver::createInstance(
@@ -316,17 +263,17 @@ void MiniEngine::Backend::VulkanDriver::createDevice(const std::vector<const cha
 	deviceInfo.pNext = &dynamicInfo;
 
 	vkCreateDevice(mActiveGpu, &deviceInfo, nullptr, &mActiveDevice);
-	volkLoadDevice(mActiveDevice);
+    volkLoadDevice(mActiveDevice);
 
-	// Getting first queue only
-	vkGetDeviceQueue(mActiveDevice, mActiveQueue, 0, &mActiveDeviceQueue);
+    // Getting first queue only
+    vkGetDeviceQueue(mActiveDevice, mActiveQueue, 0, &mActiveDeviceQueue);
 
-	VkPhysicalDeviceProperties deviceProps;
-	vkGetPhysicalDeviceProperties(mActiveGpu, &deviceProps);
+    VkPhysicalDeviceProperties deviceProps;
+    vkGetPhysicalDeviceProperties(mActiveGpu, &deviceProps);
 
-	MiniEngine::Logger::print("Device Name: {}, Driver Version: {}",
-		deviceProps.deviceName,
-		deviceProps.driverVersion);
+    MiniEngine::Logger::print("Selected Device Name: {}, Driver Version: {}",
+                              deviceProps.deviceName,
+                              deviceProps.driverVersion);
 }
 
 void MiniEngine::Backend::VulkanDriver::createSwapchain()
@@ -374,78 +321,61 @@ void MiniEngine::Backend::VulkanDriver::createDescriptorPools()
 
 void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 {
-	SceneBlock sceneBlock{};
-	sceneBlock.cameraPosition = glm::vec3(0, 0, 2);
-	sceneBlock.projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-	sceneBlock.view = glm::lookAt(sceneBlock.cameraPosition,
-		glm::vec3(0.0f, 0.0f, 0.0f),
-		glm::vec3(0.0f, -1.0f, 0.0f));
+    // TODO: CLEAN THESE UP!!!
+    SceneBlock sceneBlock{};
+    sceneBlock.cameraPosition = glm::vec3(0, 0, 2);
+    sceneBlock.projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+    sceneBlock.view = glm::lookAt(sceneBlock.cameraPosition,
+                                  glm::vec3(0.0f, 0.0f, 0.0f),
+                                  glm::vec3(0.0f, -1.0f, 0.0f));
 
-	auto sceneBlockBuffer = createBuffer(sizeof(sceneBlock),
-		&sceneBlock,
-		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
-		| VK_BUFFER_USAGE_TRANSFER_DST_BIT, "GBufferUniformBuffer");
+    struct TransformPushConstant
+    {
+        glm::mat4 model;
+    };
 
-	auto sceneDescriptorSet = VulkanDescriptorSet::Builder(this)
-		.setBinding(0)
-		.setCount(1)
-		.setShaderStages(VK_SHADER_STAGE_VERTEX_BIT
-			| VK_SHADER_STAGE_FRAGMENT_BIT)
-		.setType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-		.setPool(mDescriptorPools[0])
-		.setDebugName("GBufferUniformDescriptor")
-		.build();
+    auto sceneBlockBuffer = createBuffer(sizeof(sceneBlock),
+                                         &sceneBlock,
+                                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
+                                             | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                         "GBufferUniformBuffer");
 
-	auto imageBufferDescriptorSet = VulkanDescriptorSet::Builder(this)
-		.setBinding(1)
-		.setCount(3)
-		.setShaderStages(VK_SHADER_STAGE_FRAGMENT_BIT)
-		.setType(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
-		.setPool(mDescriptorPools[1])
-		.setDebugName("GBufferImageDescriptor")
-		.build();
+    auto sceneDescriptorSet = VulkanDescriptorSet::Builder(this)
+                                  .setBinding(0)
+                                  .setCount(1)
+                                  .setShaderStages(VK_SHADER_STAGE_VERTEX_BIT
+                                                   | VK_SHADER_STAGE_FRAGMENT_BIT)
+                                  .setType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+                                  .setPool(mDescriptorPools[0])
+                                  .setDebugName("GBufferUniformDescriptor")
+                                  .build();
 
-	sceneDescriptorSet.loadData(std::move(sceneBlockBuffer));
-	sceneDescriptorSet.update();
+    auto imageBufferDescriptorSet = VulkanDescriptorSet::Builder(this)
+                                        .setBinding(1)
+                                        .setCount(1)
+                                        .setShaderStages(VK_SHADER_STAGE_FRAGMENT_BIT)
+                                        .setType(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                                        .setPool(mDescriptorPools[1])
+                                        .setDebugName("GBufferImageDescriptor")
+                                        .build();
+
+    sceneDescriptorSet.loadData(std::move(sceneBlockBuffer));
+    sceneDescriptorSet.update();
     imageBufferDescriptorSet.loadData(&mPlaceholderImage);
     imageBufferDescriptorSet.update();
 
     mGbufferPipeline = VulkanPipeline::Builder(this)
-                           .setAttachmentCount(4)
+                           .setAttachmentCount(1)
                            .addShaderState(DIR "/shaders/deferred.vert",
                                            DIR "/shaders/deferred.frag")
                            .addVertexAttributeState(0, {2, 3}) //point, color
                            .addDescriptorSet(std::move(sceneDescriptorSet))
                            .addDescriptorSet(std::move(imageBufferDescriptorSet))
+                           .addPushConstant(sizeof(TransformPushConstant))
                            .setDynamicState({VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR})
                            .setRasterState(true, true)
                            .setDepthState(true, true)
                            .build();
-}
-
-void MiniEngine::Backend::VulkanDriver::createLightingPipeline()
-{
-	auto descriptorSet = VulkanDescriptorSet::Builder(this)
-		.setBinding(0)
-		.setCount(1)
-		.setShaderStages(VK_SHADER_STAGE_FRAGMENT_BIT)
-		.setType(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
-		.setPool(mDescriptorPools[1])
-		.setDebugName("LightingImageDescriptor")
-		.build();
-
-	descriptorSet.loadData(&mImageAttachments[0]);
-	descriptorSet.update();
-
-	mLightingPipeline = VulkanPipeline::Builder(this)
-		.setAttachmentCount(5)
-		.addShaderState(DIR "/shaders/lighting_vk.vert",
-			DIR "/shaders/lighting_vk.frag")
-		.setDynamicState({ VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR })
-		.setRasterState(true, true)
-		.setDepthState(false, false)
-		.addDescriptorSet(std::move(descriptorSet))
-		.build();
 }
 
 void MiniEngine::Backend::VulkanDriver::createDisplaySemaphores()
@@ -510,107 +440,71 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene* 
 		vkBeginCommandBuffer(cmd, &beginInfo);
 
 		auto swapchainImage = perFrameData[i].rawImage;
-        auto colorImage = mImageAttachments[static_cast<int>(ImageAttachmentType::COLOR)]
-                              .getRawImage();
-        auto positionImage = mImageAttachments[static_cast<int>(ImageAttachmentType::POSITION)]
-                                 .getRawImage();
-        auto normalImage = mImageAttachments[static_cast<int>(ImageAttachmentType::NORMAL)]
-                               .getRawImage();
-        auto roughnessImage = mImageAttachments[static_cast<int>(ImageAttachmentType::ROUGHNESS)]
-                                  .getRawImage();
 
         auto clearColor = VkClearColorValue{mParams.clearColor.r(),
                                             mParams.clearColor.g(),
                                             mParams.clearColor.b(),
                                             mParams.clearColor.a()};
 
-        VkRenderingAttachmentInfo gBufferColorAttachment{
-            VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
-        gBufferColorAttachment.imageView
-			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::COLOR)].getImageView();
-		gBufferColorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		gBufferColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		gBufferColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		gBufferColorAttachment.clearValue.color = clearColor;
+        VkRenderingAttachmentInfo swapchainAttachment{VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+        swapchainAttachment.imageView = perFrameData[i].imageView;
+        swapchainAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        swapchainAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        swapchainAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        swapchainAttachment.clearValue.color = clearColor;
 
-		VkRenderingAttachmentInfo gBufferPositionAttachment{
-			VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-		gBufferPositionAttachment.imageView
-			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::POSITION)].getImageView();
-		gBufferPositionAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		gBufferPositionAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		gBufferPositionAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		gBufferPositionAttachment.clearValue.color = clearColor;
+        VkRenderingAttachmentInfo depthAttachment{VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+        depthAttachment.imageView
+            = mMainFrameBuffer[static_cast<unsigned int>(ImageAttachmentType::DEPTH)].getImageView();
+        depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+        depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        depthAttachment.clearValue.depthStencil = {1, 0};
 
-		VkRenderingAttachmentInfo gBufferNormalAttachment{
-			VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-		gBufferNormalAttachment.imageView
-			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::NORMAL)].getImageView();
-		gBufferNormalAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		gBufferNormalAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		gBufferNormalAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		gBufferNormalAttachment.clearValue.color = clearColor;
+        mGbufferPipeline.bind(cmd);
 
-		VkRenderingAttachmentInfo gBufferRoughnessAttachment{
-			VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-		gBufferRoughnessAttachment.imageView
-			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::ROUGHNESS)].getImageView();
-		gBufferRoughnessAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		gBufferRoughnessAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		gBufferRoughnessAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		gBufferRoughnessAttachment.clearValue.color = clearColor;
+        VkViewport vp{};
+        vp.width = mParams.screenWidth;
+        vp.height = mParams.screenHeight;
+        vp.minDepth = 0.0f;
+        vp.maxDepth = 1.0f;
 
-		VkRenderingAttachmentInfo depthAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-		depthAttachment.imageView
-			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::DEPTH)].getImageView();
-		depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		depthAttachment.clearValue.depthStencil = { 1, 0 };
+        vkCmdSetViewport(cmd, 0, 1, &vp);
 
-		VkRenderingAttachmentInfo gBufferAttachmentArray[] = { gBufferColorAttachment,
-													   gBufferPositionAttachment,
-													   gBufferNormalAttachment,
-													   gBufferRoughnessAttachment };
+        VkRect2D scissor{};
+        scissor.extent.width = mParams.screenWidth;
+        scissor.extent.height = mParams.screenHeight;
 
-		mGbufferPipeline.bind(cmd);
+        vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-		VkViewport vp{};
-		vp.width = mParams.screenWidth;
-		vp.height = mParams.screenHeight;
-		vp.minDepth = 0.0f;
-		vp.maxDepth = 1.0f;
+        VkRenderingInfoKHR gBufferRenderingInfo{VK_STRUCTURE_TYPE_RENDERING_INFO};
+        gBufferRenderingInfo.layerCount = 1;
+        gBufferRenderingInfo.colorAttachmentCount = 1;
+        gBufferRenderingInfo.pColorAttachments = &swapchainAttachment;
+        gBufferRenderingInfo.pDepthAttachment = &depthAttachment;
+        gBufferRenderingInfo.renderArea = {0, 0, mParams.screenWidth, mParams.screenHeight};
 
-		vkCmdSetViewport(cmd, 0, 1, &vp);
+        // TODO CLEAN THIS !!!!!!!!!!!!!!!!!
+        auto firstCamera = scene->getCameraComponentDatabase()[0]; //TODO: fix
 
-		VkRect2D scissor{};
-		scissor.extent.width = mParams.screenWidth;
-		scissor.extent.height = mParams.screenHeight;
+        SceneBlock sceneBlock{};
+        sceneBlock.cameraPosition = glm::vec3(firstCamera.position.x,
+                                              firstCamera.position.y,
+                                              firstCamera.position.z);
+        sceneBlock.projection = glm::perspective(glm::radians(firstCamera.fov),
+                                                 firstCamera.aspectRatio,
+                                                 firstCamera.nearPlane,
+                                                 firstCamera.farPlane);
+        sceneBlock.view = glm::lookAt(glm::vec3(firstCamera.position.x,
+                                                firstCamera.position.y,
+                                                firstCamera.position.z),
+                                      glm::vec3(0.0f, 0.0f, 0.0f),
+                                      glm::vec3(0.0f, -1.0f, 0.0f));
 
-		vkCmdSetScissor(cmd, 0, 1, &scissor);
-
-		VkRenderingInfoKHR gBufferRenderingInfo{ VK_STRUCTURE_TYPE_RENDERING_INFO };
-		gBufferRenderingInfo.layerCount = 1;
-		gBufferRenderingInfo.colorAttachmentCount = 4;
-		gBufferRenderingInfo.pColorAttachments = gBufferAttachmentArray;
-		gBufferRenderingInfo.pDepthAttachment = &depthAttachment;
-		gBufferRenderingInfo.renderArea = { 0, 0, mParams.screenWidth, mParams.screenHeight };
-
-		auto firstCamera = scene->getCameraComponentDatabase()[0]; //TODO: fix
-
-		SceneBlock sceneBlock{};
-		sceneBlock.cameraPosition = glm::vec3(firstCamera.position.x,
-			firstCamera.position.y,
-			firstCamera.position.z);
-		sceneBlock.projection = glm::perspective(glm::radians(firstCamera.fov),
-			firstCamera.aspectRatio,
-			firstCamera.nearPlane,
-			firstCamera.farPlane);
-		sceneBlock.view = glm::lookAt(glm::vec3(firstCamera.position.x,
-			firstCamera.position.y,
-			firstCamera.position.z),
-			glm::vec3(0.0f, 0.0f, 0.0f),
-			glm::vec3(0.0f, -1.0f, 0.0f));
+        struct TransformPushConstant
+        {
+            glm::mat4 model;
+        } tempModel;
 
         VulkanBarrier::Builder()
             .setCmdBuffer(&cmd)
@@ -636,23 +530,6 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene* 
             .setDstStageMask(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
             .build();
 
-		// Create barrier for all attachments
-		// The last two are swapchain and depth, hence not needed here
-		for (int i = 0; i < EnumExtension::elementCount<ImageAttachmentType>() - 2; ++i) 
-		{
-			VulkanBarrier::Builder()
-				.setCmdBuffer(&cmd)
-				.setImage(mImageAttachments[i].getRawImage())
-				.setSrcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-				.setDstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-				.setAspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
-				.setOldLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-				.setNewLayout(VK_IMAGE_LAYOUT_GENERAL)
-				.setSrcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-				.setDstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-				.build();
-		}
-
         // GBuffer pass
         vkCmdUpdateBuffer(cmd,
                           mGbufferPipeline.mDescriptors[0].mBuffers[0].getRawBuffer(),
@@ -673,92 +550,50 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene* 
             .build();
 
         vkCmdBeginRendering(cmd, &gBufferRenderingInfo);
+
         auto renderables = scene->getRenderableComponentDatabase();
         for (size_t i = 0; i < renderables.size(); ++i) {
+            auto mesh = renderables[i];
             VkDeviceSize offset = {0};
-            auto buffer = renderables[i].vbuffer.getRawBuffer();
+            auto buffer = mesh.vbuffer.getRawBuffer();
             vkCmdBindVertexBuffers(cmd, 0, 1, &buffer, &offset);
+
+            tempModel.model = glm::mat4(1.0);
+            tempModel.model = glm::translate(glm::mat4(1.0),
+                                             {mesh.worldPosition.x,
+                                              mesh.worldPosition.y,
+                                              mesh.worldPosition.z});
+
+            // Push model transform
+            vkCmdPushConstants(cmd,
+                               mGbufferPipeline.mPipelineLayout,
+                               VK_SHADER_STAGE_VERTEX_BIT,
+                               0,
+                               sizeof(TransformPushConstant),
+                               &tempModel);
+
+            // Attach textures ===========
+            mGbufferPipeline.mDescriptors.at(1).mImages.clear(); // TODO FIX
+
+            auto texId = mesh.materialInstance
+                             ->textureReference[0 /*MiniEngine::Types::TextureType::Diffuse*/]
+                             .getId();
+            VulkanImage *tex;
+            for (auto &imgRef : mVulkanImageCache) {
+                if (imgRef.getResourceId() == texId)
+                    tex = &imgRef;
+            }
+
+            mGbufferPipeline.mDescriptors.at(1).loadData(tex);
+            mGbufferPipeline.mDescriptors.at(1).update();
+            // ===========================
+
             vkCmdDraw(cmd, 3, 1, 0, 0);
         }
+
         vkCmdEndRendering(cmd);
 
-        // ================ LIGHTING ==================================================================================
-
-        VkRenderingAttachmentInfo lightingSwapChainAttachment{
-            VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
-        lightingSwapChainAttachment.imageView = perFrameData[i].imageView;
-        lightingSwapChainAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        lightingSwapChainAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        lightingSwapChainAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        lightingSwapChainAttachment.clearValue.color = {1, 0, 0, 1};
-
-        VkRenderingAttachmentInfo lightingColorAttachment{
-            VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
-        lightingColorAttachment.imageView
-            = mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::COLOR)].getImageView();
-        lightingColorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        lightingColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-		lightingColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		lightingColorAttachment.clearValue.color = { 1, 0, 0, 1 };
-
-		VkRenderingAttachmentInfo lightingPositionAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-        lightingPositionAttachment.imageView
-            = mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::POSITION)]
-                  .getImageView();
-        lightingPositionAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        lightingPositionAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-        lightingPositionAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		lightingPositionAttachment.clearValue.color = { 1, 0, 0, 1 };
-
-		VkRenderingAttachmentInfo lightingNormalAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-		lightingNormalAttachment.imageView
-			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::NORMAL)].getImageView();
-		lightingNormalAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		lightingNormalAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-		lightingNormalAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		lightingNormalAttachment.clearValue.color = { 1, 0, 0, 1 };
-
-		VkRenderingAttachmentInfo lightingRoughnessAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-		lightingRoughnessAttachment.imageView
-			= mImageAttachments[static_cast<unsigned int>(ImageAttachmentType::ROUGHNESS)].getImageView();
-		lightingRoughnessAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		lightingRoughnessAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-		lightingRoughnessAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		lightingRoughnessAttachment.clearValue.color = { 1, 0, 0, 1 };
-
-		auto lightingAttachmentArray = { lightingColorAttachment, lightingPositionAttachment, lightingNormalAttachment,
-			lightingRoughnessAttachment, lightingSwapChainAttachment };
-
-		mLightingPipeline.bind(cmd);
-
-		VkRenderingInfoKHR lightingRenderingInfo{ VK_STRUCTURE_TYPE_RENDERING_INFO };
-		lightingRenderingInfo.layerCount = 1;
-		lightingRenderingInfo.colorAttachmentCount = 5;
-		lightingRenderingInfo.pColorAttachments = lightingAttachmentArray.begin();
-		lightingRenderingInfo.renderArea = { 0, 0, mParams.screenWidth, mParams.screenHeight };
-
-		for (int i = 0; i < EnumExtension::elementCount<ImageAttachmentType>() - 2; ++i)
-		{
-			VulkanBarrier::Builder()
-				.setCmdBuffer(&cmd)
-				.setImage(mImageAttachments[i].getRawImage())
-				.setSrcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-				.setDstAccessMask(VK_ACCESS_SHADER_READ_BIT)
-				.setAspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
-				.setOldLayout(VK_IMAGE_LAYOUT_GENERAL)
-				.setNewLayout(VK_IMAGE_LAYOUT_GENERAL)
-				.setSrcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-				.setDstStageMask(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
-				.build();
-		}
-
-        // Create new attachment array here with different load store
-        // Lighting pass
-        vkCmdBeginRendering(cmd, &lightingRenderingInfo);
-		vkCmdDraw(cmd, 6, 1, 0, 0);
-		vkCmdEndRendering(cmd);
-
-		// swapchain present
+        // swapchain present
         VulkanBarrier::Builder()
             .setCmdBuffer(&cmd)
             .setImage(swapchainImage)
@@ -881,24 +716,26 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene* scene)
 	vkQueuePresentKHR(mActiveDeviceQueue, &presentInfo);
 }
 
-unsigned int MiniEngine::Backend::VulkanDriver::createTexture(
-	int width, int height, int channels, void* data, TextureType type)
+MiniEngine::Texture MiniEngine::Backend::VulkanDriver::createTexture(
+    int width, int height, int channels, void *data, TextureType type)
 {
-	auto texture = VulkanImage::Builder(this)
-		.setWidth(mParams.screenWidth)
-		.setHeight(mParams.screenHeight)
-		.setChannels(4)
-		.setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT
-			| VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-		.setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
-		.setFormat(mActiveSwapchain.getFormat()) // todo change
-		.setData(data)
-		.build();
+    // Todo add to some form of resource cache
+    auto texture = VulkanImage::Builder(this)
+                       .setWidth(width)
+                       .setHeight(height)
+                       .setChannels(channels)
+                       .setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT
+                                      | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+                       .setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
+                       .setFormat(mActiveSwapchain.getFormat()) // todo change
+                       .setData(data)
+                       .build();
 
-	// todo remove, always adding to gbuffer textures
-	mGbufferPipeline.mDescriptors[1].loadData(&texture);
+    Texture tex = {width, height, channels};
+    texture.mResourceId = tex.getId();
+    mVulkanImageCache.push_back(texture);
 
-	return 0;
+    return tex;
 }
 
 void MiniEngine::Backend::VulkanDriver::setupMesh(MiniEngine::Components::RenderableComponent* component)

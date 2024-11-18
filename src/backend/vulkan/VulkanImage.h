@@ -44,11 +44,13 @@ namespace MiniEngine::Backend
 		VkImage getRawImage() const { return mImage; }
 		VkDeviceMemory getMemory() const { return mMemory; }
 		VkImageView getImageView() const { return mImageView; }
+        unsigned int getResourceId() const { return mResourceId; };
 
-	private:
-		VkImage mImage;
+    private:
+        VkImage mImage;
 		VkDeviceMemory mMemory;
 		VkImageView mImageView;
+        unsigned int mResourceId;
 
         friend class VulkanDriver;
     };

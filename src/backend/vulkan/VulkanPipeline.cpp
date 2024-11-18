@@ -54,6 +54,13 @@ MiniEngine::Backend::VulkanPipeline::Builder::addDescriptorSet(VulkanDescriptorS
 	return *this;
 }
 
+MiniEngine::Backend::VulkanPipeline::Builder &
+MiniEngine::Backend::VulkanPipeline::Builder::addPushConstant(size_t size)
+{
+    mPushConstantSize = size;
+    return *this;
+}
+
 MiniEngine::Backend::VulkanPipeline::Builder&
 MiniEngine::Backend::VulkanPipeline::Builder::addShaderState(const char* vert, const char* frag)
 {
@@ -136,8 +143,18 @@ MiniEngine::Backend::VulkanPipeline MiniEngine::Backend::VulkanPipeline::Builder
 	VkPipelineLayoutCreateInfo layoutInfo{ VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
 	layoutInfo.setLayoutCount = mDescriptors.size();
 
-	std::vector<VkDescriptorSetLayout> setLayouts{};
-	setLayouts.reserve(mDescriptors.size());
+    if (mPushConstantSize > 0) {
+        VkPushConstantRange range{};
+        range.offset = 0;
+        range.size = mPushConstantSize;
+        range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+        layoutInfo.pPushConstantRanges = &range;
+        layoutInfo.pushConstantRangeCount = 1;
+    }
+
+    std::vector<VkDescriptorSetLayout> setLayouts{};
+    setLayouts.reserve(mDescriptors.size());
 
 	for (auto& d : mDescriptors) {
 		setLayouts.push_back(*d.getDescriptorSetLayout());
