@@ -50,14 +50,15 @@ void MiniEngine::Backend::VulkanDriver::generateDevice()
 	registerPhysicalDevice();
 	registerPhysicalDeviceQueueFamily();
 	enumerateDeviceExtensionProperties();
-	createDevice({ "VK_KHR_swapchain",
-				  "VK_KHR_dynamic_rendering",
-				  "VK_KHR_depth_stencil_resolve",
-				  "VK_KHR_create_renderpass2",
-				  "VK_KHR_multiview",
-				  "VK_KHR_maintenance2" });
+    createDevice({"VK_KHR_swapchain",
+                  "VK_KHR_dynamic_rendering",
+                  "VK_KHR_depth_stencil_resolve",
+                  "VK_KHR_create_renderpass2",
+                  "VK_KHR_multiview",
+                  "VK_KHR_maintenance2",
+                  VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME});
 
-	initializeMemoryAllocator();
+    initializeMemoryAllocator();
 }
 
 void MiniEngine::Backend::VulkanDriver::generateSwapchain()
@@ -249,12 +250,21 @@ void MiniEngine::Backend::VulkanDriver::createDevice(const std::vector<const cha
 		VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES };
 	dynamicInfo.dynamicRendering = true;
 
-	// Enable storage image write feature
-	VkPhysicalDeviceFeatures features;
-	vkGetPhysicalDeviceFeatures(mActiveGpu, &features);
-	features.fragmentStoresAndAtomics = VK_TRUE;
+    VkPhysicalDeviceDescriptorIndexingFeatures indexingFeatures = {};
+    indexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+    indexingFeatures.descriptorBindingUniformBufferUpdateAfterBind = true;
+    indexingFeatures.descriptorBindingUpdateUnusedWhilePending = true;
+    indexingFeatures.descriptorBindingPartiallyBound = true;
+    indexingFeatures.descriptorBindingVariableDescriptorCount = true;
+    indexingFeatures.descriptorBindingStorageImageUpdateAfterBind = true;
+    dynamicInfo.pNext = &indexingFeatures;
 
-	VkDeviceCreateInfo deviceInfo{ VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
+    // Enable storage image write feature
+    VkPhysicalDeviceFeatures features;
+    vkGetPhysicalDeviceFeatures(mActiveGpu, &features);
+    features.fragmentStoresAndAtomics = VK_TRUE;
+
+    VkDeviceCreateInfo deviceInfo{ VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
 	deviceInfo.queueCreateInfoCount = 1;
 	deviceInfo.pQueueCreateInfos = &queueInfo;
 	deviceInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
@@ -310,13 +320,15 @@ void MiniEngine::Backend::VulkanDriver::createDescriptorPools()
 	uniformDescriptorPoolInfo.poolSizeCount = 1;
 	uniformDescriptorPoolInfo.maxSets = 2;
 	uniformDescriptorPoolInfo.pPoolSizes = &uniformScenePoolSize;
+    uniformDescriptorPoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
 
-	imageDescriptorPoolInfo.poolSizeCount = 1;
-	imageDescriptorPoolInfo.maxSets = 2;
-	imageDescriptorPoolInfo.pPoolSizes = &imagePoolSize;
+    imageDescriptorPoolInfo.poolSizeCount = 1;
+    imageDescriptorPoolInfo.maxSets = 2;
+    imageDescriptorPoolInfo.pPoolSizes = &imagePoolSize;
+    imageDescriptorPoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
 
-	vkCreateDescriptorPool(mActiveDevice, &uniformDescriptorPoolInfo, nullptr, &mDescriptorPools[0]);
-	vkCreateDescriptorPool(mActiveDevice, &imageDescriptorPoolInfo, nullptr, &mDescriptorPools[1]);
+    vkCreateDescriptorPool(mActiveDevice, &uniformDescriptorPoolInfo, nullptr, &mDescriptorPools[0]);
+    vkCreateDescriptorPool(mActiveDevice, &imageDescriptorPoolInfo, nullptr, &mDescriptorPools[1]);
 }
 
 void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()

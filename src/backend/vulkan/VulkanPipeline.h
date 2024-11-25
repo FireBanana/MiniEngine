@@ -53,7 +53,9 @@ class VulkanDriver;
         };
 
     public:
-        void bind(VkCommandBuffer buffer);        
+        void bind(VkCommandBuffer buffer);
+        void bindDescriptors(VkCommandBuffer buffer);
+        void unbindDescriptors(VkCommandBuffer buffer);
 
     private:
         std::vector<VulkanDescriptorSet> mDescriptors;

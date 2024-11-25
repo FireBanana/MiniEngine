@@ -236,19 +236,20 @@ MiniEngine::Backend::VulkanPipeline MiniEngine::Backend::VulkanPipeline::Builder
 void MiniEngine::Backend::VulkanPipeline::bind(VkCommandBuffer cmd)
 {
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline);
-	auto list = std::accumulate(mDescriptors.begin(), mDescriptors.end(), std::vector<VkDescriptorSet>{}, [](std::vector<VkDescriptorSet> init, VulkanDescriptorSet sec)
-		{
-			init.push_back(*sec.getDescriptorSet());
-			return init;
-		});
+    auto list = std::accumulate(mDescriptors.begin(),
+                                mDescriptors.end(),
+                                std::vector<VkDescriptorSet>{},
+                                [](std::vector<VkDescriptorSet> init, VulkanDescriptorSet sec) {
+                                    init.push_back(*sec.getDescriptorSet());
+                                    return init;
+                                });
 
-
-	vkCmdBindDescriptorSets(cmd,
-		VK_PIPELINE_BIND_POINT_GRAPHICS,
-		mPipelineLayout,
-		0,
-		list.size(),
-		list.data(),
-		0,
-		nullptr);
+    vkCmdBindDescriptorSets(cmd,
+                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            mPipelineLayout,
+                            0,
+                            list.size(),
+                            list.data(),
+                            0,
+                            nullptr);
 }
