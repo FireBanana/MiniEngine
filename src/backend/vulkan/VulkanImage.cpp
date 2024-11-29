@@ -2,7 +2,7 @@
 #include "VulkanDriver.h"
 
 MiniEngine::Backend::VulkanImage::Builder::Builder(VulkanDriver* driver)
-	:mDriver(driver)
+	:mDriver(driver), mData(nullptr)
 {}
 
 MiniEngine::Backend::VulkanImage::Builder& MiniEngine::Backend::VulkanImage::Builder::setWidth(float width)
@@ -65,25 +65,47 @@ MiniEngine::Backend::VulkanImage MiniEngine::Backend::VulkanImage::Builder::buil
 	attachmentImageInfo.extent.height = mHeight;
 	attachmentImageInfo.extent.depth = 1;
 	attachmentImageInfo.arrayLayers = 1;
-	attachmentImageInfo.mipLevels = 1;
+	attachmentImageInfo.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(mWidth, mHeight)))) + 1;
 	attachmentImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	attachmentImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 	attachmentImageInfo.usage = mUsageFlags;
+	attachmentImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
     VkImage attachmentImage;
     VkImageView attachmentImageView;
 
     VmaAllocationCreateInfo allocInfo = {};
     allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
-    allocInfo.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
+	allocInfo.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
 
-    VmaAllocation allocation;
-    vmaCreateImage(mDriver->mMemoryAllocator,
-                   &attachmentImageInfo,
-                   &allocInfo,
-                   &attachmentImage,
-                   &allocation,
-                   nullptr);
+	// Create staging buffer for image data
+	if (mData) {
+		VkBufferCreateInfo bufCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+		bufCreateInfo.size = mWidth * mHeight * sizeof(char);
+		bufCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+		VmaAllocationCreateInfo allocCreateInfo = {};
+		allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
+		allocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+			VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+		VkBuffer buf;
+		VmaAllocation alloc;
+		VmaAllocationInfo allocInfo;
+		vmaCreateBuffer(mDriver->mMemoryAllocator, &bufCreateInfo, &allocCreateInfo, &buf, &alloc, &allocInfo);
+
+		memcpy(allocInfo.pMappedData, mData, mWidth * mHeight * sizeof(char));
+
+		image.mStagingBuffer = buf;
+	}
+
+	VmaAllocation allocation;
+	auto r = vmaCreateImage(mDriver->mMemoryAllocator,
+		&attachmentImageInfo,
+		&allocInfo,
+		&attachmentImage,
+		&allocation,
+		nullptr);
 
     VkImageViewCreateInfo colorImageViewInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
     colorImageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;

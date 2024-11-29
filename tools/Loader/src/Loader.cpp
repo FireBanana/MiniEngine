@@ -158,9 +158,9 @@ namespace MiniTools
 		stbi_set_flip_vertically_on_load(flipImage);
 
 		if (isFloat)
-			data = stbi_loadf(path, &w, &h, &c, 0);
+			data = stbi_loadf(path, &w, &h, &c, STBI_rgb_alpha);
 		else
-			data = stbi_load(path, &w, &h, &c, 0);
+			data = stbi_load(path, &w, &h, &c, STBI_rgb_alpha);
 
 		if (data == nullptr) std::cout << stbi_failure_reason() << std::endl;
 
