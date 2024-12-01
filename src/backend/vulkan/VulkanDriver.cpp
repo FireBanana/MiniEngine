@@ -466,7 +466,6 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene* 
     //TODO now:
     // Make single time general purpose commanddbuffer?
     // Transistion all textures, load all data to images
-    h
 
 	for (auto i = 0; i < mActiveSwapchain.getSwapchainSize(); ++i) {
 		auto& cmd = perFrameData[i].imageCommandBuffer;
@@ -552,17 +551,17 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene* 
             .setDstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
             .build();
 
-        VulkanBarrier::Builder()
-            .setCmdBuffer(&cmd)
-            .setImage(mVulkanImageCache[0].getRawImage())
-            .setSrcAccessMask(0)
-            .setDstAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT)
-            .setAspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
-            .setOldLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-            .setNewLayout(VK_IMAGE_LAYOUT_GENERAL)
-            .setSrcStageMask(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
-            .setDstStageMask(VK_PIPELINE_STAGE_TRANSFER_BIT)
-            .build();
+        //VulkanBarrier::Builder()
+        //    .setCmdBuffer(&cmd)
+        //    .setImage(mVulkanImageCache[0].getRawImage())
+        //    .setSrcAccessMask(0)
+        //    .setDstAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT)
+        //    .setAspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
+        //    .setOldLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+        //    .setNewLayout(VK_IMAGE_LAYOUT_GENERAL)
+        //    .setSrcStageMask(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
+        //    .setDstStageMask(VK_PIPELINE_STAGE_TRANSFER_BIT)
+        //    .build();
 
         //VulkanBarrier::Builder()
         //    .setCmdBuffer(&cmd)
@@ -575,6 +574,17 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene* 
         //    .setSrcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
         //    .setDstStageMask(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
         //    .build();
+
+        VulkanBarrier::Builder()
+            .setCmdBuffer(&cmd)
+            .setBuffer(mGbufferPipeline.mDescriptors[0].mBuffers[0].getRawBuffer())
+            .setDstAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT)
+            .setSrcAccessMask(VK_ACCESS_UNIFORM_READ_BIT)
+            .setOldLayout(VK_IMAGE_LAYOUT_GENERAL)
+            .setNewLayout(VK_IMAGE_LAYOUT_GENERAL)
+            .setDstStageMask(VK_PIPELINE_STAGE_TRANSFER_BIT)
+            .setSrcStageMask(VK_PIPELINE_STAGE_VERTEX_SHADER_BIT)
+            .build();
 
         // GBuffer pass
         vkCmdUpdateBuffer(cmd,
@@ -759,6 +769,7 @@ MiniEngine::Texture MiniEngine::Backend::VulkanDriver::createTexture(
                        .setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
                        .setFormat(mActiveSwapchain.getFormat()) // todo change
                        .setData(data)
+                       .setDebugName("CustomTexture")
                        .build();
 
     Texture tex = {width, height, channels};
