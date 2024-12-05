@@ -65,7 +65,7 @@ MiniEngine::Backend::VulkanImage MiniEngine::Backend::VulkanImage::Builder::buil
 	attachmentImageInfo.extent.height = mHeight;
 	attachmentImageInfo.extent.depth = 1;
 	attachmentImageInfo.arrayLayers = 1;
-	attachmentImageInfo.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(mWidth, mHeight)))) + 1;
+	attachmentImageInfo.mipLevels = 1;//static_cast<uint32_t>(std::floor(std::log2(std::max(mWidth, mHeight)))) + 1;
 	attachmentImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	attachmentImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 	attachmentImageInfo.usage = mUsageFlags;
@@ -81,7 +81,7 @@ MiniEngine::Backend::VulkanImage MiniEngine::Backend::VulkanImage::Builder::buil
 	// Create staging buffer for image data
 	if (mData) {
 		VkBufferCreateInfo bufCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-		bufCreateInfo.size = mWidth * mHeight * sizeof(char);
+		bufCreateInfo.size = mWidth * mHeight * sizeof(char) * 4;
 		bufCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
 		VmaAllocationCreateInfo allocCreateInfo = {};
@@ -94,7 +94,7 @@ MiniEngine::Backend::VulkanImage MiniEngine::Backend::VulkanImage::Builder::buil
 		VmaAllocationInfo allocInfo;
 		vmaCreateBuffer(mDriver->mMemoryAllocator, &bufCreateInfo, &allocCreateInfo, &buf, &alloc, &allocInfo);
 
-		memcpy(allocInfo.pMappedData, mData, mWidth * mHeight * sizeof(char));
+		memcpy(allocInfo.pMappedData, mData, mWidth * mHeight * sizeof(char) * 4);
 
 		image.mStagingBuffer = buf;
 	}
@@ -134,6 +134,8 @@ MiniEngine::Backend::VulkanImage MiniEngine::Backend::VulkanImage::Builder::buil
 
 	image.mImage = attachmentImage;
     image.mImageView = attachmentImageView;
+	image.mWidth = mWidth;
+	image.mHeight = mHeight;
 
     return image;
 }

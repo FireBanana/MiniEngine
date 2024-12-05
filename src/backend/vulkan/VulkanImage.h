@@ -46,13 +46,18 @@ namespace MiniEngine::Backend
 		VkImageView getImageView() const { return mImageView; }
 		VkBuffer getStagingBuffer() const { return mStagingBuffer; }
         unsigned int getResourceId() const { return mResourceId; }
+		float getWidth() { return mWidth; }
+		float getHeight() { return mHeight; }
 
     private:
+
         VkImage mImage;
 		VkDeviceMemory mMemory;
 		VkImageView mImageView;
 		VkBuffer mStagingBuffer;
         unsigned int mResourceId;
+		float mWidth;
+		float mHeight;
 
         friend class VulkanDriver;
     };

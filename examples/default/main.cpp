@@ -72,7 +72,11 @@ int main(void)
     auto mesh = MiniEngine::Renderable::Builder()
                     .addMaterialInstance(&material)
                     .addBufferData(
-                        {0.0, -0.5, 1.0, 0.0, 0.0, 0.5, -0.5, 0.0, 1.0, 0.0, 0.5, 0.0, 0.0, 0.0, 1.0})
+                        {
+							0.0, -0.5, 0.0, 1.0, 0.0,
+							0.5, -0.5, 0.0, 0.0, 0.0,
+							0.5, 0.0, 0.0, 0.0, 1.0
+						})
                     .addIndices({0, 1, 2, 0, 2, 3})
                     .addBufferAttributes({3, 2})
                     .build(&scene, meshEntity);
@@ -81,7 +85,11 @@ int main(void)
         = MiniEngine::Renderable::Builder()
               .addMaterialInstance(&material)
               .addBufferData(
-                  {0.0, 0.5, 1.0, 0.0, 0.0, -0.5, 0.5, 0.0, 1.0, 0.0, -0.5, 0.0, 0.0, 0.0, 1.0})
+                  {
+					  0.0, 0.5, 1.0, 0.0, 0.0,
+					  -0.5, 0.5, 0.0, 1.0, 0.0,
+					  -0.5, 0.0, 0.0, 0.0, 1.0
+				  })
               .addIndices({0, 1, 2, 0, 2, 3})
               .addBufferAttributes({3, 2})
               .build(&scene, meshEntity2);

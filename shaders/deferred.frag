@@ -10,19 +10,16 @@ layout(set=0, binding=0) uniform SceneBlock
 };
 
 layout (set = 1, binding = 0, rgba8) uniform image2D _diffuse;
-//layout (set = 1, binding = 1, rgba8) uniform image2D _normal;
-//layout (set = 1, binding = 2, rgba8) uniform image2D _roughness;
 
-layout(location = 0) in vec3 in_position;
-//layout(location = 1) in vec2 in_uv;
-//layout(location = 2) in vec3 in_normal;
+layout(location = 0) in vec2 in_pos;
+layout(location = 1) in vec3 in_col;
 
 layout(location = 0)out vec4 col;
 
 void main()
 {
-    vec3 c = in_position;
-    vec4 d = imageLoad(_diffuse, ivec2(c.x, c.y));
+    vec2 c = in_col.xy;
+    vec4 d = imageLoad(_diffuse, ivec2(c.x * 2048, c.y * 2048));
 
     // colorAttachment = vec4(d.x, d.y, 0, 1.);
     // positionAttachment = vec4(c.y, c.x, 0, 1.);

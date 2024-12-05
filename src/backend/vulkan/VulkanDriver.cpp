@@ -380,7 +380,7 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
                            .setAttachmentCount(1)
                            .addShaderState(DIR "/shaders/deferred.vert",
                                            DIR "/shaders/deferred.frag")
-                           .addVertexAttributeState(0, {2, 3}) //point, color
+                           .addVertexAttributeState(0, {3, 2}) //point, color
                            .addDescriptorSet(std::move(sceneDescriptorSet))
                            .addDescriptorSet(std::move(imageBufferDescriptorSet))
                            .addPushConstant(sizeof(TransformPushConstant))
@@ -442,10 +442,6 @@ void MiniEngine::Backend::VulkanDriver::initializeMemoryAllocator()
 
 void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene* scene)
 {
-	// TODO: refactor into renderpass
-	VkCommandBufferBeginInfo beginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
-	auto perFrameData = mActiveSwapchain.getPerFrameData();
-
     // Attach textures ===========
     mGbufferPipeline.mDescriptors.at(1).mImages.clear(); // TODO FIX
 
@@ -453,19 +449,82 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene* 
     //    ->textureReference[0 /*MiniEngine::Types::TextureType::Diffuse*/]
     //    .getId();
     //VulkanImage* tex;
-    for (auto& imgRef : mVulkanImageCache) {
-        //if (imgRef.getResourceId() == texId)
-        //    tex = &imgRef;
-    
-        mGbufferPipeline.mDescriptors.at(1).loadData(&imgRef);
-    }
-
-    mGbufferPipeline.mDescriptors.at(1).update();
-    // ===========================
 
     //TODO now:
     // Make single time general purpose commanddbuffer?
     // Transistion all textures, load all data to images
+    VkCommandPool commandPool;
+    VkCommandBuffer commandBuffer;
+
+    VkCommandPoolCreateInfo cmdPoolInfo{ VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
+    cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+    cmdPoolInfo.queueFamilyIndex = mActiveQueue;
+    vkCreateCommandPool(mActiveDevice, &cmdPoolInfo, nullptr, &commandPool);
+
+    VkCommandBufferAllocateInfo cmdBuffInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+    cmdBuffInfo.commandPool = commandPool;
+    cmdBuffInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    cmdBuffInfo.commandBufferCount = 1;
+    vkAllocateCommandBuffers(mActiveDevice, &cmdBuffInfo, &commandBuffer);
+
+    VkCommandBufferBeginInfo beginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+    for (auto& imgRef : mVulkanImageCache) {
+        //if (imgRef.getResourceId() == texId)
+        //    tex = &imgRef;
+
+        VulkanBarrier::Builder()
+            .setCmdBuffer(&commandBuffer)
+            .setImage(imgRef.getRawImage())
+            .setSrcAccessMask(0)
+            .setDstAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT)
+            .setAspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
+            .setOldLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+            .setNewLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+            .setSrcStageMask(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
+            .setDstStageMask(VK_PIPELINE_STAGE_TRANSFER_BIT)
+            .build();
+
+        auto stageBuffer = imgRef.getStagingBuffer();
+
+        VkBufferImageCopy region{};
+        region.bufferOffset = 0;
+        region.bufferRowLength = 0;
+        region.bufferImageHeight = 0;
+
+        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.imageSubresource.mipLevel = 0;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = 1;
+
+        region.imageOffset = {0,0,0};
+        region.imageExtent = { static_cast<unsigned int>(imgRef.getWidth()), static_cast<unsigned int>(imgRef.getHeight()), 1};
+
+        vkCmdCopyBufferToImage(commandBuffer, stageBuffer, imgRef.getRawImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+        mGbufferPipeline.mDescriptors.at(1).loadData(&imgRef);
+    }
+
+    mGbufferPipeline.mDescriptors.at(1).update();
+
+    vkEndCommandBuffer(commandBuffer);
+
+    // TODO: move this stuff out
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+
+    vkQueueSubmit(mActiveDeviceQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(mActiveDeviceQueue);
+
+    vkFreeCommandBuffers(mActiveDevice, commandPool, 1, &commandBuffer);
+
+    beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+    auto perFrameData = mActiveSwapchain.getPerFrameData();
 
 	for (auto i = 0; i < mActiveSwapchain.getSwapchainSize(); ++i) {
 		auto& cmd = perFrameData[i].imageCommandBuffer;
