@@ -35,7 +35,7 @@ namespace MiniEngine
 
 			Builder& addBufferData(std::vector<float>&& buffer);
 			Builder& addBufferAttributes(std::vector<unsigned int>&& attributes);
-			Builder& addIndices(std::vector<unsigned int>&& indices);
+			Builder& addIndices(std::vector<uint16_t>&& indices);
 			Builder& addMaterialInstance(MaterialInstance* MaterialInstance);
 			Builder& addModel(const char* path);
 			Builder& isLit(bool isLit);
@@ -43,7 +43,7 @@ namespace MiniEngine
 			MiniEngine::Components::RenderableComponent* build(Scene* scene, Entity* entity);
 
 			inline const std::vector<float>& getBuffer() const { return mBuffer; }
-			inline const std::vector<unsigned int>& getIndices() const { return mIndices; }
+			inline const std::vector<uint16_t>& getIndices() const { return mIndices; }
 			inline const std::vector<unsigned int>& getAttributes() const { return mAttributes; }
 			inline const char* getModelPath() const { return mModelPath; }
 			inline MaterialInstance* getMaterialInstance() const { return mMaterialInstance; }
@@ -51,7 +51,7 @@ namespace MiniEngine
 		private:
 
 			std::vector<float>		  mBuffer;
-			std::vector<unsigned int> mIndices;
+			std::vector<uint16_t> mIndices;
 			std::vector<unsigned int> mAttributes;
 			MaterialInstance* mMaterialInstance;
 			bool					  mIsLit;

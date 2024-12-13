@@ -9,7 +9,7 @@ namespace MiniTools
 	struct Model
 	{
 		std::vector<float>		  bufferData;
-		std::vector<unsigned int> indices;
+		std::vector<uint16_t> indices;
 		std::vector<unsigned int> vertexAttributeSizes;
 	};
 

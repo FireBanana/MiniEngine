@@ -16,9 +16,9 @@ namespace MiniEngine
 		return *this;
 	}
 
-	Renderable::Builder& Renderable::Builder::addIndices(std::vector<unsigned int>&& indices)
+	Renderable::Builder& Renderable::Builder::addIndices(std::vector<uint16_t>&& indices)
 	{
-		mIndices = std::forward<std::vector<unsigned int>&&>(indices);
+		mIndices = std::forward<std::vector<uint16_t>&&>(indices);
 		return *this;
 	}
 

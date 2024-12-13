@@ -99,6 +99,12 @@ FetchContent_Declare(
         GIT_TAG master
 )
 
+FetchContent_Declare(
+        assimp
+        GIT_REPOSITORY https://github.com/assimp/assimp
+        GIT_TAG v5.4.3
+)
+
 FetchContent_GetProperties(glm)
 if(NOT glm_POPULATED)
   FetchContent_Populate(glm)
@@ -129,6 +135,8 @@ FetchContent_GetProperties(vma)
 if(NOT vma_POPULATED)
   FetchContent_Populate(vma)
 endif()
+
+FetchContent_MakeAvailable(assimp)
 
 target_include_directories(MiniEngine PUBLIC SYSTEM ${glm_SOURCE_DIR}/glm)
 target_link_libraries(MiniEngine glm)
@@ -174,6 +182,8 @@ target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3d
 
 target_include_directories(MiniEngine PUBLIC SYSTEM ${vma_SOURCE_DIR}/include)
 #add_subdirectory(${vma_SOURCE_DIR} ${vma_BINARY_DIR})
+
+target_link_libraries(MiniEngine assimp)
 
 # Add secondary tools
 

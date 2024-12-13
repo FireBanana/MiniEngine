@@ -1,10 +1,13 @@
 #include "Loader.h"
 
-#define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
-#include <tiny_gltf.h>
+#include <stb_image.h>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 #include <iostream>
 #include <glm.hpp>
 
@@ -12,142 +15,44 @@ namespace MiniTools
 {
 	ModelLoaderResults ModelLoader::load(const char* path)
 	{
-		tinygltf::TinyGLTF loader;
-		tinygltf::Model model;
-		std::string err, wrn;
+		Assimp::Importer importer{};
+		ModelLoaderResults res{};
 
-		ModelLoaderResults results{};
+		const auto scene = importer.ReadFile(path, aiProcess_CalcTangentSpace |
+			aiProcess_Triangulate |
+			aiProcess_JoinIdenticalVertices |
+			aiProcess_SortByPType);
 
-		loader.LoadBinaryFromFile(&model, &err, &wrn, path);
-
-		for (auto& object : model.meshes)
-		{
-			std::vector<float> vertexData;
-			std::vector<float> uvData;
-			std::vector<float> normalData;
-
-			std::vector<unsigned int> indices;
-
-			auto primitive = object.primitives[0];
-
-			if (primitive.mode != TINYGLTF_MODE_TRIANGLES) throw;
-
-			// TODO: Cleanup ifs
-			// Get vertices
-			for (auto& attrib : primitive.attributes)
-			{
-				if (attrib.first == "POSITION")
-				{
-					auto& accessor = model.accessors[attrib.second];
-					auto& bufferView = model.bufferViews[accessor.bufferView];
-					auto type = accessor.type;
-
-					auto byteStride = accessor.ByteStride(bufferView);
-					auto size = accessor.count;
-
-					auto& buffer = model.buffers[bufferView.buffer];
-
-					for (auto i = 0; i < size; ++i)
-					{
-						vertexData.push_back(
-							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset)])))
-						);
-
-						vertexData.push_back(
-							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float)])))
-						);
-
-						vertexData.push_back(
-							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float) * 2])))
-						);
-					}
-				}
-				else if (attrib.first == "TEXCOORD_0")
-				{
-					auto& accessor = model.accessors[attrib.second];
-					auto& bufferView = model.bufferViews[accessor.bufferView];
-					auto type = accessor.type;
-
-					auto byteStride = accessor.ByteStride(bufferView);
-					auto size = accessor.count;
-
-					auto& buffer = model.buffers[bufferView.buffer];
-
-					for (auto i = 0; i < size; ++i)
-					{
-						uvData.push_back(
-							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset)])))
-						);
-
-						uvData.push_back(
-							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float)])))
-						);
-					}
-				}
-				else if (attrib.first == "NORMAL")
-				{
-					auto& accessor = model.accessors[attrib.second];
-					auto& bufferView = model.bufferViews[accessor.bufferView];
-					auto type = accessor.type;
-
-					auto byteStride = accessor.ByteStride(bufferView);
-					auto size = accessor.count;
-
-					auto& buffer = model.buffers[bufferView.buffer];
-
-					for (auto i = 0; i < size; ++i)
-					{
-						normalData.push_back(
-							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset)])))
-						);
-
-						normalData.push_back(
-							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float)])))
-						);
-
-						normalData.push_back(
-							*(reinterpret_cast<float*>(&(buffer.data[(i * byteStride + bufferView.byteOffset) + sizeof(float) * 2])))
-						);
-					}
-				}
-			}
-
-			// Get indices
-			auto& indexAccessor = model.accessors[primitive.indices];
-			auto& indexBufferView = model.bufferViews[indexAccessor.bufferView];
-			auto indexStride = indexAccessor.ByteStride(indexBufferView);
-			auto& indexBuffer = model.buffers[indexBufferView.buffer];
-
-			for (auto i = 0; i < indexAccessor.count; ++i)
-			{
-				auto val = *(reinterpret_cast<unsigned int*>(&(indexBuffer.data[i * indexStride + indexBufferView.byteOffset]))) & ((~0u) >> 16);
-
-				indices.push_back(val);
-			}
-
-			auto bufferData = std::vector<float>();
-			auto it_vert = vertexData.begin();
-			auto it_uv = uvData.begin();
-			auto it_normal = normalData.begin();
-
-			while (it_vert != vertexData.end() && it_uv != uvData.end() && it_normal != normalData.end())
-			{
-				bufferData.push_back(*(it_vert++));
-				bufferData.push_back(*(it_vert++));
-				bufferData.push_back(*(it_vert++));
-
-				bufferData.push_back(*(it_uv++));
-				bufferData.push_back(*(it_uv++));
-
-				bufferData.push_back(*(it_normal++));
-				bufferData.push_back(*(it_normal++));
-				bufferData.push_back(*(it_normal++));
-			}
-
-			results.models.push_back({ std::move(bufferData), std::move(indices), {3, 2, 3} });
+		if (scene == nullptr) {
+			std::cout << "\nLoading file failed!\n";
+			std::cout << importer.GetErrorString();
+			return {};
 		}
 
-		return results;
+		if (scene->mNumMeshes > 1) {
+			std::cout << "\nLoading file failed! Only 1 mesh supported currently\n";
+			return {};
+		}
+
+		auto mesh = scene->mMeshes[0];
+
+		res.models.push_back({});
+
+		for (int i = 0; i < mesh->mNumVertices; ++i) {
+			res.models[0].bufferData.push_back(mesh->mVertices[i].x);
+			res.models[0].bufferData.push_back(mesh->mVertices[i].y);
+			res.models[0].bufferData.push_back(mesh->mVertices[i].z);
+		}
+
+		for (int i = 0; i < mesh->mNumFaces; ++i) {
+			for (int j = 0; j < mesh->mFaces[i].mNumIndices; ++j) {
+				res.models[0].indices.push_back(mesh->mFaces[i].mIndices[j]);
+			}
+		}
+		
+		res.models[0].vertexAttributeSizes = { 3 };
+
+		return res;
 	}
 
 	ImageLoaderResults ImageLoader::load(const char* path, bool isFloat, bool flipImage)

@@ -13,13 +13,15 @@ namespace MiniEngine::Components
 	struct RenderableComponent : public Component
 	{
 		std::vector<float>		   buffer;
-		std::vector<unsigned int>  indices;
+		std::vector<uint16_t>  indices;
 		std::vector<unsigned int>  attributes;
 		MaterialInstance*          materialInstance;
 		Shader					   shader;
 		Vector3					   worldPosition;
 		Vector3					   rotation;
 		unsigned int			  stride;
+
         Backend::VulkanBuffer vbuffer;
+		Backend::VulkanBuffer ibuffer;
     };
 }
