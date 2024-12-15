@@ -42,6 +42,9 @@ namespace MiniTools
 			res.models[0].bufferData.push_back(mesh->mVertices[i].x);
 			res.models[0].bufferData.push_back(mesh->mVertices[i].y);
 			res.models[0].bufferData.push_back(mesh->mVertices[i].z);
+
+			res.models[0].bufferData.push_back(mesh->mTextureCoords[0][i].x);
+			res.models[0].bufferData.push_back(mesh->mTextureCoords[0][i].y);
 		}
 
 		for (int i = 0; i < mesh->mNumFaces; ++i) {
@@ -50,7 +53,7 @@ namespace MiniTools
 			}
 		}
 		
-		res.models[0].vertexAttributeSizes = { 3 };
+		res.models[0].vertexAttributeSizes = { 3, 2 };
 
 		return res;
 	}

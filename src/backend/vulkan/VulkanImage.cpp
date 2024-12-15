@@ -81,7 +81,7 @@ MiniEngine::Backend::VulkanImage MiniEngine::Backend::VulkanImage::Builder::buil
 	// Create staging buffer for image data
 	if (mData) {
 		VkBufferCreateInfo bufCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-		bufCreateInfo.size = mWidth * mHeight * sizeof(char) * 4;
+		bufCreateInfo.size = mWidth * mHeight * 32;
 		bufCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
 		VmaAllocationCreateInfo allocCreateInfo = {};
@@ -94,7 +94,8 @@ MiniEngine::Backend::VulkanImage MiniEngine::Backend::VulkanImage::Builder::buil
 		VmaAllocationInfo allocInfo;
 		vmaCreateBuffer(mDriver->mMemoryAllocator, &bufCreateInfo, &allocCreateInfo, &buf, &alloc, &allocInfo);
 
-		memcpy(allocInfo.pMappedData, mData, mWidth * mHeight * sizeof(char) * 4);
+		// Considering 32 bit pixels
+		memcpy(allocInfo.pMappedData, mData, mWidth * mHeight * 4);
 
 		image.mStagingBuffer = buf;
 	}

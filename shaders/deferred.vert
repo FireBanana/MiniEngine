@@ -14,15 +14,15 @@ layout( push_constant ) uniform constant
     mat4 model;
 } pConstant;
 
-layout(location = 0) in vec2 in_pos;
-layout(location = 1) in vec3 in_col;
+layout(location = 0) in vec3 in_pos;
+layout(location = 1) in vec2 in_col;
 
-layout(location = 0) out vec2 out_pos;
-layout(location = 1) out vec3 out_col;
+layout(location = 0) out vec3 out_pos;
+layout(location = 1) out vec2 out_col;
 
 void main()
 {
-    gl_Position = projection * view * pConstant.model * vec4(in_pos, 0., 1.0);
+    gl_Position = projection * view * pConstant.model * vec4(in_pos, 1.0);
     out_col = in_col;
     out_pos = in_pos;
 }

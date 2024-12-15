@@ -111,7 +111,7 @@ int main(void)
 	//	.build(&scene, meshEntity3);
 
 	auto camera = MiniEngine::Camera::Builder()
-		.setPosition({ 0, 0, 2 })
+		.setPosition({ 0, 0, 4 })
 		.setAspectRatio((float)params.screenWidth / (float)params.screenHeight)
 		.setNearFarPlane(0.1f, 1000.0f)
 		.setFOV(90)

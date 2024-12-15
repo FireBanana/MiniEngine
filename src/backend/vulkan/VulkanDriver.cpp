@@ -380,7 +380,7 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 		.setAttachmentCount(1)
 		.addShaderState(DIR "/shaders/deferred.vert",
 			DIR "/shaders/deferred.frag")
-		.addVertexAttributeState(0, { 3 }) //point, color
+		.addVertexAttributeState(0, { 3, 2 }) //point, color
 		.addDescriptorSet(std::move(sceneDescriptorSet))
 		.addDescriptorSet(std::move(imageBufferDescriptorSet))
 		.addPushConstant(sizeof(TransformPushConstant))
@@ -828,7 +828,7 @@ MiniEngine::Texture MiniEngine::Backend::VulkanDriver::createTexture(
 		.setUsageFlags(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT
 			| VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT)
 		.setAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT)
-		.setFormat(mActiveSwapchain.getFormat()) // todo change
+		.setFormat(VK_FORMAT_R8G8B8A8_SRGB) // todo change
 		.setData(data)
 		.setDebugName("CustomTexture")
 		.build();
