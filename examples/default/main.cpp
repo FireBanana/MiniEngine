@@ -15,8 +15,8 @@
 int main(void)
 {
 	MiniEngine::Types::EngineInitParams params{};
-	params.screenWidth = 512;
-	params.screenHeight = 512;
+	params.screenWidth = 1600;
+	params.screenHeight = 900;
 	params.clearColor = { 0.1f, 0.15f, 0.2f, 0.0f };
 	params.enablePostProcess = false;
 	MiniEngine::Engine engine{ params };
@@ -30,8 +30,8 @@ int main(void)
 	auto cameraEntity2 = scene.createEntity();
 	//auto mainLightEntity = scene.createEntity();
 
-	MiniEngine::Texture texture = engine.loadTexture(RESOLVE_PATH("/assets/color.jpg"), MiniEngine::Texture::TextureType::Default, false);
-	//MiniEngine::Texture normal = engine.loadTexture(RESOLVE_PATH("/assets/normal.jpg"), MiniEngine::Texture::TextureType::Default, false);
+	MiniEngine::Texture texture = engine.loadTexture(RESOLVE_PATH("/assets/powder.png"), MiniEngine::Texture::TextureType::Default, false);
+	MiniEngine::Texture normal = engine.loadTexture(RESOLVE_PATH("/assets/normal.jpg"), MiniEngine::Texture::TextureType::Default, false);
 	//MiniEngine::Texture roughness = engine.loadTexture(RESOLVE_PATH("/assets/roughness.jpg"), MiniEngine::Texture::TextureType::Default, false);
 	//MiniEngine::Texture texture2 = engine.loadTexture(RESOLVE_PATH("/assets/hdri.hdr"), MiniEngine::Texture::TextureType::CubeMap, true);
 
@@ -45,7 +45,7 @@ int main(void)
 		.create();
 
 	auto mesh = MiniEngine::Renderable::Builder()
-		.addModel(RESOLVE_PATH("/assets/monkey.glb"))
+		.addModel(RESOLVE_PATH("/assets/powder.glb"))
 		.addMaterialInstance(&material)
 		.build(&scene, meshEntity);
 
@@ -111,20 +111,18 @@ int main(void)
 	//	.build(&scene, meshEntity3);
 
 	auto camera = MiniEngine::Camera::Builder()
-		.setPosition({ 0, 0, 4 })
+		.setPosition({ 5, 0, 10 })
 		.setAspectRatio((float)params.screenWidth / (float)params.screenHeight)
 		.setNearFarPlane(0.1f, 1000.0f)
-		.setFOV(90)
+		.setFOV(40)
 		.build(&scene, cameraEntity2);
-
-	//mesh->worldPosition = { 1, 0, 0 };
-
-	//mesh3->worldPosition = { -1, 0, 0 };
 
 	//auto light = MiniEngine::Light::Builder()
 	//	.setPosition({ 0,0,0 })
 	//	.setIntensity(1.0f)
 	//	.build(&scene, mainLightEntity);
+
+	//mesh->rotation.y = 25 * (3.124 / 180);
 
 	//// todo, hides when x/z 0. Need to set forward vector etc.
 	scene.setCameraActive(camera);

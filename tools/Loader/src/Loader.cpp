@@ -21,7 +21,8 @@ namespace MiniTools
 		const auto scene = importer.ReadFile(path, aiProcess_CalcTangentSpace |
 			aiProcess_Triangulate |
 			aiProcess_JoinIdenticalVertices |
-			aiProcess_SortByPType);
+			aiProcess_SortByPType |
+			aiProcess_FlipUVs);
 
 		if (scene == nullptr) {
 			std::cout << "\nLoading file failed!\n";
@@ -31,7 +32,7 @@ namespace MiniTools
 
 		if (scene->mNumMeshes > 1) {
 			std::cout << "\nLoading file failed! Only 1 mesh supported currently\n";
-			return {};
+			//return {};
 		}
 
 		auto mesh = scene->mMeshes[0];
@@ -43,6 +44,10 @@ namespace MiniTools
 			res.models[0].bufferData.push_back(mesh->mVertices[i].y);
 			res.models[0].bufferData.push_back(mesh->mVertices[i].z);
 
+			res.models[0].bufferData.push_back(mesh->mNormals[i].x);
+			res.models[0].bufferData.push_back(mesh->mNormals[i].y);
+			res.models[0].bufferData.push_back(mesh->mNormals[i].z);
+
 			res.models[0].bufferData.push_back(mesh->mTextureCoords[0][i].x);
 			res.models[0].bufferData.push_back(mesh->mTextureCoords[0][i].y);
 		}
@@ -53,7 +58,7 @@ namespace MiniTools
 			}
 		}
 		
-		res.models[0].vertexAttributeSizes = { 3, 2 };
+		res.models[0].vertexAttributeSizes = { 3, 3, 2 };
 
 		return res;
 	}

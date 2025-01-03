@@ -364,7 +364,7 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 
 	auto imageBufferDescriptorSet = VulkanDescriptorSet::Builder(this)
 		.setBinding(1) // CURRENTLY UNUSED
-		.setCount(1)
+		.setCount(2)
 		.setShaderStages(VK_SHADER_STAGE_FRAGMENT_BIT)
 		.setType(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
 		.setPool(mDescriptorPools[1])
@@ -380,7 +380,7 @@ void MiniEngine::Backend::VulkanDriver::createGBufferPipeline()
 		.setAttachmentCount(1)
 		.addShaderState(DIR "/shaders/deferred.vert",
 			DIR "/shaders/deferred.frag")
-		.addVertexAttributeState(0, { 3, 2 }) //point, color
+		.addVertexAttributeState(0, { 3, 3, 2 }) //point, normal, color
 		.addDescriptorSet(std::move(sceneDescriptorSet))
 		.addDescriptorSet(std::move(imageBufferDescriptorSet))
 		.addPushConstant(sizeof(TransformPushConstant))
@@ -454,7 +454,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene* 
 	// Make single time general purpose commanddbuffer?
 	// Transistion all textures, load all data to images
 	VkCommandPool commandPool;
-	VkCommandBuffer commandBuffer;
+	std::vector<VkCommandBuffer> commandBufferList{ mVulkanImageCache.size()};
 
 	VkCommandPoolCreateInfo cmdPoolInfo{ VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
 	cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
@@ -464,17 +464,19 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene* 
 	VkCommandBufferAllocateInfo cmdBuffInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
 	cmdBuffInfo.commandPool = commandPool;
 	cmdBuffInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	cmdBuffInfo.commandBufferCount = 1;
-	vkAllocateCommandBuffers(mActiveDevice, &cmdBuffInfo, &commandBuffer);
+	cmdBuffInfo.commandBufferCount = mVulkanImageCache.size();
+	vkAllocateCommandBuffers(mActiveDevice, &cmdBuffInfo, commandBufferList.data());
 
 	VkCommandBufferBeginInfo beginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-	vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
 	for (auto& imgRef : mVulkanImageCache) {
 		//if (imgRef.getResourceId() == texId)
 		//    tex = &imgRef;
+
+		// TODO: should be index!!
+		auto &commandBuffer = commandBufferList[imgRef.getResourceId()];
+		vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
 		VulkanBarrier::Builder()
 			.setCmdBuffer(&commandBuffer)
@@ -505,23 +507,34 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene* 
 
 		vkCmdCopyBufferToImage(commandBuffer, stageBuffer, imgRef.getRawImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-		mGbufferPipeline.mDescriptors.at(1).loadData(&imgRef);
+		vkEndCommandBuffer(commandBuffer);
+	}
+
+	// Set texture for models
+	auto renderables = scene->getRenderableComponentDatabase();
+
+	for (size_t i = 0; i < renderables.size(); ++i) {
+		auto mesh = renderables[i];
+		auto diffuse = mesh.materialInstance->textureReference[(int)MiniEngine::Types::TextureType::Diffuse];
+
+		if (diffuse.isValid()) {
+			// TODO Check flag here instead of num
+			mGbufferPipeline.mDescriptors.at(1).loadData(&mVulkanImageCache[0]);
+		}
 	}
 
 	mGbufferPipeline.mDescriptors.at(1).update();
 
-	vkEndCommandBuffer(commandBuffer);
-
 	// TODO: move this stuff out
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffer;
+	submitInfo.commandBufferCount = mVulkanImageCache.size();
+	submitInfo.pCommandBuffers = commandBufferList.data();
 
 	vkQueueSubmit(mActiveDeviceQueue, 1, &submitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(mActiveDeviceQueue);
 
-	vkFreeCommandBuffers(mActiveDevice, commandPool, 1, &commandBuffer);
+	vkFreeCommandBuffers(mActiveDevice, commandPool, mVulkanImageCache.size(), commandBufferList.data());
 
 	beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 	auto perFrameData = mActiveSwapchain.getPerFrameData();
@@ -610,30 +623,6 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene* 
 			.setDstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
 			.build();
 
-		//VulkanBarrier::Builder()
-		//    .setCmdBuffer(&cmd)
-		//    .setImage(mVulkanImageCache[0].getRawImage())
-		//    .setSrcAccessMask(0)
-		//    .setDstAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT)
-		//    .setAspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
-		//    .setOldLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-		//    .setNewLayout(VK_IMAGE_LAYOUT_GENERAL)
-		//    .setSrcStageMask(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
-		//    .setDstStageMask(VK_PIPELINE_STAGE_TRANSFER_BIT)
-		//    .build();
-
-		//VulkanBarrier::Builder()
-		//    .setCmdBuffer(&cmd)
-		//    .setImage(mPlaceholderImage.getRawImage())
-		//    .setSrcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-		//    .setDstAccessMask(VK_ACCESS_SHADER_READ_BIT)
-		//    .setAspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
-		//    .setOldLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-		//    .setNewLayout(VK_IMAGE_LAYOUT_GENERAL)
-		//    .setSrcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-		//    .setDstStageMask(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
-		//    .build();
-
 		VulkanBarrier::Builder()
 			.setCmdBuffer(&cmd)
 			.setBuffer(mGbufferPipeline.mDescriptors[0].mBuffers[0].getRawBuffer())
@@ -667,6 +656,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene* 
 		vkCmdBeginRendering(cmd, &gBufferRenderingInfo);
 
 		auto renderables = scene->getRenderableComponentDatabase();
+
 		for (size_t i = 0; i < renderables.size(); ++i) {
 			auto mesh = renderables[i];
 			VkDeviceSize offset = { 0 };
@@ -675,11 +665,14 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene* 
 			vkCmdBindVertexBuffers(cmd, 0, 1, &vbuffer, &offset);
 			vkCmdBindIndexBuffer(cmd, ibuffer, 0, VK_INDEX_TYPE_UINT16);
 
-				tempModel.model = glm::mat4(1.0);
 			tempModel.model = glm::translate(glm::mat4(1.0),
 				{ mesh.worldPosition.x,
 				 mesh.worldPosition.y,
 				 mesh.worldPosition.z });
+			tempModel.model = glm::rotate(tempModel.model, mesh.rotation.x, glm::vec3(1, 0, 0));
+			tempModel.model = glm::rotate(tempModel.model, mesh.rotation.y, glm::vec3(0, 1, 0));
+			tempModel.model = glm::rotate(tempModel.model, mesh.rotation.z, glm::vec3(0, 0, 1));
+
 
 			// Push model transform
 			vkCmdPushConstants(cmd,
@@ -834,6 +827,7 @@ MiniEngine::Texture MiniEngine::Backend::VulkanDriver::createTexture(
 		.build();
 
 	Texture tex = { width, height, channels };
+	tex.setValid();
 	texture.mResourceId = tex.getId();
 	mVulkanImageCache.push_back(texture);
 

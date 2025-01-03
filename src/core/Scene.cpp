@@ -20,8 +20,8 @@ namespace MiniEngine
 
 	Entity* Scene::createEntity()
 	{
-		mEntityDatabase.push(Entity{});
-		return &(mEntityDatabase.getLast());
+		mEntityDatabase.push_back(Entity{});
+		return &(mEntityDatabase.back());
 	}
 
 	Components::RenderableComponent* Scene::createRenderable(const Renderable::Builder* builderResults, Entity* entity) //TODO: Move this elsewhere
@@ -66,8 +66,8 @@ namespace MiniEngine
 
 		mEngine->getGraphicsDriver()->setupMesh(&m);
 
-		mRenderableComponentDatabase.push(std::move(m));
-		return &(mRenderableComponentDatabase.getLast());
+		mRenderableComponentDatabase.push_back(std::move(m));
+		return &(mRenderableComponentDatabase.back());
 	}
 
 	Components::CameraComponent* Scene::createCamera(const Camera::Builder* builderResults, Entity* entity)
@@ -80,8 +80,8 @@ namespace MiniEngine
 		c.fov = builderResults->getFov();
 		c.nearPlane = builderResults->getNearPlane();
 
-		mCameraComponentDatabase.push(std::move(c));
-		return &(mCameraComponentDatabase.getLast());
+		mCameraComponentDatabase.push_back(std::move(c));
+		return &(mCameraComponentDatabase.back());
 	}
 
 	Components::LightComponent* Scene::createLight(const Light::Builder* builderResults, Entity* entity)
@@ -91,8 +91,8 @@ namespace MiniEngine
 		l.position = builderResults->getPosition();
 		l.intensity = builderResults->getIntensity();
 
-		mLightComponentDatabase.push(std::move(l));
-		return &(mLightComponentDatabase.getLast());
+		mLightComponentDatabase.push_back(std::move(l));
+		return &(mLightComponentDatabase.back());
 	}
 
 	Components::SkyboxComponent Scene::createSkybox(const Skybox::Builder* builderResults, Entity* entity)

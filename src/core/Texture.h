@@ -19,6 +19,8 @@ namespace MiniEngine
 		inline int getHeight() const { return mHeight; }
 		inline int getWidth() const { return mWidth; }
 		inline unsigned int getId() const { return mId; }
+		inline bool isValid() { return mValid; }
+		inline void setValid() { mValid = true; }
 
     private:
         static unsigned int sResourceIdCounter;
@@ -27,5 +29,6 @@ namespace MiniEngine
 		int mHeight;
 		int mChannels;
         unsigned int mId;
+		bool mValid = false;
     };
 }

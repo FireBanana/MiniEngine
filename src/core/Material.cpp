@@ -6,14 +6,14 @@ namespace MiniEngine
 	Material::Creator::Creator() : 
 		mTextureMask(0)
 	{
-		mMaterialProperties.set((int)PropertyType::Roughness, 0.0f);
-		mMaterialProperties.set((int)PropertyType::Metallic, 0.0f);
+		mMaterialProperties[(int)PropertyType::Roughness] = 0.0f;
+		mMaterialProperties[(int)PropertyType::Metallic] = 0.0f;
 	}
 
 	Material::Creator& Material::Creator::addTexture(MiniEngine::Types::TextureType textureType, Texture texture)
 	{
 		mTextureMask |= (0x1 << (int)textureType);
-		mTextureReference.set((int)textureType, texture);
+		mTextureReference[(int)textureType] = texture;
 		return *this;
 	}
 	
@@ -25,7 +25,7 @@ namespace MiniEngine
 	
 	Material::Creator& Material::Creator::addMaterialProperty(PropertyType propertyType, float value)
 	{
-		mMaterialProperties.set((int)propertyType, value);
+		mMaterialProperties[(int)propertyType] = value;
 		return *this;
 	}
 

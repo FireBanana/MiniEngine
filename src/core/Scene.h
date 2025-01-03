@@ -43,11 +43,11 @@ namespace MiniEngine
 		Engine* mEngine;
 		Components::SkyboxComponent* mActiveSkybox;
 
-		ComponentArray<Entity, MAX_COMPONENT_SIZE>							mEntityDatabase;
-		ComponentArray<Components::CameraComponent, MAX_COMPONENT_SIZE>	    mCameraComponentDatabase;
-		ComponentArray<Components::RenderableComponent, MAX_COMPONENT_SIZE> mRenderableComponentDatabase;
-		ComponentArray<Components::TransformComponent, MAX_COMPONENT_SIZE>  mTransformComponentDatabase;
-		ComponentArray<Components::LightComponent, MAX_COMPONENT_SIZE>		mLightComponentDatabase;
+		std::vector<Entity>							mEntityDatabase{ };
+		std::vector<Components::CameraComponent>	    mCameraComponentDatabase{ };
+		std::vector<Components::RenderableComponent> mRenderableComponentDatabase{ };
+		std::vector<Components::TransformComponent>  mTransformComponentDatabase{ };
+		std::vector<Components::LightComponent>		mLightComponentDatabase{ };
 	};
 
 }

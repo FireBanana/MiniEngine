@@ -61,13 +61,6 @@ MiniEngine::Backend::VulkanDescriptorSet MiniEngine::Backend::VulkanDescriptorSe
           | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT
           | VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT_EXT;
 
-    VkDescriptorSetLayoutBindingFlagsCreateInfoEXT binding_flags{};
-    binding_flags.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
-    binding_flags.bindingCount = 1;
-    binding_flags.pBindingFlags = &flags;
-
-    descriptorLayoutInfo.pNext = &binding_flags;
-
     std::vector<VkDescriptorSetLayoutBinding> bindings{};
 
     for (auto i = 0; i < mCount; ++i) {
@@ -80,6 +73,13 @@ MiniEngine::Backend::VulkanDescriptorSet MiniEngine::Backend::VulkanDescriptorSe
 
         bindings.push_back(binding);
     }
+
+    VkDescriptorSetLayoutBindingFlagsCreateInfoEXT binding_flags{};
+    binding_flags.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
+    binding_flags.bindingCount = mCount;
+    binding_flags.pBindingFlags = &flags;
+
+    descriptorLayoutInfo.pNext = &binding_flags;
 
     descriptorLayoutInfo.bindingCount = mCount;
     descriptorLayoutInfo.pBindings = bindings.data();
