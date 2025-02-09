@@ -201,7 +201,7 @@ void MiniEngine::Backend::VulkanDriver::registerPhysicalDevice()
 	vkEnumeratePhysicalDevices(mInstance, &gpuCount, gpuList.data());
 
 	// Only taking the first GPU found
-	mActiveGpu = gpuList.size() > 1 ? gpuList[1] : gpuList[0];
+	mActiveGpu = gpuList.size() > 1 ? gpuList[0] : gpuList[0];
 
 	vkGetPhysicalDeviceMemoryProperties(mActiveGpu, &mGpuMemoryProperties);
 }

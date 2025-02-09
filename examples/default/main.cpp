@@ -10,7 +10,7 @@
 
 #include "GlslCompiler.h"
 
-#define RESOLVE_PATH(path) DIR##path
+#define RESOLVE_PATH(path) DIR path
 
 int main(void)
 {
@@ -30,6 +30,7 @@ int main(void)
 	auto cameraEntity2 = scene.createEntity();
 	//auto mainLightEntity = scene.createEntity();
 
+	MiniEngine::Logger::print(RESOLVE_PATH("/assets/powder.png"));
 	MiniEngine::Texture texture = engine.loadTexture(RESOLVE_PATH("/assets/powder.png"), MiniEngine::Texture::TextureType::Default, false);
 	MiniEngine::Texture normal = engine.loadTexture(RESOLVE_PATH("/assets/normal.jpg"), MiniEngine::Texture::TextureType::Default, false);
 	//MiniEngine::Texture roughness = engine.loadTexture(RESOLVE_PATH("/assets/roughness.jpg"), MiniEngine::Texture::TextureType::Default, false);

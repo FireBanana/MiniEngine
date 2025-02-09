@@ -1,11 +1,8 @@
 #pragma once
 
 #include "Shader.h"
-#include "ComponentArray.h"
 #include "MaterialInstance.h"
 #include "Texture.h"
-#include "EnumExtension.h"
-#include "EngineConstants.h"
 #include "EngineTypes.h"
 #include <array>
 
@@ -56,13 +53,13 @@ namespace MiniEngine
 
 			bool isTextureSet(MiniEngine::Types::TextureType type);
 
-			inline std::array<Texture, MiniEngine::MAX_TEXTURE_TYPES> getTextureReference() const { return mTextureReference; }
+			inline std::array<Texture, 32> getTextureReference() const { return mTextureReference; }
 			inline std::array<float, 16> getMaterialPropertyReference() const { return mMaterialProperties; }
 			inline Shader* getShader() const { return mShader; }
 
 		private:
 
-			std::array<Texture, MiniEngine::MAX_TEXTURE_TYPES> mTextureReference;
+			std::array<Texture, 32> mTextureReference;
 			std::array<float, 16> mMaterialProperties;
 			uint32_t mTextureMask;
 			Shader* mShader;

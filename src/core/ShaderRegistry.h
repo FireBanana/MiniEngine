@@ -4,7 +4,7 @@
 #include "VulkanDriver.h"
 #include <vector>
 
-#define RESOLVE_PATH(path) DIR##path
+#define RESOLVE_PATH(path) DIR path
 
 static constexpr char* DEFERRED_VERTEX_PATH		   = RESOLVE_PATH("/shaders/deferred.vert");
 static constexpr char* DEFERRED_FRAGMENT_PATH	   = RESOLVE_PATH("/shaders/deferred.frag");

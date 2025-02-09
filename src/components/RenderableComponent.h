@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Component.h"
-#include "ComponentArray.h"
 #include "MaterialInstance.h"
 #include "Shader.h"
 #include "Texture.h"

@@ -1,5 +1,8 @@
 #pragma once
 #include <functional>
+#include <condition_variable>
+#include <atomic>
+#include <thread>
 
 #include "utils/ThreadSafeQueue.h"
 

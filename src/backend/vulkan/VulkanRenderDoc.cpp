@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef GRAPHICS_DEBUG
+#if defined(GRAPHICS_DEBUG) && defined(MSVC)
 #include "VulkanRenderDoc.h"
 #include "Logger.h"
 #include <Windows.h>
@@ -53,4 +53,17 @@ namespace VulkanRenderDoc
 }
 }
 
+#else
+namespace MiniEngine
+{
+namespace Backend
+{
+namespace VulkanRenderDoc
+{
+void initRenderDoc(){};
+void startCapture(){};
+void endCapture(){};
+}
+}
+}
 #endif

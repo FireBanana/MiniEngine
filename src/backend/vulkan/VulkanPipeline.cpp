@@ -1,5 +1,4 @@
 #include "VulkanPipeline.h"
-#include "EnumExtension.h"
 #include "GlslCompiler.h"
 #include "Logger.h"
 #include "VulkanDriver.h"
