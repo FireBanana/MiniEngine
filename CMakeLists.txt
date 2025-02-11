@@ -194,6 +194,7 @@ target_include_directories(MiniEngine PUBLIC SYSTEM ${vma_SOURCE_DIR}/include)
 #add_subdirectory(${vma_SOURCE_DIR} ${vma_BINARY_DIR})
 
 target_link_libraries(MiniEngine assimp)
+target_include_directories(MiniEngine PUBLIC SYSTEM ${assimp_SOURCE_DIR}/include)
 
 # Add secondary tools
 
