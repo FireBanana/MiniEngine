@@ -9,14 +9,12 @@
 #include "VulkanPlatform.h"
 #include <GLFW/glfw3.h>
 
-namespace MiniEngine
-{
+namespace MiniEngine {
 
 class Scene;
 class Engine;
 
-namespace Backend
-{
+namespace Backend {
 class VulkanPlatform
 {
 public:
@@ -35,8 +33,11 @@ private:
     Engine *mEngine;
     MiniEngine::Types::EngineInitParams mParams;
 
+    // Events
+    static void framebufferSizeCallback(GLFWwindow *window, int height, int width);
+
     void createWindow(uint16_t width, uint16_t height);
     void createDriver(MiniEngine::Types::EngineInitParams &params);
-	};
-}
-}
+};
+} // namespace Backend
+} // namespace MiniEngine

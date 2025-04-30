@@ -23,8 +23,7 @@ public:
         Builder operator=(Builder &&) = delete;
 
         Builder &setBinding(int binding);
-        Builder &setCount(int count);
-        Builder &setType(VkDescriptorType type);
+        Builder &setTypeStructure(std::vector<VkDescriptorType> type);
         Builder &setShaderStages(VkShaderStageFlags flags);
         Builder &setPool(VkDescriptorPool pool); // autoselect based on type?
         Builder &setDebugName(std::string &&name);
@@ -34,14 +33,13 @@ public:
         VulkanDriver *mDriver;
         VkDescriptorPool mPool;
         int mBinding;
-        int mCount;
         std::string mDebugName;
-        VkDescriptorType mType;
+        std::vector<VkDescriptorType> mTypeStructure;
         VkShaderStageFlags mStageFlags;
     };
 
-    void loadData(VulkanBuffer &&buffer);
-    void loadData(VulkanImage *images);
+    void loadData(VulkanBuffer &&buffer, int structureIndex);
+    void loadData(VulkanImage *images, int structureIndex);
     void update();
 
     VkDescriptorSet *getDescriptorSet() { return &mDescriptorSet; }
@@ -54,7 +52,8 @@ private:
     std::vector<VkDescriptorImageInfo> mImageInfos;
     VkDescriptorSet mDescriptorSet;
     VkDescriptorSetLayout mLayout;
-    VkDescriptorType mType;
+    std::vector<std::pair<VkDescriptorType, int>>
+        mTypeStructure; // The int represents the index into the specific array
     VulkanDriver *mDriver;
 
     friend class VulkanDriver;

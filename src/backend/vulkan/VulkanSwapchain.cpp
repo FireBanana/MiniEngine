@@ -1,5 +1,5 @@
-#include "VulkanSwapchain.h"
 #include "VulkanDriver.h"
+#include "VulkanSwapchain.h"
 
 MiniEngine::Backend::VulkanSwapchain::Builder::Builder(VulkanDriver *driver)
     : mDriver(driver)
@@ -57,27 +57,20 @@ MiniEngine::Backend::VulkanSwapchain MiniEngine::Backend::VulkanSwapchain::Build
 
     // Preferred format VK_FORMAT_R16G16B16A16_SFLOAT
     uint32_t surfaceFormatCount;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(mDriver->mActiveGpu,
-                                         mSurface,
-                                         &surfaceFormatCount,
-                                         nullptr);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(mDriver->mActiveGpu, mSurface, &surfaceFormatCount, nullptr);
     std::vector<VkSurfaceFormatKHR> supportedFormatList(surfaceFormatCount);
-    vkGetPhysicalDeviceSurfaceFormatsKHR(mDriver->mActiveGpu,
-                                         mSurface,
-                                         &surfaceFormatCount,
-                                         supportedFormatList.data());
+    vkGetPhysicalDeviceSurfaceFormatsKHR(
+        mDriver->mActiveGpu, mSurface, &surfaceFormatCount, supportedFormatList.data());
 
-    auto iter = std::find_if(supportedFormatList.begin(),
-                             supportedFormatList.end(),
-                             [this](VkSurfaceFormatKHR currFormat) {
-                                 return currFormat.format == mColorFormat;
-                             });
+    auto iter = std::find_if(
+        supportedFormatList.begin(),
+        supportedFormatList.end(),
+        [this](VkSurfaceFormatKHR currFormat) { return currFormat.format == mColorFormat; });
 
     if (iter == supportedFormatList.end()) {
         iter = supportedFormatList.begin();
-        MiniEngine::Logger::wprint("{} not found as a supported format. Defaulting to {}",
-                                   mColorFormat,
-                                   (*iter).format);
+        MiniEngine::Logger::wprint(
+            "{} not found as a supported format. Defaulting to {}", mColorFormat, iter->format);
     }
 
     auto format = *iter;
@@ -85,9 +78,8 @@ MiniEngine::Backend::VulkanSwapchain MiniEngine::Backend::VulkanSwapchain::Build
     vSwapchain.mColorFormat = format.format;
 
     // Choose desired depth as well
-    constexpr VkFormat depthList[] = {VK_FORMAT_D32_SFLOAT,
-                                      VK_FORMAT_D32_SFLOAT_S8_UINT,
-                                      VK_FORMAT_D24_UNORM_S8_UINT};
+    constexpr VkFormat depthList[]
+        = {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT};
 
     vSwapchain.mDepthFormat = depthList[0];
 
@@ -148,10 +140,8 @@ void MiniEngine::Backend::VulkanSwapchain::createPerFrameData()
     vkGetSwapchainImagesKHR(mDriver->mActiveDevice, this->getSwapchain(), &mSwapchainCount, nullptr);
 
     std::vector<VkImage> swapchainImages(mSwapchainCount);
-    vkGetSwapchainImagesKHR(mDriver->mActiveDevice,
-                            this->getSwapchain(),
-                            &mSwapchainCount,
-                            swapchainImages.data());
+    vkGetSwapchainImagesKHR(
+        mDriver->mActiveDevice, this->getSwapchain(), &mSwapchainCount, swapchainImages.data());
 
     mSwapchainPerFrameData = std::vector<PerFrameData>(mSwapchainCount, PerFrameData{});
 
@@ -190,5 +180,20 @@ void MiniEngine::Backend::VulkanSwapchain::createPerFrameData()
         vkCreateImageView(mDriver->mActiveDevice, &viewInfo, nullptr, &imageView);
         mSwapchainPerFrameData[i].imageView = imageView;
         mSwapchainPerFrameData[i].rawImage = swapchainImages[i];
+
+#ifdef GRAPHICS_DEBUG
+
+        VkDebugUtilsObjectNameInfoEXT imageNameInfo{};
+        imageNameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        imageNameInfo.pNext = NULL;
+        imageNameInfo.objectType = VK_OBJECT_TYPE_IMAGE_VIEW;
+        imageNameInfo.objectHandle = (uint64_t) imageView;
+        imageNameInfo.pObjectName = std::string("SwapchainImage", i).c_str();
+
+        if (vkSetDebugUtilsObjectNameEXT(mDriver->mActiveDevice, &imageNameInfo) != VK_SUCCESS)
+            MiniEngine::Logger::eprint(
+                "Error in creating debug object: {}", std::string("SwapchainImage", i).c_str());
+
+#endif
     }
 }

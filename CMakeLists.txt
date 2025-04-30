@@ -4,12 +4,13 @@ include(FetchContent)
 project(MiniEngine)
 
 set(CMAKE_SUPPRESS_REGENERATION true)
-set(CMAKE_CXX_STANDARD 17)
+set(CXX_STANDARD 17)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin/)
 set(CMAKE_RUNTIME_LIBRARY_DIRECTORY bin/)
 
 set(GRAPHICS_DEBUG ON)
 set(RENDERDOC_ENABLE OFF)
+set(CMAKE_BUILD_TYPE "DEBUG")
 
 add_definitions(-DGLFW_INCLUDE_NONE)
 add_compile_definitions(DIR="${CMAKE_SOURCE_DIR}")
@@ -23,6 +24,8 @@ endif()
 
 if(GRAPHICS_DEBUG)
         add_compile_definitions(GRAPHICS_DEBUG)
+        set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+        set(CMAKE_CXX_FLAGS_DEBUG  "-g")
 endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)

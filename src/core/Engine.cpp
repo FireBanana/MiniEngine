@@ -7,70 +7,65 @@
 #include "VulkanPlatform.h"
 #include <memory>
 
-namespace MiniEngine
+namespace MiniEngine {
+Engine::Engine(MiniEngine::Types::EngineInitParams &params)
 {
-	Engine::Engine(MiniEngine::Types::EngineInitParams& params)
-	{
-		MiniEngine::Logger::print("Initializing engine...");
+    MiniEngine::Logger::print("Initializing engine...");
 
-        mGraphicsPlatform = std::make_unique<Backend::VulkanPlatform>();
-		
-		mGraphicsPlatform->initialize(params, this);
+    mGraphicsPlatform = std::make_unique<Backend::VulkanPlatform>();
 
-		mShaderRegistry = std::make_unique<ShaderRegistry>(mGraphicsPlatform->getDriver());
+    mGraphicsPlatform->initialize(params, this);
 
-		mShaderRegistry->loadDeferredShader();
-		mShaderRegistry->loadPbrShader();
-		mShaderRegistry->loadSkyboxShader();
-		mShaderRegistry->loadSkyboxRenderShader();
-		mShaderRegistry->loadSkyboxConvoluter();
-		mShaderRegistry->loadEnvPrefilterShader();
-		mShaderRegistry->loadEnvPreComputeBrdfShader();
-		mShaderRegistry->loadPostProcessShader();
+    mShaderRegistry = std::make_unique<ShaderRegistry>(mGraphicsPlatform->getDriver());
 
-		createDefaultMaterial();
-	}
+    mShaderRegistry->loadDeferredShader();
+    mShaderRegistry->loadPbrShader();
+    mShaderRegistry->loadSkyboxShader();
+    mShaderRegistry->loadSkyboxRenderShader();
+    mShaderRegistry->loadSkyboxConvoluter();
+    mShaderRegistry->loadEnvPrefilterShader();
+    mShaderRegistry->loadEnvPreComputeBrdfShader();
+    mShaderRegistry->loadPostProcessShader();
 
-	void Engine::execute(Scene* scene)
-	{
-		mGraphicsPlatform->execute(scene);
-	}
-
-	Texture Engine::loadTexture(const char* path, Texture::TextureType type, bool flipYAxis)
-	{
-		auto results = MiniTools::ImageLoader::load(path, type == Texture::TextureType::CubeMap, flipYAxis);
-
-        auto img = mGraphicsPlatform.get()
-                       ->getDriver()
-                       ->createTexture(results.width,
-                                       results.height,
-                                       results.channels,
-                                       results.data,
-                                       (Backend::VulkanDriver::TextureType) type);
-
-        return img;
-    }
-
-    void Engine::addSlider(
-        const char *name, float *value, float min, float max, std::function<void()> cb)
-    {
-        mGraphicsPlatform->getUiInterface()->createSliderPanel(name, value, min, max, cb);
-    }
-
-    void Engine::addCheckbox(const char* name, bool& flag, std::function<void()> cb)
-	{
-		mGraphicsPlatform->getUiInterface()->createBooleanPanel(name, flag, cb);
-	}
-
-	void Engine::createDefaultMaterial()
-	{
-		mDefaultMaterial = MiniEngine::Material::Creator()
-			.addShader(getShaderRegistry()->getDeferredShader())
-			.addMaterialProperty(MiniEngine::Material::PropertyType::Roughness, 0.15f)
-			.addMaterialProperty(MiniEngine::Material::PropertyType::Metallic, 1.f)
-			.create();
-	}
+    createDefaultMaterial();
 }
 
+void Engine::execute(Scene *scene)
+{
+    mGraphicsPlatform->execute(scene);
+}
 
+Texture Engine::loadTexture(const char *path, Texture::TextureType type, bool flipYAxis)
+{
+    auto results
+        = MiniTools::ImageLoader::load(path, type == Texture::TextureType::CubeMap, flipYAxis);
 
+    auto img = mGraphicsPlatform.get()->getDriver()->createTexture(
+        results.width,
+        results.height,
+        results.channels,
+        results.data,
+        (Backend::VulkanDriver::TextureType) type);
+
+    return img;
+}
+
+void Engine::addSlider(const char *name, float *value, float min, float max, std::function<void()> cb)
+{
+    mGraphicsPlatform->getUiInterface()->createSliderPanel(name, value, min, max, cb);
+}
+
+void Engine::addCheckbox(const char *name, bool &flag, std::function<void()> cb)
+{
+    mGraphicsPlatform->getUiInterface()->createBooleanPanel(name, flag, cb);
+}
+
+void Engine::createDefaultMaterial()
+{
+    mDefaultMaterial = MiniEngine::Material::Creator()
+                           .addShader(getShaderRegistry()->getDeferredShader())
+                           .addMaterialProperty(MiniEngine::Material::PropertyType::Roughness, 0.15f)
+                           .addMaterialProperty(MiniEngine::Material::PropertyType::Metallic, 1.f)
+                           .create();
+}
+} // namespace MiniEngine

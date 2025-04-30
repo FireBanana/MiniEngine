@@ -142,8 +142,8 @@ MiniEngine::Backend::VulkanPipeline MiniEngine::Backend::VulkanPipeline::Builder
 	VkPipelineLayoutCreateInfo layoutInfo{ VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
 	layoutInfo.setLayoutCount = mDescriptors.size();
 
+	VkPushConstantRange range{};
     if (mPushConstantSize > 0) {
-        VkPushConstantRange range{};
         range.offset = 0;
         range.size = mPushConstantSize;
         range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;

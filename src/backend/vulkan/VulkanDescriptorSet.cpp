@@ -13,16 +13,10 @@ MiniEngine::Backend::VulkanDescriptorSet::Builder::setBinding(int binding)
 }
 
 MiniEngine::Backend::VulkanDescriptorSet::Builder &
-MiniEngine::Backend::VulkanDescriptorSet::Builder::setCount(int count)
+MiniEngine::Backend::VulkanDescriptorSet::Builder::setTypeStructure(
+    std::vector<VkDescriptorType> type)
 {
-    mCount = count;
-    return *this;
-}
-
-MiniEngine::Backend::VulkanDescriptorSet::Builder &
-MiniEngine::Backend::VulkanDescriptorSet::Builder::setType(VkDescriptorType type)
-{
-    mType = type;
+    mTypeStructure = type;
     return *this;
 }
 
@@ -40,8 +34,8 @@ MiniEngine::Backend::VulkanDescriptorSet::Builder::setPool(VkDescriptorPool pool
     return *this;
 }
 
-MiniEngine::Backend::VulkanDescriptorSet::Builder&
-MiniEngine::Backend::VulkanDescriptorSet::Builder::setDebugName(std::string&& name) 
+MiniEngine::Backend::VulkanDescriptorSet::Builder &
+MiniEngine::Backend::VulkanDescriptorSet::Builder::setDebugName(std::string &&name)
 {
     mDebugName = name;
     return *this;
@@ -55,39 +49,38 @@ MiniEngine::Backend::VulkanDescriptorSet MiniEngine::Backend::VulkanDescriptorSe
         VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
     descriptorLayoutInfo.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT;
 
-    const VkDescriptorBindingFlagsEXT flags
-        = VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT
-          | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT
+    const VkDescriptorBindingFlagsEXT flag
+        = VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT
           | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT
           | VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT_EXT;
 
+    std::vector<VkDescriptorBindingFlagsEXT> flags{};
     std::vector<VkDescriptorSetLayoutBinding> bindings{};
 
-    for (auto i = 0; i < mCount; ++i) {
+    for (auto i = 0; i < mTypeStructure.size(); ++i) {
         VkDescriptorSetLayoutBinding binding{};
 
         binding.binding = i;
         binding.descriptorCount = 1;
         binding.stageFlags = mStageFlags;
-        binding.descriptorType = mType;
+        binding.descriptorType = mTypeStructure[i];
 
         bindings.push_back(binding);
+
+        flags.push_back(flag);
     }
 
     VkDescriptorSetLayoutBindingFlagsCreateInfoEXT binding_flags{};
     binding_flags.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
-    binding_flags.bindingCount = mCount;
-    binding_flags.pBindingFlags = &flags;
+    binding_flags.bindingCount = mTypeStructure.size();
+    binding_flags.pBindingFlags = flags.data();
 
     descriptorLayoutInfo.pNext = &binding_flags;
 
-    descriptorLayoutInfo.bindingCount = mCount;
+    descriptorLayoutInfo.bindingCount = mTypeStructure.size();
     descriptorLayoutInfo.pBindings = bindings.data();
 
-    vkCreateDescriptorSetLayout(mDriver->mActiveDevice,
-                                &descriptorLayoutInfo,
-                                nullptr,
-                                &set.mLayout);
+    vkCreateDescriptorSetLayout(mDriver->mActiveDevice, &descriptorLayoutInfo, nullptr, &set.mLayout);
 
     VkDescriptorSetAllocateInfo allocInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
 
@@ -112,59 +105,84 @@ MiniEngine::Backend::VulkanDescriptorSet MiniEngine::Backend::VulkanDescriptorSe
         debugNameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
         debugNameInfo.pNext = NULL;
         debugNameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET;
-        debugNameInfo.objectHandle = (uint64_t)(set.mDescriptorSet);
+        debugNameInfo.objectHandle = (uint64_t) (set.mDescriptorSet);
         debugNameInfo.pObjectName = mDebugName.c_str();
 
-        vkSetDebugUtilsObjectNameEXT(mDriver->mActiveDevice, &debugNameInfo);
+        if (vkSetDebugUtilsObjectNameEXT(mDriver->mActiveDevice, &debugNameInfo) != VK_SUCCESS)
+            MiniEngine::Logger::eprint("Error creating descriptor debug object");
     }
 #endif
 
     set.mDriver = mDriver;
-    set.mType = mType;
+
+    for (auto i = 0; i < mTypeStructure.size(); ++i)
+        set.mTypeStructure.push_back({mTypeStructure[i], -1});
 
     return set;
 }
 
-void MiniEngine::Backend::VulkanDescriptorSet::loadData(VulkanBuffer &&buffer)
+void MiniEngine::Backend::VulkanDescriptorSet::loadData(VulkanBuffer &&buffer, int structureIndex)
 {
+    if (mTypeStructure[structureIndex].first != VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
+        MiniEngine::Logger::eprint("Loading data into incorrect slot in descriptor set");
+        return;
+    }
+
     mBuffers.push_back(buffer);
+    mTypeStructure[structureIndex].second = mBuffers.size() - 1;
 }
 
-void MiniEngine::Backend::VulkanDescriptorSet::loadData(VulkanImage *images)
+void MiniEngine::Backend::VulkanDescriptorSet::loadData(VulkanImage *images, int structureIndex)
 {
+    if (mTypeStructure[structureIndex].first != VK_DESCRIPTOR_TYPE_STORAGE_IMAGE) {
+        MiniEngine::Logger::eprint("Loading data into incorrect slot in descriptor set");
+        return;
+    }
+
     mImages.push_back(images);
+    mTypeStructure[structureIndex].second = mImages.size() - 1;
 }
 
 void MiniEngine::Backend::VulkanDescriptorSet::update()
 {
-    VkWriteDescriptorSet writeSet{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
-    writeSet.dstSet = mDescriptorSet;
-    writeSet.dstBinding = 0;
-    writeSet.dstArrayElement = 0;
-    writeSet.descriptorCount = 1;
-    writeSet.descriptorType = mType;
+    mBufferInfos.clear();
+    mImageInfos.clear();
+    std::vector<VkWriteDescriptorSet> writeSetList{};
 
-    if (mType
-        == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) { // TODO mtype should be individual to each descriptor
-        for (auto &buffer : mBuffers) {
+    for (auto i = 0; i < mTypeStructure.size(); ++i) {
+        auto descriptorInfo = mTypeStructure[i];
+
+        VkWriteDescriptorSet writeSet{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+        writeSet.dstSet = mDescriptorSet;
+        writeSet.dstBinding = descriptorInfo.second;
+        writeSet.dstArrayElement = 0;
+        writeSet.descriptorCount = 1;
+        writeSet.descriptorType = descriptorInfo.first;
+
+        if (descriptorInfo.first
+            == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) { // TODO mtype should be individual to each descriptor
+            auto &buffer = mBuffers[descriptorInfo.second];
             mBufferInfos.push_back({});
             auto &last = mBufferInfos.back();
             last.buffer = buffer.getRawBuffer();
             last.offset = 0;
             last.range = buffer.getSize();
             writeSet.pBufferInfo = &last;
-        }
-    } else if (mType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE) {
-        for (auto &image : mImages) {
+        } else if (descriptorInfo.first == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE) {
+            auto &image = mImages[descriptorInfo.second];
             mImageInfos.push_back({});
             auto &last = mImageInfos.back();
             last.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
             last.imageView = image->getImageView();
             writeSet.pImageInfo = &last;
+        } else {
+            MiniEngine::Logger::eprint("Descriptor type error during update");
         }
-    } else {
-        MiniEngine::Logger::eprint("Descriptor type error during update");
+
+        writeSetList.push_back(writeSet);
     }
 
-    vkUpdateDescriptorSets(mDriver->mActiveDevice, 1, &writeSet, 0, nullptr);
+    // One for all descriptors?
+    vkUpdateDescriptorSets(
+        mDriver->mActiveDevice, writeSetList.size(), writeSetList.data(), 0, nullptr);
 }

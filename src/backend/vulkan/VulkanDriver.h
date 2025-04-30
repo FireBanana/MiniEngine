@@ -13,20 +13,17 @@
 #include <VulkanMemory.h>
 #include <vector>
 
-namespace MiniEngine
-{
+namespace MiniEngine {
 class Scene;
 class Shader;
 class Engine;
 
-namespace Components
-{
-	struct RenderableComponent;
-	struct SkyboxComponent;
-}
+namespace Components {
+struct RenderableComponent;
+struct SkyboxComponent;
+} // namespace Components
 
-namespace Backend
-{
+namespace Backend {
 class VulkanDriver
 {
 public:
@@ -39,10 +36,7 @@ public:
 
     enum class ShaderType { VERTEX, FRAGMENT };
 
-    enum class ImageAttachmentType : unsigned int {
-        DEPTH,
-        SWAPCHAIN
-    };
+    enum class ImageAttachmentType : unsigned int { DEPTH, SWAPCHAIN };
 
     enum class TextureType : int { Default = 0, CubeMap = 1 };
 
@@ -50,8 +44,9 @@ public:
 
     void initialize(MiniEngine::Types::EngineInitParams &params);
 
-    void createInstance(const std::vector<const char *> &requireInstanceExtensions,
-                        const std::vector<const char *> &&requiredLayers);
+    void createInstance(
+        const std::vector<const char *> &requireInstanceExtensions,
+        const std::vector<const char *> &&requiredLayers);
 
     void generateDevice();
     void generateSwapchain();
@@ -63,13 +58,9 @@ public:
 
     Texture createTexture(int width, int height, int channels, void *data, TextureType type);
     unsigned int createUniformBlock(size_t dataSize, unsigned int bindIndex) const;
-    void updateUniformData(unsigned int bufferId,
-                           unsigned int offset,
-                           size_t size,
-                           void *data) const;
-    void registerUniformBlock(const char *blockName,
-                              const Shader *program,
-                              unsigned int layoutIndex) const;
+    void updateUniformData(unsigned int bufferId, unsigned int offset, size_t size, void *data) const;
+    void registerUniformBlock(
+        const char *blockName, const Shader *program, unsigned int layoutIndex) const;
     void setupMesh(MiniEngine::Components::RenderableComponent *component);
     void setupSkybox(MiniEngine::Components::SkyboxComponent *skybox);
     void beginRenderpass();
@@ -115,12 +106,14 @@ private:
     void createGBufferPipeline();
     void createDisplaySemaphores();
     void initializeMemoryAllocator();
+    void syncTextures(MiniEngine::Scene *scene);
 
     void loadShaderModule();
     void acquireNextImage(uint32_t *image, uint32_t *displaySemaphoreIndex);
     uint32_t getMemoryTypeIndex(const VkMemoryRequirements *memReqs);
 
-    VulkanBuffer createBuffer(size_t memSize, void *data, VkBufferUsageFlags usageFlags, std::string &&debugName = "");
+    VulkanBuffer createBuffer(
+        size_t memSize, void *data, VkBufferUsageFlags usageFlags, std::string &&debugName = "");
 
     friend class VulkanPipeline;
     friend class VulkanDescriptorSet;
@@ -128,7 +121,7 @@ private:
     friend class VulkanSwapchain;
     friend class VulkanBuffer;
 };
-}
-}
+} // namespace Backend
+} // namespace MiniEngine
 
 #endif //MINIENGINE_VULKAN_DRIVER

@@ -20,9 +20,11 @@ layout(location = 0)out vec4 col;
 
 void main()
 {    
-    ivec2 size = imageSize(_normal);
+    ivec2 size = imageSize(_diffuse);
     vec2 c = in_texcoord;
     vec4 d = imageLoad(_diffuse, ivec2(c * size));
+
+    vec4 t_normal = imageLoad(_normal, ivec2(c * size));
 
     // colorAttachment = vec4(d.x, d.y, 0, 1.);
     // positionAttachment = vec4(c.y, c.x, 0, 1.);
@@ -36,5 +38,6 @@ void main()
     float fres = dot(normalize(camera - in_pos), normalize(in_norm));
     fres = pow(fres, 0.1);
 
-    col = d;// * (lightDir + .3) * (fres * vec4(0.1, 0.15, 0.2, 1.)) ;
+    col = d * (lightDir + .3) * (fres * vec4(0.1, 0.15, 0.2, 1.)) ;
+    // col = t_normal; 
 }

@@ -1,90 +1,89 @@
 #include "GlslCompiler.h"
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
-VkShaderModule MiniTools::GlslCompiler::loadShader(std::string path,
-                                                   VkShaderStageFlagBits stage,
-                                                   VkDevice &device) {
-  glslang::EShTargetLanguage targetLang =
-      glslang::EShTargetLanguage::EShTargetNone;
-  ;
-  std::vector<uint32_t> spirv;
+VkShaderModule MiniTools::GlslCompiler::loadShader(
+    std::string path, VkShaderStageFlagBits stage, VkDevice &device)
+{
+    glslang::EShTargetLanguage targetLang = glslang::EShTargetLanguage::EShTargetNone;
+    ;
+    std::vector<uint32_t> spirv;
 
-  glslang::InitializeProcess();
+    glslang::InitializeProcess();
 
-  EShMessages messageFilter{EShMsgDefault | EShMsgVulkanRules | EShMsgSpvRules};
-  EShLanguage language{stage == VK_SHADER_STAGE_VERTEX_BIT ? EShLangVertex
-                                                           : EShLangFragment};
+    EShMessages messageFilter{EShMsgDefault | EShMsgVulkanRules | EShMsgSpvRules};
+    EShLanguage language{stage == VK_SHADER_STAGE_VERTEX_BIT ? EShLangVertex : EShLangFragment};
 
-  auto stream = std::fstream(path.c_str(), std::fstream::in);
-  std::stringstream buffer;
-  buffer << stream.rdbuf();
+    auto stream = std::fstream(path.c_str(), std::fstream::in);
+    std::stringstream buffer;
+    buffer << stream.rdbuf();
 
-  auto source = buffer.str();
+    auto source = buffer.str();
 
-  const char *fileNameList[1] = {""};
-  auto shaderSource = reinterpret_cast<const char *>(source.data());
+    const char *fileNameList[1] = {""};
+    auto shaderSource = reinterpret_cast<const char *>(source.data());
 
-  glslang::TShader shader{language};
-  shader.setStringsWithLengthsAndNames(&shaderSource, nullptr, fileNameList, 1);
-  shader.setEntryPoint("main");
-  shader.setSourceEntryPoint("main");
+    glslang::TShader shader{language};
+    shader.setStringsWithLengthsAndNames(&shaderSource, nullptr, fileNameList, 1);
+    shader.setEntryPoint("main");
+    shader.setSourceEntryPoint("main");
 
-  if (targetLang != glslang::EShTargetLanguage::EShTargetNone) {
-    shader.setEnvTarget(targetLang,
-                        static_cast<glslang::EShTargetLanguageVersion>(0));
-  }
+    if (targetLang != glslang::EShTargetLanguage::EShTargetNone) {
+        shader.setEnvTarget(targetLang, static_cast<glslang::EShTargetLanguageVersion>(0));
+    }
 
-  // Can pass include dir here
-  if (!shader.parse(GetDefaultResources(), 100, false, messageFilter)) {
-    auto shaderLog = std::string(shader.getInfoLog()) + "\n" +
-                     std::string(shader.getInfoDebugLog());
-    // MiniEngine::Logger::print(shaderLog);
-    throw;
-  }
+    // Can pass include dir here
+    if (!shader.parse(GetDefaultResources(), 100, false, messageFilter)) {
+        auto shaderLog = std::string(shader.getInfoLog()) + "\n"
+                         + std::string(shader.getInfoDebugLog());
+        // MiniEngine::Logger::print(shaderLog);
+        std::cout << shaderLog << std::endl;
+        throw;
+    }
 
-  glslang::TProgram program;
-  program.addShader(&shader);
+    glslang::TProgram program;
+    program.addShader(&shader);
 
-  if (!program.link(messageFilter)) {
-    auto shaderLog = std::string(shader.getInfoLog()) + "\n" +
-                     std::string(shader.getInfoDebugLog());
-    // MiniEngine::Logger::print(shaderLog);
-    throw;
-  }
+    if (!program.link(messageFilter)) {
+        auto shaderLog = std::string(shader.getInfoLog()) + "\n"
+                         + std::string(shader.getInfoDebugLog());
+        // MiniEngine::Logger::print(shaderLog);
+        std::cout << shaderLog;
+        throw;
+    }
 
-  // Save any info log that was generated.
-  if (shader.getInfoLog()) {
-    auto logs = std::string(shader.getInfoLog()) + "\n" +
-                std::string(shader.getInfoDebugLog()) + "\n";
-  }
+    // Save any info log that was generated.
+    if (shader.getInfoLog()) {
+        auto logs = std::string(shader.getInfoLog()) + "\n" + std::string(shader.getInfoDebugLog())
+                    + "\n";
+    }
 
-  if (program.getInfoLog()) {
-    auto logs = std::string(program.getInfoLog()) + "\n" +
-                std::string(program.getInfoDebugLog());
-  }
+    if (program.getInfoLog()) {
+        auto logs = std::string(program.getInfoLog()) + "\n"
+                    + std::string(program.getInfoDebugLog());
+    }
 
-  glslang::TIntermediate *intermediate = program.getIntermediate(language);
+    glslang::TIntermediate *intermediate = program.getIntermediate(language);
 
-  if (!intermediate) {
-    throw;
-  }
+    if (!intermediate) {
+        throw;
+    }
 
-  spv::SpvBuildLogger logger;
+    spv::SpvBuildLogger logger;
 
-  glslang::GlslangToSpv(*intermediate, spirv, &logger);
+    glslang::GlslangToSpv(*intermediate, spirv, &logger);
 
-  auto log = logger.getAllMessages();
+    auto log = logger.getAllMessages();
 
-  glslang::FinalizeProcess();
+    glslang::FinalizeProcess();
 
-  VkShaderModuleCreateInfo moduleInfo{
-      VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
-  moduleInfo.codeSize = spirv.size() * sizeof(uint32_t);
-  moduleInfo.pCode = spirv.data();
+    VkShaderModuleCreateInfo moduleInfo{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
+    moduleInfo.codeSize = spirv.size() * sizeof(uint32_t);
+    moduleInfo.pCode = spirv.data();
 
-  VkShaderModule shaderModule;
-  vkCreateShaderModule(device, &moduleInfo, nullptr, &shaderModule);
+    VkShaderModule shaderModule;
+    vkCreateShaderModule(device, &moduleInfo, nullptr, &shaderModule);
 
-  return shaderModule;
+    return shaderModule;
 }

@@ -1,7 +1,8 @@
 #include "VulkanPlatform.h"
 #include "VulkanRenderDoc.h"
 
-void MiniEngine::Backend::VulkanPlatform::initialize(MiniEngine::Types::EngineInitParams& params, Engine* engine)
+void MiniEngine::Backend::VulkanPlatform::initialize(
+    MiniEngine::Types::EngineInitParams &params, Engine *engine)
 {
     mParams = params;
 
@@ -19,20 +20,23 @@ void MiniEngine::Backend::VulkanPlatform::createWindow(uint16_t width, uint16_t 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
     mWindow = glfwCreateWindow(width, height, "MiniEngine", NULL, NULL);
-    if (!mWindow)
-    {
+    if (!mWindow) {
         glfwTerminate();
         MiniEngine::Logger::eprint("Create window failed");
     }
+
+    // Events
+    glfwSetFramebufferSizeCallback(mWindow, framebufferSizeCallback);
 
     mDriver->initialize(mParams);
 
     uint32_t countExtensions;
     auto exts = glfwGetRequiredInstanceExtensions(&countExtensions);
-    std::vector<const char*> extensions(countExtensions);
+    std::vector<const char *> extensions(countExtensions);
 
-    for (int i = 0; i < countExtensions; ++i) extensions[i] = exts[i];
-    
+    for (int i = 0; i < countExtensions; ++i)
+        extensions[i] = exts[i];
+
     extensions.push_back("VK_EXT_swapchain_colorspace");
     extensions.push_back("VK_KHR_get_physical_device_properties2");
 
@@ -42,7 +46,7 @@ void MiniEngine::Backend::VulkanPlatform::createWindow(uint16_t width, uint16_t 
 
     VulkanRenderDoc::initRenderDoc();
 #else
-    mDriver->createInstance(extensions, { });
+    mDriver->createInstance(extensions, {});
 #endif
 
     glfwCreateWindowSurface(mDriver->getInstance(), mWindow, nullptr, &mSurface);
@@ -56,16 +60,14 @@ void MiniEngine::Backend::VulkanPlatform::createWindow(uint16_t width, uint16_t 
     glfwMakeContextCurrent(mWindow);
 }
 
-void MiniEngine::Backend::VulkanPlatform::createDriver(MiniEngine::Types::EngineInitParams& params)
+void MiniEngine::Backend::VulkanPlatform::createDriver(MiniEngine::Types::EngineInitParams &params)
 {
     mDriver = std::make_unique<VulkanDriver>();
 }
 
-void MiniEngine::Backend::VulkanPlatform::makeCurrent()
-{
-}
+void MiniEngine::Backend::VulkanPlatform::makeCurrent() {}
 
-void MiniEngine::Backend::VulkanPlatform::execute(Scene* scene)
+void MiniEngine::Backend::VulkanPlatform::execute(Scene *scene)
 {
     mDriver->recordCommandBuffers(scene);
 
@@ -76,11 +78,15 @@ void MiniEngine::Backend::VulkanPlatform::execute(Scene* scene)
     }
 }
 
-MiniEngine::Backend::IImgui* MiniEngine::Backend::VulkanPlatform::getUiInterface() const
+MiniEngine::Backend::IImgui *MiniEngine::Backend::VulkanPlatform::getUiInterface() const
 {
     return nullptr;
 }
 
-void MiniEngine::Backend::VulkanPlatform::createImguiInterface()
+void MiniEngine::Backend::VulkanPlatform::createImguiInterface() {}
+
+void MiniEngine::Backend::VulkanPlatform::framebufferSizeCallback(
+    GLFWwindow *window, int height, int width)
 {
+    MiniEngine::Logger::print("Resizing window");
 }
