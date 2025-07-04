@@ -81,12 +81,6 @@ FetchContent_Declare(
 )
 
 FetchContent_Declare(
-        imgui
-        GIT_REPOSITORY https://github.com/ocornut/imgui
-        GIT_TAG v1.89.6
-)
-
-FetchContent_Declare(
         spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog
         GIT_TAG v1.12.0
@@ -122,11 +116,6 @@ if(NOT glm_POPULATED)
   add_subdirectory(${glm_SOURCE_DIR} ${glm_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
-FetchContent_GetProperties(imgui)
-if(NOT imgui_POPULATED)
-  FetchContent_Populate(imgui)
-endif()
-
 FetchContent_GetProperties(spdlog)
 if(NOT spdlog_POPULATED)
   FetchContent_Populate(spdlog)
@@ -155,43 +144,30 @@ target_link_libraries(MiniEngine glm)
 target_include_directories(MiniEngine PUBLIC SYSTEM ${volk_SOURCE_DIR}/)
 target_sources( MiniEngine PRIVATE ${volk_SOURCE_DIR}/volk.c)
 
-target_include_directories(MiniEngine PUBLIC SYSTEM ${imgui_SOURCE_DIR}/)
-target_include_directories(MiniEngine PUBLIC SYSTEM ${imgui_SOURCE_DIR}/backends)
-
 set(SPDLOG_BUILD_SHARED ON CACHE BOOL "Build spdlog shared lib")
 add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR})
 target_include_directories(MiniEngine PUBLIC SYSTEM ${spdlog_SOURCE_DIR}/include/)
 #target_link_libraries(MiniEngine spdlog)
 
-add_library(IMGUI EXCLUDE_FROM_ALL
-        ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
-        ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
-        ${imgui_SOURCE_DIR}/imgui.cpp
-        ${imgui_SOURCE_DIR}/imgui_demo.cpp
-        ${imgui_SOURCE_DIR}/imgui_draw.cpp
-        ${imgui_SOURCE_DIR}/imgui_tables.cpp
-        ${imgui_SOURCE_DIR}/imgui_widgets.cpp)
-
-target_include_directories(IMGUI PUBLIC SYSTEM libs/glfw/include)
-target_include_directories(IMGUI PUBLIC SYSTEM ${imgui_SOURCE_DIR}/backends)
-target_include_directories(IMGUI PUBLIC SYSTEM ${imgui_SOURCE_DIR}/)
-target_link_libraries(MiniEngine IMGUI)
-
 target_include_directories(MiniEngine PUBLIC SYSTEM ${glslang_SOURCE_DIR}/glslang)
 
-set(ENABLE_SPVREMAPPER OFF CACHE BOOL "")
-set(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "")
-set(ENABLE_HLSL OFF CACHE BOOL "")
-set(ENABLE_OPT OFF CACHE BOOL "enable opt")
-set(BUILD_TESTING OFF CACHE BOOL "")
-set(BUILD_EXTERNAL OFF CACHE BOOL "")
+set(ENABLE_SPVREMAPPER OFF CACHE BOOL "" FORCE)
+set(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(ENABLE_HLSL ON CACHE BOOL "" FORCE)
+set(ENABLE_OPT OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(BUILD_EXTERNAL OFF CACHE BOOL "" FORCE)
+set(SKIP_GLSLANG_INSTALL ON CACHE BOOL "" FORCE)
 add_subdirectory(${glslang_SOURCE_DIR} ${glslang_BINARY_DIR})
-target_link_libraries(MiniEngine glslang OSDependent SPIRV glslang-default-resource-limits)
-
-find_package(glfw3 REQUIRED)
-target_link_libraries(MiniEngine glfw)
-# target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3.lib)
-# target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/glfw3dll.lib)
+target_link_libraries(MiniEngine glslang OSDependent SPIRV MachineIndependent GenericCodeGen glslang-default-resource-limits)
+if(WIN32)
+        target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/libglfw3.a)
+        target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/libglfw3dll.a)
+else()
+        find_package(glfw3 REQUIRED)
+        target_link_libraries(MiniEngine glfw)
+endif()
 
 target_include_directories(MiniEngine PUBLIC SYSTEM ${vma_SOURCE_DIR}/include)
 #add_subdirectory(${vma_SOURCE_DIR} ${vma_BINARY_DIR})
