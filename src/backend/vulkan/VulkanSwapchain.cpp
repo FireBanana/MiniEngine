@@ -121,8 +121,7 @@ MiniEngine::Backend::VulkanSwapchain MiniEngine::Backend::VulkanSwapchain::Build
     swapchainInfo.imageExtent.height = swapchainSize.height;
     swapchainInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
     swapchainInfo.imageArrayLayers = 1;
-    swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
-                               | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+    swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     swapchainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     swapchainInfo.compositeAlpha = composite;
     swapchainInfo.presentMode = mPresentMode;
