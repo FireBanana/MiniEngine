@@ -42,7 +42,7 @@ int main(void)
 
     auto material = MiniEngine::Material::Creator()
                         .addTexture(MiniEngine::Types::TextureType::Diffuse, texture)
-                        .addTexture(MiniEngine::Types::TextureType::Normal, normal)
+                        // .addTexture(MiniEngine::Types::TextureType::Normal, normal)
                         //.addTexture(MiniEngine::Types::TextureType::Roughness, roughness)
                         .addShader(engine.getShaderRegistry()->getDeferredShader())
                         .addMaterialProperty(MiniEngine::Material::PropertyType::Roughness, 0.15f)

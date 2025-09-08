@@ -10,7 +10,6 @@ set(CMAKE_RUNTIME_LIBRARY_DIRECTORY bin/)
 
 set(GRAPHICS_DEBUG ON)
 set(RENDERDOC_ENABLE OFF)
-set(CMAKE_BUILD_TYPE "DEBUG")
 
 add_definitions(-DGLFW_INCLUDE_NONE)
 add_compile_definitions(DIR="${CMAKE_SOURCE_DIR}")
@@ -43,6 +42,7 @@ target_include_directories(MiniEngine PUBLIC src/components)
 target_include_directories(MiniEngine PUBLIC src/systems)
 target_include_directories(MiniEngine PUBLIC src/backend)
 target_include_directories(MiniEngine PUBLIC src/backend/vulkan)
+target_include_directories(MiniEngine PUBLIC src/backend/framegraph)
 target_include_directories(MiniEngine PUBLIC src/core)
 target_include_directories(MiniEngine PUBLIC src/core/utils)
 target_include_directories(MiniEngine PUBLIC src/core/types)
@@ -153,14 +153,13 @@ target_include_directories(MiniEngine PUBLIC SYSTEM ${glslang_SOURCE_DIR}/glslan
 
 set(ENABLE_SPVREMAPPER OFF CACHE BOOL "" FORCE)
 set(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "" FORCE)
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(ENABLE_HLSL ON CACHE BOOL "" FORCE)
 set(ENABLE_OPT OFF CACHE BOOL "" FORCE)
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 set(BUILD_EXTERNAL OFF CACHE BOOL "" FORCE)
 set(SKIP_GLSLANG_INSTALL ON CACHE BOOL "" FORCE)
 add_subdirectory(${glslang_SOURCE_DIR} ${glslang_BINARY_DIR})
-target_link_libraries(MiniEngine glslang OSDependent SPIRV MachineIndependent GenericCodeGen glslang-default-resource-limits)
+target_link_libraries(MiniEngine glslang SPIRV  glslang-default-resource-limits)
 if(WIN32)
         target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/libglfw3.a)
         target_link_libraries(MiniEngine ${CMAKE_SOURCE_DIR}/libs/glfw/lib-vc2022/libglfw3dll.a)
@@ -174,6 +173,8 @@ target_include_directories(MiniEngine PUBLIC SYSTEM ${vma_SOURCE_DIR}/include)
 
 target_link_libraries(MiniEngine assimp)
 target_include_directories(MiniEngine PUBLIC SYSTEM ${assimp_SOURCE_DIR}/include)
+
+message(INFO ${assimp_SOURCE_DIR})
 
 # Add secondary tools
 

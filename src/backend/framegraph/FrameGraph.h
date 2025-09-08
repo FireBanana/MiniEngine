@@ -1,76 +1,89 @@
-#include <functional>
-#include <string>
-#include <unordered_map>
-#include <vector>
+#include "VulkanDriver.h"
+#include "pch.hpp"
+#include <winuser.h>
 
-namespace MiniEngine::Backend
-{
+namespace MiniEngine::Backend {
 
-class VulkanDriver;
-
-struct Resource
-{
-    int id;
-    ResourceDesc desc;
-
-    VkImage image;
-    VkDeviceMemory memory;
-    VkImageView view;
+enum class TextureUsage {
+    COLOR_ATTACHMENT,
+    DEPTH_ATTACHMENT,
 };
 
-class ResourceDesc
+// Loaded through the API as a texture
+struct ResourceImage
 {
+    VulkanImage *image;
+};
+
+struct ResourceBuffer
+{
+    VulkanBuffer *buffer;
+};
+
+struct TextureResourceDesc
+{
+    enum class Type { RENDER_TARGET, INPUT_ATTACHMENT, DEPTH };
+    Type type;
+    std::string name;
     uint32_t width, height;
     VkFormat format;
 };
 
-class RenderPass
+struct BufferResourceDesc
 {
-public:
+    enum class Type { UNIFORM, TRANSFER };
     std::string name;
+    size_t size;
+};
 
-    std::vector<int> reads;
-    std::vector<int> writes;
+struct ResourceEntry
+{
+    enum class Type {TEXTURE, BUFFER};
+    std::string name;
+    int id;
 
-    void (*execute)(VkCommandBuffer, const std::unordered_map<int, Resource>&);
+};
+
+struct RenderPass
+{
+    std::string name;
+    std::vector<TextureResourceDesc> attachments;
+    std::vector<BufferResourceDesc> buffers;
+};
+
+struct GraphNode
+{
+    int id;
+    std::vector<ResourceEntry *> readResources;
+    std::vector<ResourceEntry *> writeResources;
 };
 
 class FrameGraph
 {
 public:
-    void addPass(std::string name, std::function<void(RenderPass &)> setup, std::function<void()> execute)
+    FrameGraph() {}
+
+    void addPass(std::string name, RenderPass pass)
     {
-	RenderPass pass;
-	pass.name = name;
-	pass.execute = execute.VK_USE_PLATFORM_WIN32_KHR;
+        // Set Attachments
+        // Set RenderTargets
 
-	setup(pass);
-
-	passes.push_back(std::move(pass));
+        for (auto &attachment : pass.attachments) {
+            switch (attachment.type) {
+                case TextureResourceDesc::Type::RENDER_TARGET: break;
+                case TextureResourceDesc::Type::INPUT_ATTACHMENT: break;
+                case TextureResourceDesc::Type::DEPTH: break;
+            }
+        }
     }
 
-    void createResource(ResourceDesc &desc)
-    {
-	resources.push_back(Resource{resources.size(), desc});
-    }
+    void addResource(VulkanImage *image) {}
+    void addResource(VulkanBuffer *buffer) {}
 
-    // sorts, make read/write deps
-    void compile()
-    {
-	for(auto &p : passes)
-	    std::cout << "passing";
-    }
+    std::unique_ptr<VulkanDriver *> driver;
 
-    void execute()
-    {
-	for(auto &p : passes)
-	    p.execute();
-    }
-
-    // ----------
-
-    std::vector<RenderPass> passes;
-    std::vector<Resource> resources;
+    std::vector<ResourceEntry> resources;
+    std::vector<GraphNode> passes;
 };
 
 } // namespace MiniEngine::Backend
