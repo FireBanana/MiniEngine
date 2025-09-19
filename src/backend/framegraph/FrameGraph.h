@@ -22,10 +22,11 @@ struct ResourceBuffer
 
 struct TextureResourceDesc
 {
-    enum class Type { RENDER_TARGET, INPUT_ATTACHMENT, DEPTH };
+    enum class Type { RENDER_TARGET, INPUT_ATTACHMENT, OUTPUT_STORAGE, DEPTH };
     Type type;
     std::string name;
-    uint32_t width, height;
+    uint16_t width, height;
+    uint8_t channels;
     VkFormat format;
 };
 
@@ -36,15 +37,14 @@ struct BufferResourceDesc
     size_t size;
 };
 
-struct ResourceEntry
-{
-    enum class Type {TEXTURE, BUFFER};
-    std::string name;
-    int id;
+// struct ResourceEntry
+// {
+//     enum class Type { TEXTURE, BUFFER };
+//     std::string name;
+//     int id;
+// };
 
-};
-
-struct RenderPass
+struct RenderPassResource
 {
     std::string name;
     std::vector<TextureResourceDesc> attachments;
@@ -54,8 +54,10 @@ struct RenderPass
 struct GraphNode
 {
     int id;
-    std::vector<ResourceEntry *> readResources;
-    std::vector<ResourceEntry *> writeResources;
+    std::vector<TextureResourceDesc *> textureReadResources;
+    std::vector<TextureResourceDesc *> textureWriteResources;
+    std::vector<BufferResourceDesc *> bufferReadResources;
+    std::vector<BufferResourceDesc *> bufferWriteResources;
 };
 
 class FrameGraph
@@ -63,26 +65,41 @@ class FrameGraph
 public:
     FrameGraph() {}
 
-    void addPass(std::string name, RenderPass pass)
+    // Execute contains vulkan code
+    void addPass(std::string name, RenderPassResource pass, std::function<void()> execute)
     {
         // Set Attachments
         // Set RenderTargets
 
+        auto node = GraphNode{};
+
         for (auto &attachment : pass.attachments) {
-            switch (attachment.type) {
-                case TextureResourceDesc::Type::RENDER_TARGET: break;
-                case TextureResourceDesc::Type::INPUT_ATTACHMENT: break;
-                case TextureResourceDesc::Type::DEPTH: break;
-            }
         }
     }
 
-    void addResource(VulkanImage *image) {}
-    void addResource(VulkanBuffer *buffer) {}
+    int createTexture(TextureResourceDesc desc)
+    {
+        auto texture = driver->createTexture(
+            desc.width, desc.height, desc.channels, nullptr, VulkanDriver::TextureType::Default);
 
-    std::unique_ptr<VulkanDriver *> driver;
+        switch (desc.type) {
+        case TextureResourceDesc::Type::RENDER_TARGET:
+            break;
+        case TextureResourceDesc::Type::INPUT_ATTACHMENT:
+            break;
+        case TextureResourceDesc::Type::OUTPUT_STORAGE:
+            break;
+        case TextureResourceDesc::Type::DEPTH:
+            break;
+        }
+    }
 
-    std::vector<ResourceEntry> resources;
+    // External?
+    int addResource(VulkanImage *image) {}
+    int addResource(VulkanBuffer *buffer) {}
+
+    std::unique_ptr<VulkanDriver> driver;
+
     std::vector<GraphNode> passes;
 };
 
