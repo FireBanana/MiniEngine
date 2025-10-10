@@ -1,3 +1,4 @@
+#include "FrameGraph.h"
 #include "VulkanPlatform.h"
 #include "VulkanRenderDoc.h"
 
@@ -69,7 +70,24 @@ void MiniEngine::Backend::VulkanPlatform::makeCurrent() {}
 
 void MiniEngine::Backend::VulkanPlatform::execute(Scene *scene)
 {
-    mDriver->recordCommandBuffers(scene);
+    FrameGraph mDefaultFrameGraph{};
+
+    auto imageCache = mDriver->getImageCache();
+
+    MiniEngine::Backend::TextureResourceDesc renderTexture{};
+    renderTexture.type = Backend::TextureResourceDesc::Type::RENDER_TARGET;
+    MiniEngine::Backend::TextureResourceDesc diffuse{}; //TODO FIX
+    diffuse.type = Backend::TextureResourceDesc::Type::EXTERNAL;
+    diffuse.image = &std::get<0>(imageCache[0]);
+
+    mDefaultFrameGraph
+        .addPass("pass1", {"test", {diffuse}, {renderTexture}, {}, {}}, [this, scene]() {
+            // Main pass
+            mDriver->syncTextures(scene);
+            mDriver->recordCommandBuffers(scene);
+        });
+
+    mDefaultFrameGraph.bake();
 
     while (!glfwWindowShouldClose(mWindow)) //run separate thread
     {

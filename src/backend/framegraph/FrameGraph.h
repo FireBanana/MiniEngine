@@ -1,6 +1,11 @@
+#ifndef MINIENGINE_FRAMEGRAPH
+#define MINIENGINE_FRAMEGRAPH
+
 #include "Logger.h"
 #include "VulkanDriver.h"
 #include "pch.hpp"
+#include <iterator>
+#include <map>
 #include <winuser.h>
 #include <queue>
 
@@ -11,12 +16,6 @@ enum class TextureUsage {
     DEPTH_ATTACHMENT,
 };
 
-// Loaded through the API as a texture
-struct ResourceImage
-{
-    VulkanImage *image;
-};
-
 struct ResourceBuffer
 {
     VulkanBuffer *buffer;
@@ -24,13 +23,14 @@ struct ResourceBuffer
 
 struct TextureResourceDesc
 {
-    // enum class Type { RENDER_TARGET, INPUT_ATTACHMENT, OUTPUT_STORAGE, EXTERNAL, DEPTH };
-    // Type type;
+    enum class Type { RENDER_TARGET, EXTERNAL, TEXTURE };
+    Type type;
     std::string name;
     uint16_t width, height;
     uint8_t channels;
     uint8_t nativeHandle;
     VkFormat format;
+    VulkanImage *image;
 
     bool operator==(const TextureResourceDesc &rhs) { return this->name == rhs.name; }
 };
@@ -57,12 +57,12 @@ struct RenderPassResource
     std::vector<BufferResourceDesc> bufferReadResources;
     std::vector<BufferResourceDesc> bufferWriteResources;
 
-    bool operator==(const RenderPassResource &rhs) { return this->name == rhs.name; }
+    // bool operator==(const RenderPassResource &rhs) { return this->name == rhs.name; }
 };
 
 struct RenderPass
 {
-    int id;
+    std::string name;
     std::vector<TextureResourceDesc> textureReadResources;
     std::vector<TextureResourceDesc> textureWriteResources;
     std::vector<BufferResourceDesc> bufferReadResources;
@@ -83,12 +83,15 @@ public:
         // Set RenderTargets
 
         auto pass = RenderPass{};
+        pass.name = name;
         pass.textureReadResources = passRes.textureReadResources;
         pass.textureWriteResources = passRes.textureWriteResources;
         pass.bufferReadResources = passRes.bufferReadResources;
         pass.bufferWriteResources = passRes.bufferWriteResources;
 
         pass.execute = execute;
+
+        passes.push_back(pass);
     }
 
     int createTexture(TextureResourceDesc desc)
@@ -96,16 +99,17 @@ public:
         auto texture = driver->createTexture(
             desc.width, desc.height, desc.channels, nullptr, VulkanDriver::TextureType::Default);
 
-        // switch (desc.type) {
-        // case TextureResourceDesc::Type::RENDER_TARGET:
-        //     break;
-        // case TextureResourceDesc::Type::INPUT_ATTACHMENT:
-        //     break;
-        // case TextureResourceDesc::Type::OUTPUT_STORAGE:
-        //     break;
-        // case TextureResourceDesc::Type::DEPTH:
-        //     break;
-        // }
+        switch (desc.type) {
+        case TextureResourceDesc::Type::RENDER_TARGET:
+            // driver->getCurrentRenderTarget();
+            break;
+        case TextureResourceDesc::Type::TEXTURE:
+            // driver->createTexture();
+            break;
+        case TextureResourceDesc::Type::EXTERNAL:
+            // driver->getTextureId();
+            break;
+        }
         return 0;
     }
 
@@ -116,20 +120,12 @@ public:
 
         // Build dependencies
         for (auto i = 0; i < passes.size(); ++i) {
-            for (auto j = 0; j < passes.size(); ++j) {
-                if (i == j)
+            for (auto j = i; j < passes.size(); ++j) {
+                if (i == j) //Check self dependency issues
                     continue;
 
+                // Write checks
                 for (auto write : passes[i].textureWriteResources) {
-                    // Write -> Read
-                    if (std::find(
-                            passes[j].textureReadResources.begin(),
-                            passes[j].textureReadResources.end(),
-                            write)
-                        != passes[j].textureWriteResources.end()) {
-                        edges[i].push_back(j);
-                    }
-
                     // Write -> Write
                     if (std::find(
                             passes[j].textureWriteResources.begin(),
@@ -138,12 +134,32 @@ public:
                         != passes[j].textureWriteResources.end()) {
                         edges[i].push_back(j);
                     }
+                    // Write -> Read
+                    if (std::find(
+                            passes[j].textureReadResources.begin(),
+                            passes[j].textureReadResources.end(),
+                            write)
+                        != passes[j].textureReadResources.end()) {
+                        edges[i].push_back(j);
+                    }
+                }
+
+                // Read checks
+                for (auto read : passes[i].textureReadResources) {
+                    // Write -> Read
+                    if (std::find(
+                            passes[j].textureWriteResources.begin(),
+                            passes[j].textureWriteResources.end(),
+                            read)
+                        != passes[j].textureWriteResources.end()) {
+                        edges[j].push_back(i);
+                    }
                 }
             }
         }
 
         // Kahn Sort
-        std::vector<int> indegree(edges.size(), 0);
+        std::vector<int> indegree(passes.size(), 0);
 
         for (int i = 0; i < edges.size(); ++i) {
             for (int j : edges[i])
@@ -166,20 +182,80 @@ public:
                     q.push(e);
             }
         }
-        //Sorted
 
-        for(auto i : order)
-            MiniEngine::Logger::print("Pass: {}", i);
+        //Execute setups
+        for (auto o : order) {
+            passes[o].execute();
+        }
+
+        debugDrawGraph(order);
     }
 
     // External?
-    int addResource(RenderPass *pass, VulkanImage *image) { return 0;}
-    int addResource(RenderPass *pass, VulkanBuffer *buffer) { return 0;}
+    int addResource(RenderPass *pass, VulkanImage *image) { return 0; }
+    int addResource(RenderPass *pass, VulkanBuffer *buffer) { return 0; }
 
     std::unique_ptr<VulkanDriver> driver;
     std::vector<RenderPass> passes;
 
-    void debugDrawGraph() {}
+    void debugDrawGraph(std::vector<int> indegree)
+    {
+        if (indegree.empty()) {
+            std::cout << "Empty graph\n";
+            return;
+        }
+
+        std::cout << "\n=== Framegraph ===\n\n";
+
+        // Print horizontal flow
+        std::cout << "Flow: ";
+        for (size_t i = 0; i < indegree.size(); ++i) {
+            std::cout << "[" << passes[indegree[i]].name << "]";
+            if (i < indegree.size() - 1) {
+                std::cout << " -> ";
+            }
+        }
+        std::cout << "\n\n";
+
+        // Print vertical visualization with levels
+        std::cout << "Levels:\n";
+        for (size_t i = 0; i < indegree.size(); ++i) {
+            std::cout << "Level " << i << ": ";
+
+            // Indentation for visual effect
+            for (size_t j = 0; j < i; ++j) {
+                std::cout << "  ";
+            }
+
+            std::cout << "+---+\n";
+            std::cout << "         ";
+            for (size_t j = 0; j < i; ++j) {
+                std::cout << "  ";
+            }
+            std::cout << "| " << passes[indegree[i]].name << " |\n";
+            std::cout << "         ";
+            for (size_t j = 0; j < i; ++j) {
+                std::cout << "  ";
+            }
+            std::cout << "+---+\n";
+
+            if (i < indegree.size() - 1) {
+                std::cout << "           ";
+                for (size_t j = 0; j < i; ++j) {
+                    std::cout << "  ";
+                }
+                std::cout << "|\n           ";
+                for (size_t j = 0; j < i; ++j) {
+                    std::cout << "  ";
+                }
+                std::cout << "v\n";
+            }
+        }
+
+        std::cout << "\n===========================================\n";
+    }
 };
 
 } // namespace MiniEngine::Backend
+
+#endif

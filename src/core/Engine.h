@@ -1,7 +1,7 @@
 #pragma once
 
-#include <unordered_map>
 #include <functional>
+#include <unordered_map>
 
 #include "Color.h"
 #include "EngineTypes.h"
@@ -12,41 +12,41 @@
 #include "ShaderRegistry.h"
 #include "VulkanDriver.h"
 #include "VulkanPlatform.h"
+#include "FrameGraph.h"
 
-namespace MiniEngine
+namespace MiniEngine {
+class Engine
 {
-	class Engine
-	{
-	public:
+public:
+    Engine(MiniEngine::Types::EngineInitParams &params);
 
-		Engine(MiniEngine::Types::EngineInitParams& params);
+    Engine(Engine const &) = delete;
+    Engine(Engine &&) = delete;
+    Engine &operator=(Engine const &) = delete;
+    Engine &operator=(Engine &&) = delete;
 
-		Engine(Engine const&) = delete;
-		Engine(Engine&&) = delete;
-		Engine& operator=(Engine const&) = delete;
-		Engine& operator=(Engine&&) = delete;
+    void execute(Scene *scene);
 
-		void execute(Scene* scene);
+    Texture loadTexture(const char *path, Texture::TextureType type, bool flipYAxis);
 
-		Texture loadTexture(const char* path, Texture::TextureType type, bool flipYAxis);
+    inline ShaderRegistry *getShaderRegistry() const { return mShaderRegistry.get(); }
+    inline Backend::VulkanDriver *getGraphicsDriver() const
+    {
+        return mGraphicsPlatform.get()->getDriver();
+    }
+    inline MaterialInstance *getDefaultMaterial() { return &mDefaultMaterial; }
 
-        inline ShaderRegistry *getShaderRegistry() const { return mShaderRegistry.get(); }
-        inline Backend::VulkanDriver *getGraphicsDriver() const
-        {
-            return mGraphicsPlatform.get()->getDriver();
-        }
-        inline MaterialInstance* getDefaultMaterial() { return &mDefaultMaterial; }
+    // UI
+    void addSlider(
+        const char *name, float *value, float min, float max, std::function<void()> cb = nullptr);
+    void addCheckbox(const char *name, bool &flag, std::function<void()> cb = nullptr);
 
-		// UI
-		void addSlider(const char* name, float* value, float min, float max, std::function<void()> cb = nullptr);
-		void addCheckbox(const char* name, bool& flag, std::function<void()> cb = nullptr);
+private:
+    std::unique_ptr<Backend::VulkanPlatform> mGraphicsPlatform;
+    std::unique_ptr<ShaderRegistry> mShaderRegistry;
 
-    private:
-        std::unique_ptr<Backend::VulkanPlatform> mGraphicsPlatform;
-        std::unique_ptr<ShaderRegistry> mShaderRegistry;
+    MaterialInstance mDefaultMaterial;
 
-		MaterialInstance mDefaultMaterial;
-	
-		void createDefaultMaterial();
-	};
-}
+    void createDefaultMaterial();
+};
+} // namespace MiniEngine

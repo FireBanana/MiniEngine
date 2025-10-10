@@ -9,7 +9,6 @@
 #include <thread>
 
 #include "GlslCompiler.h"
-#include "FrameGraph.h"
 
 #define RESOLVE_PATH(path) DIR path
 
@@ -54,14 +53,6 @@ int main(void)
                     .addModel(RESOLVE_PATH("/assets/powder.glb"))
                     .addMaterialInstance(&material)
                     .build(&scene, meshEntity);
-
-    // --------------TESTING ----------------
-    MiniEngine::Backend::FrameGraph f{};
-    f.addPass("pass1", {"test", {{"Tex1"}, {"Tex3"}, {"Tex6"}}, {{"Tex2"}}, {}, {} }, [](){});
-    f.addPass("pass2", {"test", {{"Tex1"}, {"Tex3"}, {"Tex2"}}, {{"Tex5"}}, {}, {} }, [](){});
-    f.addPass("pass3", {"test", {{"Tex1"}, {"Tex3"}, {"Tex5"}}, {{"Tex8"}}, {}, {} }, [](){});
-    f.bake();
-    // --------------------------------------
 
 
     // auto skyBox = MiniEngine::Skybox::Builder()

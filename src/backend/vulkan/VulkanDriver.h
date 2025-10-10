@@ -73,7 +73,10 @@ public:
     void setVec3(unsigned int program, const char *name, Vector3 value) const;
     void setMat4(unsigned int program, const char *name, Matrix4x4 value) const;
 
+    void syncTextures(MiniEngine::Scene *scene);
     void recordCommandBuffers(MiniEngine::Scene *scene);
+
+    const std::vector<std::tuple<VulkanImage, bool>> &getImageCache() const { return mVulkanImageCache; }
 
 private:
     MiniEngine::Types::EngineInitParams mParams;
@@ -90,7 +93,7 @@ private:
     VkPhysicalDeviceMemoryProperties mGpuMemoryProperties;
     VulkanImage mPlaceholderImage;
 
-    std::vector<VulkanImage> mVulkanImageCache;
+    std::vector<std::tuple<VulkanImage, bool>> mVulkanImageCache;
     std::array<VulkanImage, 2> mMainFrameBuffer;
     Utils::DynamicArray<DisplaySemaphore> mDisplaySemaphoreArray;
     std::array<VkDescriptorPool, 2> mDescriptorPools; //change to enum
@@ -106,7 +109,6 @@ private:
     void createGBufferPipeline();
     void createDisplaySemaphores();
     void initializeMemoryAllocator();
-    void syncTextures(MiniEngine::Scene *scene);
 
     void loadShaderModule();
     void acquireNextImage(uint32_t *image, uint32_t *displaySemaphoreIndex);

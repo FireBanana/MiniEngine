@@ -435,6 +435,10 @@ void MiniEngine::Backend::VulkanDriver::initializeMemoryAllocator()
     vmaCreateAllocator(&vmaInfo, &mMemoryAllocator);
 }
 
+// void MiniEngine::Backend::VulkanDriver::AddTexturesForSync(
+//     std::vector<std::tuple<VulkanImage, bool>> images)
+// {}
+
 void MiniEngine::Backend::VulkanDriver::syncTextures(MiniEngine::Scene *scene)
 {
     // Attach textures ===========
@@ -465,9 +469,15 @@ void MiniEngine::Backend::VulkanDriver::syncTextures(MiniEngine::Scene *scene)
     VkCommandBufferBeginInfo beginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-    for (auto &imgRef : mVulkanImageCache) {
+    for (auto &[imgRef, isLoaded] : mVulkanImageCache) {
         //if (imgRef.getResourceId() == texId)
         //    tex = &imgRef;
+
+        // Already uploaded
+        if (isLoaded)
+            continue;
+
+        isLoaded = true;
 
         // TODO: should be index!!
         auto &commandBuffer = commandBufferList[imgRef.getResourceId()];
@@ -535,8 +545,8 @@ void MiniEngine::Backend::VulkanDriver::syncTextures(MiniEngine::Scene *scene)
 
         if (diffuse.isValid()) {
             // TODO Check flag here instead of num
-            mGbufferPipeline.mDescriptors.at(1).loadData(&mVulkanImageCache[0], 0);
-            mGbufferPipeline.mDescriptors.at(1).loadData(&mVulkanImageCache[1], 1);
+            mGbufferPipeline.mDescriptors.at(1).loadData(&std::get<0>(mVulkanImageCache[0]), 0);
+            mGbufferPipeline.mDescriptors.at(1).loadData(&std::get<0>(mVulkanImageCache[1]), 1);
         }
     }
 
@@ -560,8 +570,6 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene *
     VkCommandBufferBeginInfo beginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
     beginInfo = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
     auto perFrameData = mActiveSwapchain.getPerFrameData();
-
-    syncTextures(scene);
 
     for (auto i = 0; i < mActiveSwapchain.getSwapchainSize(); ++i) {
         auto &cmd = perFrameData[i].imageCommandBuffer;
@@ -853,7 +861,8 @@ MiniEngine::Texture MiniEngine::Backend::VulkanDriver::createTexture(
     Texture tex = {width, height, channels};
     tex.setValid();
     texture.mResourceId = tex.getId();
-    mVulkanImageCache.push_back(texture);
+    //Should not be used
+    mVulkanImageCache.push_back({texture, false});
 
     return tex;
 }

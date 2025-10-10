@@ -1,5 +1,6 @@
 #include "VulkanDriver.h"
 #include "VulkanSwapchain.h"
+#include <algorithm>
 
 MiniEngine::Backend::VulkanSwapchain::Builder::Builder(VulkanDriver *driver)
     : mDriver(driver)

@@ -6,18 +6,18 @@
 
 #define RESOLVE_PATH(path) DIR path
 
-static constexpr char* DEFERRED_VERTEX_PATH		   = RESOLVE_PATH("/shaders/deferred.vert");
-static constexpr char* DEFERRED_FRAGMENT_PATH	   = RESOLVE_PATH("/shaders/deferred.frag");
-static constexpr char* LIGHTING_VERTEX_PATH		   = RESOLVE_PATH("/shaders/pbr.vert");
-static constexpr char* LIGHTING_FRAGMENT_PATH	   = RESOLVE_PATH("/shaders/pbr.frag");
-static constexpr char* SKYBOX_VERTEX_PATH		   = RESOLVE_PATH("/shaders/sky.vert");
-static constexpr char* SKYBOX_FRAGMENT_PATH		   = RESOLVE_PATH("/shaders/sky.frag");
-static constexpr char* SKYBOX_RENDER_VERTEX_PATH   = RESOLVE_PATH("/shaders/sky_render.vert");
-static constexpr char* SKYBOX_RENDER_FRAGMENT_PATH = RESOLVE_PATH("/shaders/sky_render.frag");
-static constexpr char* ENV_CONVOLUTION_PATH		   = RESOLVE_PATH("/shaders/env_convolution.frag");
-static constexpr char* ENV_PREFILTER_PATH		   = RESOLVE_PATH("/shaders/prefilter.frag");
-static constexpr char* ENV_PRECOMPUTE_BRDF_PATH    = RESOLVE_PATH("/shaders/precompbrdf.frag");
-static constexpr char* POST_PROCESS_FRAGMENT_PATH  = RESOLVE_PATH("/shaders/fxaa.frag");
+static constexpr const char* DEFERRED_VERTEX_PATH		   = RESOLVE_PATH("/shaders/deferred.vert");
+static constexpr const char* DEFERRED_FRAGMENT_PATH	   = RESOLVE_PATH("/shaders/deferred.frag");
+static constexpr const char* LIGHTING_VERTEX_PATH		   = RESOLVE_PATH("/shaders/pbr.vert");
+static constexpr const char* LIGHTING_FRAGMENT_PATH	   = RESOLVE_PATH("/shaders/pbr.frag");
+static constexpr const char* SKYBOX_VERTEX_PATH		   = RESOLVE_PATH("/shaders/sky.vert");
+static constexpr const char* SKYBOX_FRAGMENT_PATH		   = RESOLVE_PATH("/shaders/sky.frag");
+static constexpr const char* SKYBOX_RENDER_VERTEX_PATH   = RESOLVE_PATH("/shaders/sky_render.vert");
+static constexpr const char* SKYBOX_RENDER_FRAGMENT_PATH = RESOLVE_PATH("/shaders/sky_render.frag");
+static constexpr const char* ENV_CONVOLUTION_PATH		   = RESOLVE_PATH("/shaders/env_convolution.frag");
+static constexpr const char* ENV_PREFILTER_PATH		   = RESOLVE_PATH("/shaders/prefilter.frag");
+static constexpr const char* ENV_PRECOMPUTE_BRDF_PATH    = RESOLVE_PATH("/shaders/precompbrdf.frag");
+static constexpr const char* POST_PROCESS_FRAGMENT_PATH  = RESOLVE_PATH("/shaders/fxaa.frag");
 
 namespace MiniEngine
 {
