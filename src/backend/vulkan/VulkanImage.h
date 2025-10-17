@@ -3,64 +3,64 @@
 
 #include "VulkanHelper.h"
 
-namespace MiniEngine::Backend
+namespace MiniEngine::Backend {
+class VulkanDriver;
+
+class VulkanImage
 {
-	class VulkanDriver;
+public:
+    class Builder
+    {
+    public:
+        Builder(VulkanDriver *driver);
+        Builder(Builder &) = delete;
+        Builder operator=(Builder &) = delete;
+        Builder(Builder &&) = delete;
+        Builder operator=(Builder &&) = delete;
 
-	class VulkanImage 
-	{
-	public:
-		class Builder 
-		{
-		public:
-            Builder(VulkanDriver *driver);
-            Builder(Builder &) = delete;
-            Builder operator=(Builder&) = delete;
-			Builder(Builder&&) = delete;
-			Builder operator=(Builder&&) = delete;
-
-			Builder& setWidth(float width);
-			Builder& setHeight(float height);
-			Builder& setChannels(int channels);
-			Builder& setData(void* data);
-			Builder& setFormat(VkFormat format);
-			Builder& setUsageFlags(VkImageUsageFlags flags);
-			Builder& setAspectFlags(VkImageAspectFlags flags);
-			Builder& setDebugName(std::string name);
-			VulkanImage build();
-
-		private:
-			VulkanDriver* mDriver;
-			float mWidth;
-			float mHeight;
-			int mChannels;
-			void* mData;
-			VkFormat mFormat;
-			VkImageUsageFlags mUsageFlags;
-			VkImageAspectFlags mAspectFlags;
-			std::string mDebugName;
-		};
-
-		VkImage getRawImage() const { return mImage; }
-		VkDeviceMemory getMemory() const { return mMemory; }
-		VkImageView getImageView() const { return mImageView; }
-		VkBuffer getStagingBuffer() const { return mStagingBuffer; }
-        unsigned int getResourceId() const { return mResourceId; }
-		float getWidth() { return mWidth; }
-		float getHeight() { return mHeight; }
+        Builder &setWidth(float width);
+        Builder &setHeight(float height);
+        Builder &setChannels(int channels);
+        Builder &setData(void *data);
+        Builder &setFormat(VkFormat format);
+        Builder &setUsageFlags(VkImageUsageFlags flags);
+        Builder &setAspectFlags(VkImageAspectFlags flags);
+        Builder &setDebugName(std::string name);
+        VulkanImage build();
 
     private:
-
-        VkImage mImage;
-		VkDeviceMemory mMemory;
-		VkImageView mImageView;
-		VkBuffer mStagingBuffer;
-        unsigned int mResourceId;
-		float mWidth;
-		float mHeight;
-
-        friend class VulkanDriver;
+        VulkanDriver *mDriver;
+        float mWidth;
+        float mHeight;
+        int mChannels;
+        void *mData;
+        VkFormat mFormat;
+        VkImageUsageFlags mUsageFlags;
+        VkImageAspectFlags mAspectFlags;
+        std::string mDebugName;
     };
-}
+
+    VkImage getRawImage() const { return mImage; }
+    VkDeviceMemory getMemory() const { return mMemory; }
+    VkImageView getImageView() const { return mImageView; }
+    VkBuffer getStagingBuffer() const { return mStagingBuffer; }
+    unsigned int getResourceId() const { return mResourceId; }
+    float getWidth() { return mWidth; }
+    float getHeight() { return mHeight; }
+
+private:
+    VkImage mImage;
+    VkDeviceMemory mMemory;
+    VkImageView mImageView;
+    VkBuffer mStagingBuffer;
+    unsigned int mResourceId;
+    float mWidth;
+    float mHeight;
+
+    bool mUploaded = false;
+
+    friend class VulkanDriver;
+};
+} // namespace MiniEngine::Backend
 
 #endif

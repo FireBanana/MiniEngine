@@ -435,9 +435,15 @@ void MiniEngine::Backend::VulkanDriver::initializeMemoryAllocator()
     vmaCreateAllocator(&vmaInfo, &mMemoryAllocator);
 }
 
-// void MiniEngine::Backend::VulkanDriver::AddTexturesForSync(
-//     std::vector<std::tuple<VulkanImage, bool>> images)
-// {}
+void MiniEngine::Backend::VulkanDriver::markTextureForUpload(VulkanImage image)
+{
+    if (image.mUploaded)
+        return;
+
+    uploadBuffer.push_back(image);
+
+    image.mUploaded = true;
+}
 
 void MiniEngine::Backend::VulkanDriver::syncTextures(MiniEngine::Scene *scene)
 {

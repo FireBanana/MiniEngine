@@ -80,14 +80,15 @@ void MiniEngine::Backend::VulkanPlatform::execute(Scene *scene)
     diffuse.type = Backend::TextureResourceDesc::Type::EXTERNAL;
     diffuse.image = &std::get<0>(imageCache[0]);
 
+    // mDriver->syncTextures(scene);
+
     mDefaultFrameGraph
         .addPass("pass1", {"test", {diffuse}, {renderTexture}, {}, {}}, [this, scene]() {
             // Main pass
-            mDriver->syncTextures(scene);
             mDriver->recordCommandBuffers(scene);
         });
 
-    mDefaultFrameGraph.bake();
+    mDefaultFrameGraph.bake(scene);
 
     while (!glfwWindowShouldClose(mWindow)) //run separate thread
     {

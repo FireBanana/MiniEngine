@@ -2,6 +2,7 @@
 #define MINIENGINE_FRAMEGRAPH
 
 #include "Logger.h"
+#include "Scene.h"
 #include "VulkanDriver.h"
 #include "pch.hpp"
 #include <iterator>
@@ -91,6 +92,11 @@ public:
 
         pass.execute = execute;
 
+        //Mark textures for upload
+        for (auto &texture : pass.textureReadResources)
+            if (texture.type == TextureResourceDesc::Type::EXTERNAL)
+                driver->markTextureForUpload(*texture.image);
+
         passes.push_back(pass);
     }
 
@@ -113,7 +119,7 @@ public:
         return 0;
     }
 
-    void bake()
+    void bake(MiniEngine::Scene *scene)
     {
         //Build edges
         std::vector<std::vector<int>> edges(passes.size());
@@ -182,6 +188,11 @@ public:
                     q.push(e);
             }
         }
+
+        //Create resources
+
+        //Flush resources
+	driver.flushResrouces();
 
         //Execute setups
         for (auto o : order) {

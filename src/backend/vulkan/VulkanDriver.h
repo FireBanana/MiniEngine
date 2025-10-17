@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_set>
 #ifndef MINIENGINE_VULKAN_DRIVER
 #define MINIENGINE_VULKAN_DRIVER
 
@@ -73,10 +74,16 @@ public:
     void setVec3(unsigned int program, const char *name, Vector3 value) const;
     void setMat4(unsigned int program, const char *name, Matrix4x4 value) const;
 
+    void markTextureForUpload(VulkanImage image);
+    void flushResources();
     void syncTextures(MiniEngine::Scene *scene);
     void recordCommandBuffers(MiniEngine::Scene *scene);
 
-    const std::vector<std::tuple<VulkanImage, bool>> &getImageCache() const { return mVulkanImageCache; }
+    std::vector<VulkanImage> uploadBuffer;
+    const std::vector<std::tuple<VulkanImage, bool>> &getImageCache() const
+    {
+        return mVulkanImageCache;
+    }
 
 private:
     MiniEngine::Types::EngineInitParams mParams;
