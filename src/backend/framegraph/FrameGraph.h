@@ -31,7 +31,7 @@ struct TextureResourceDesc
     uint8_t channels;
     uint8_t nativeHandle;
     VkFormat format;
-    VulkanImage *image;
+    VulkanImage image;
 
     bool operator==(const TextureResourceDesc &rhs) { return this->name == rhs.name; }
 };
@@ -75,7 +75,7 @@ struct RenderPass
 class FrameGraph
 {
 public:
-    FrameGraph() {}
+    FrameGraph(VulkanDriver *d) : driver(d) {}
 
     // Execute contains vulkan code and drawing commands, called from execute()
     void addPass(std::string name, RenderPassResource passRes, std::function<void()> execute)
@@ -93,9 +93,9 @@ public:
         pass.execute = execute;
 
         //Mark textures for upload
-        for (auto &texture : pass.textureReadResources)
+        for (auto texture : pass.textureReadResources)
             if (texture.type == TextureResourceDesc::Type::EXTERNAL)
-                driver->markTextureForUpload(*texture.image);
+                driver->markTextureForUpload(texture.image);
 
         passes.push_back(pass);
     }
@@ -192,7 +192,7 @@ public:
         //Create resources
 
         //Flush resources
-	driver.flushResrouces();
+	// driver.flushResrouces();
 
         //Execute setups
         for (auto o : order) {

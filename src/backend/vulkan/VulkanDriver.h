@@ -74,12 +74,11 @@ public:
     void setVec3(unsigned int program, const char *name, Vector3 value) const;
     void setMat4(unsigned int program, const char *name, Matrix4x4 value) const;
 
-    void markTextureForUpload(VulkanImage image);
+    // void markTextureForUpload(VulkanImage image);
     void flushResources();
     void syncTextures(MiniEngine::Scene *scene);
     void recordCommandBuffers(MiniEngine::Scene *scene);
 
-    std::vector<VulkanImage> uploadBuffer;
     const std::vector<std::tuple<VulkanImage, bool>> &getImageCache() const
     {
         return mVulkanImageCache;
@@ -104,6 +103,7 @@ private:
     std::array<VulkanImage, 2> mMainFrameBuffer;
     Utils::DynamicArray<DisplaySemaphore> mDisplaySemaphoreArray;
     std::array<VkDescriptorPool, 2> mDescriptorPools; //change to enum
+    std::vector<VulkanImage> mUploadBuffer;
 
     void enumerateInstanceExtensionProperties();
     void enumerateInstanceLayerProperties();
