@@ -123,6 +123,22 @@ void MiniEngine::Backend::VulkanDriver::createInstance(
     debugInfo.pfnUserCallback = debugUtilsCallback;
 
     info.pNext = &debugInfo;
+
+    // Additional Layer Settings
+    VkBool32 data[] = {VK_TRUE};
+
+    const VkLayerSettingEXT setting{
+        "VK_LAYER_KHRONOS_validation",
+        "message_format_json",
+        VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+        static_cast<uint32_t>(std::size(data)),
+        data};
+
+    VkLayerSettingsCreateInfoEXT
+        debugSettingsInfo{VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT, nullptr, 1, &setting};
+
+    debugInfo.pNext = &debugSettingsInfo;
+
 #endif
 
     vkCreateInstance(&info, nullptr, &mInstance);
@@ -435,15 +451,15 @@ void MiniEngine::Backend::VulkanDriver::initializeMemoryAllocator()
     vmaCreateAllocator(&vmaInfo, &mMemoryAllocator);
 }
 
-// void MiniEngine::Backend::VulkanDriver::markTextureForUpload(VulkanImage image)
-// {
-//     if (image.mUploaded)
-//         return;
-//
-//     mUploadBuffer.push_back(image);
-//
-//     image.mUploaded = true;
-// }
+void MiniEngine::Backend::VulkanDriver::markTextureForUpload(VulkanImage image)
+{
+    if (image.mUploaded)
+        return;
+
+    mUploadBuffer.push_back(image);
+
+    image.mUploaded = true;
+}
 
 void MiniEngine::Backend::VulkanDriver::syncTextures(MiniEngine::Scene *scene)
 {

@@ -74,8 +74,7 @@ public:
     void setVec3(unsigned int program, const char *name, Vector3 value) const;
     void setMat4(unsigned int program, const char *name, Matrix4x4 value) const;
 
-    // void markTextureForUpload(VulkanImage image);
-    void flushResources();
+    void markTextureForUpload(VulkanImage image);
     void syncTextures(MiniEngine::Scene *scene);
     void recordCommandBuffers(MiniEngine::Scene *scene);
 

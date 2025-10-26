@@ -41,6 +41,7 @@ void MiniEngine::Backend::VulkanPlatform::createWindow(uint16_t width, uint16_t 
 
     extensions.push_back("VK_EXT_swapchain_colorspace");
     extensions.push_back("VK_KHR_get_physical_device_properties2");
+    extensions.push_back("VK_EXT_layer_settings");
 
 #ifdef GRAPHICS_DEBUG
     extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);

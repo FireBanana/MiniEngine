@@ -7,7 +7,6 @@
 #include "pch.hpp"
 #include <iterator>
 #include <map>
-#include <winuser.h>
 #include <queue>
 
 namespace MiniEngine::Backend {
@@ -190,9 +189,6 @@ public:
         }
 
         //Create resources
-
-        //Flush resources
-	// driver.flushResrouces();
 
         //Execute setups
         for (auto o : order) {
