@@ -10,7 +10,6 @@
 #include "VulkanPipeline.h"
 #include "VulkanSwapchain.h"
 #include "types/EngineTypes.h"
-#include "utils/DynamicArray.h"
 #include <VulkanMemory.h>
 #include <vector>
 
@@ -28,12 +27,7 @@ namespace Backend {
 class VulkanDriver
 {
 public:
-    struct DisplaySemaphore
-    {
-        VkSemaphore acquisitionSemaphore;
-        VkSemaphore presentationSemaphore;
-        VkFence fence;
-    };
+    constexpr static int FRAMES_IN_FLIGHT = 2;
 
     enum class ShaderType { VERTEX, FRAGMENT };
 
@@ -98,9 +92,13 @@ private:
     VkPhysicalDeviceMemoryProperties mGpuMemoryProperties;
     VulkanImage mPlaceholderImage;
 
+    uint64_t mCurrentFrame = 0;
+
     std::vector<std::tuple<VulkanImage, bool>> mVulkanImageCache;
     std::array<VulkanImage, 2> mMainFrameBuffer;
-    Utils::DynamicArray<DisplaySemaphore> mDisplaySemaphoreArray;
+    std::vector<VkSemaphore> mPresentSemaphores;
+    std::vector<VkSemaphore> mAcquireSemaphores;
+    std::vector<VkFence> mPresentFences;
     std::array<VkDescriptorPool, 2> mDescriptorPools; //change to enum
     std::vector<VulkanImage> mUploadBuffer;
 
@@ -113,11 +111,11 @@ private:
     void createSwapchain();
     void createDescriptorPools();
     void createGBufferPipeline();
-    void createDisplaySemaphores();
+    void createPresentSyncPrimitives();
     void initializeMemoryAllocator();
 
     void loadShaderModule();
-    void acquireNextImage(uint32_t *image, uint32_t *displaySemaphoreIndex);
+    void acquireNextImage(uint32_t frame, uint32_t *img);
     uint32_t getMemoryTypeIndex(const VkMemoryRequirements *memReqs);
 
     VulkanBuffer createBuffer(
