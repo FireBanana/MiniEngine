@@ -71,7 +71,7 @@ MiniEngine::Backend::VulkanSwapchain MiniEngine::Backend::VulkanSwapchain::Build
     if (iter == supportedFormatList.end()) {
         iter = supportedFormatList.begin();
         MiniEngine::Logger::wprint(
-            "{} not found as a supported format. Defaulting to {}", mColorFormat, iter->format);
+            "{} not found as a supported format. Defaulting to {}", static_cast<int>(mColorFormat), static_cast<int>(iter->format));
     }
 
     auto format = *iter;
