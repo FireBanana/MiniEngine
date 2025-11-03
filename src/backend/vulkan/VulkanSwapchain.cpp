@@ -152,7 +152,7 @@ void MiniEngine::Backend::VulkanSwapchain::createPerFrameData()
         VkImageView imageView;
 
         VkCommandPoolCreateInfo cmdPoolInfo{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
-        cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+        cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         cmdPoolInfo.queueFamilyIndex = mDriver->mActiveQueue;
         vkCreateCommandPool(mDriver->mActiveDevice, &cmdPoolInfo, nullptr, &commandPool);
 

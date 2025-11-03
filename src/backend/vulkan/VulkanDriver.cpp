@@ -622,6 +622,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene *
 
     for (auto i = 0; i < mActiveSwapchain.getSwapchainSize(); ++i) {
         auto &cmd = perFrameData[i].imageCommandBuffer;
+        vkResetCommandBuffer(cmd, 0);
 
         vkBeginCommandBuffer(cmd, &beginInfo);
 
@@ -686,6 +687,7 @@ void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene *
             glm::vec3(firstCamera.position.x, firstCamera.position.y, firstCamera.position.z),
             glm::vec3(0.0f, 0.0f, 0.0f),
             glm::vec3(0.0f, -1.0f, 0.0f));
+        sceneBlock.testUniform = mCurrentFrame;
 
         struct TransformPushConstant
         {

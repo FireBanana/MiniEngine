@@ -87,13 +87,13 @@ void MiniEngine::Backend::VulkanPlatform::execute(Scene *scene)
     mDefaultFrameGraph
         .addPass("pass1", {"test", {diffuse}, {renderTexture}, {}, {}}, [this, scene]() {
             // Main pass
-            mDriver->recordCommandBuffers(scene);
         });
 
     mDefaultFrameGraph.bake(scene);
 
     while (!glfwWindowShouldClose(mWindow)) //run separate thread
     {
+        mDriver->recordCommandBuffers(scene);
         mDriver->draw(scene);
         glfwPollEvents();
     }

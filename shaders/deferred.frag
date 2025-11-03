@@ -7,6 +7,7 @@ layout(set=0, binding=0) uniform SceneBlock
     mat4 view;
     mat4 projection;
     vec3 camPos;
+    float testUniform;
 };
 
 layout (set = 1, binding = 0, rgba8) uniform image2D _diffuse;
@@ -36,7 +37,7 @@ void main()
     vec3 light = vec3(2,2,1);
     float lightDir = dot(light, in_norm);
     float fres = dot(normalize(camera - in_pos), normalize(in_norm));
-    fres = pow(fres, 0.1);
+    fres = pow(fres, abs(sin(testUniform * 0.001)) * 0.1);
 
     col = d * (lightDir + .3) * (fres * vec4(0.1, 0.15, 0.2, 1.)) ;
     // col = t_normal; 
