@@ -802,7 +802,7 @@ void MiniEngine::Backend::VulkanDriver::acquireNextImage(uint32_t frame, uint32_
         img);
 
     if (status != VK_SUCCESS)
-        MiniEngine::Logger::eprint("Acquire error: {}", status);
+        MiniEngine::Logger::eprint("Acquire error: {}", static_cast<int>(status));
 }
 
 uint32_t MiniEngine::Backend::VulkanDriver::getMemoryTypeIndex(const VkMemoryRequirements *memReqs)

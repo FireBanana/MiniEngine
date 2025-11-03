@@ -8,9 +8,7 @@ add_library(Loader STATIC ${HDRS} ${SRCS})
 
 add_compile_options(-fPIC)
 
-if(WIN32)
-	target_link_libraries(Loader assimp)
-endif()
+target_link_libraries(Loader assimp)
 
 target_include_directories(Loader PUBLIC ${CMAKE_SOURCE_DIR}/libs)
 target_include_directories(Loader PUBLIC ${CMAKE_SOURCE_DIR}/libs/glad/include)

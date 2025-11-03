@@ -41,43 +41,43 @@ include(FetchContent)
 FetchContent_Declare(
     glm
     GIT_REPOSITORY https://github.com/g-truc/glm
-    GIT_TAG 0.9.9.8
+    GIT_TAG 1.0.2
 )
 
 FetchContent_Declare(
     spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog
-    GIT_TAG v1.12.0
+    GIT_TAG v1.16.0
 )
 
 FetchContent_Declare(
     glfw
     GIT_REPOSITORY https://github.com/glfw/glfw
-    GIT_TAG 3.3.8
+    GIT_TAG 3.4
 )
 
 FetchContent_Declare(
     volk
     GIT_REPOSITORY https://github.com/zeux/volk
-    GIT_TAG sdk-1.3.261.1
+    GIT_TAG vulkan-sdk-1.4.328.1
 )
 
 FetchContent_Declare(
     glslang
     GIT_REPOSITORY https://github.com/KhronosGroup/glslang
-    GIT_TAG main
+    GIT_TAG vulkan-sdk-1.4.328.1
 )
 
 FetchContent_Declare(
     vma
     GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-    GIT_TAG master
+    GIT_TAG v3.3.0
 )
 
 FetchContent_Declare(
     assimp
     GIT_REPOSITORY https://github.com/assimp/assimp
-    GIT_TAG v5.4.3
+    GIT_TAG v6.0.2
 )
 
 # Configure GLFW
