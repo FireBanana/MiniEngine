@@ -93,7 +93,6 @@ void MiniEngine::Backend::VulkanPlatform::execute(Scene *scene)
 
     while (!glfwWindowShouldClose(mWindow)) //run separate thread
     {
-        mDriver->recordCommandBuffers(scene);
         mDriver->draw(scene);
         glfwPollEvents();
     }

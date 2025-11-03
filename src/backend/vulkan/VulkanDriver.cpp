@@ -614,176 +614,175 @@ void MiniEngine::Backend::VulkanDriver::syncTextures(MiniEngine::Scene *scene)
         mActiveDevice, commandPool, mVulkanImageCache.size(), commandBufferList.data());
 }
 
-void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(MiniEngine::Scene *scene)
+void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(
+    MiniEngine::Scene *scene, uint32_t imgIndex)
 {
     VkCommandBufferBeginInfo beginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
     beginInfo = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
     auto perFrameData = mActiveSwapchain.getPerFrameData();
 
-    for (auto i = 0; i < mActiveSwapchain.getSwapchainSize(); ++i) {
-        auto &cmd = perFrameData[i].imageCommandBuffer;
-        vkResetCommandBuffer(cmd, 0);
+    auto &cmd = perFrameData[imgIndex].imageCommandBuffer;
+    vkResetCommandBuffer(cmd, 0);
 
-        vkBeginCommandBuffer(cmd, &beginInfo);
+    vkBeginCommandBuffer(cmd, &beginInfo);
 
-        auto swapchainImage = perFrameData[i].rawImage;
+    auto swapchainImage = perFrameData[imgIndex].rawImage;
 
-        auto clearColor = VkClearColorValue{
-            mParams.clearColor.r(),
-            mParams.clearColor.g(),
-            mParams.clearColor.b(),
-            mParams.clearColor.a()};
+    auto clearColor = VkClearColorValue{
+        mParams.clearColor.r(),
+        mParams.clearColor.g(),
+        mParams.clearColor.b(),
+        mParams.clearColor.a()};
 
-        VkRenderingAttachmentInfo swapchainAttachment{VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
-        swapchainAttachment.imageView = perFrameData[i].imageView;
-        swapchainAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        swapchainAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        swapchainAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        swapchainAttachment.clearValue.color = clearColor;
+    VkRenderingAttachmentInfo swapchainAttachment{VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+    swapchainAttachment.imageView = perFrameData[imgIndex].imageView;
+    swapchainAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    swapchainAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    swapchainAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    swapchainAttachment.clearValue.color = clearColor;
 
-        VkRenderingAttachmentInfo depthAttachment{VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
-        depthAttachment.imageView
-            = mMainFrameBuffer[static_cast<unsigned int>(ImageAttachmentType::DEPTH)].getImageView();
-        depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-        depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        depthAttachment.clearValue.depthStencil = {1, 0};
+    VkRenderingAttachmentInfo depthAttachment{VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+    depthAttachment.imageView
+        = mMainFrameBuffer[static_cast<unsigned int>(ImageAttachmentType::DEPTH)].getImageView();
+    depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    depthAttachment.clearValue.depthStencil = {1, 0};
 
-        mGbufferPipeline.bind(cmd);
+    mGbufferPipeline.bind(cmd);
 
-        VkViewport vp{};
-        vp.width = mParams.screenWidth;
-        vp.height = mParams.screenHeight;
-        vp.minDepth = 0.0f;
-        vp.maxDepth = 1.0f;
+    VkViewport vp{};
+    vp.width = mParams.screenWidth;
+    vp.height = mParams.screenHeight;
+    vp.minDepth = 0.0f;
+    vp.maxDepth = 1.0f;
 
-        vkCmdSetViewport(cmd, 0, 1, &vp);
+    vkCmdSetViewport(cmd, 0, 1, &vp);
 
-        VkRect2D scissor{};
-        scissor.extent.width = mParams.screenWidth;
-        scissor.extent.height = mParams.screenHeight;
+    VkRect2D scissor{};
+    scissor.extent.width = mParams.screenWidth;
+    scissor.extent.height = mParams.screenHeight;
 
-        vkCmdSetScissor(cmd, 0, 1, &scissor);
+    vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-        VkRenderingInfoKHR gBufferRenderingInfo{VK_STRUCTURE_TYPE_RENDERING_INFO};
-        gBufferRenderingInfo.layerCount = 1;
-        gBufferRenderingInfo.colorAttachmentCount = 1;
-        gBufferRenderingInfo.pColorAttachments = &swapchainAttachment;
-        gBufferRenderingInfo.pDepthAttachment = &depthAttachment;
-        gBufferRenderingInfo.renderArea = {0, 0, mParams.screenWidth, mParams.screenHeight};
+    VkRenderingInfoKHR gBufferRenderingInfo{VK_STRUCTURE_TYPE_RENDERING_INFO};
+    gBufferRenderingInfo.layerCount = 1;
+    gBufferRenderingInfo.colorAttachmentCount = 1;
+    gBufferRenderingInfo.pColorAttachments = &swapchainAttachment;
+    gBufferRenderingInfo.pDepthAttachment = &depthAttachment;
+    gBufferRenderingInfo.renderArea = {0, 0, mParams.screenWidth, mParams.screenHeight};
 
-        // TODO CLEAN THIS !!!!!!!!!!!!!!!!!
-        auto firstCamera = scene->getCameraComponentDatabase()[0]; //TODO: fix
+    // TODO CLEAN THIS !!!!!!!!!!!!!!!!!
+    auto firstCamera = scene->getCameraComponentDatabase()[0]; //TODO: fix
 
-        SceneBlock sceneBlock{};
-        sceneBlock.cameraPosition
-            = glm::vec3(firstCamera.position.x, firstCamera.position.y, firstCamera.position.z);
-        sceneBlock.projection = glm::perspective(
-            glm::radians(firstCamera.fov),
-            firstCamera.aspectRatio,
-            firstCamera.nearPlane,
-            firstCamera.farPlane);
-        sceneBlock.view = glm::lookAt(
-            glm::vec3(firstCamera.position.x, firstCamera.position.y, firstCamera.position.z),
-            glm::vec3(0.0f, 0.0f, 0.0f),
-            glm::vec3(0.0f, -1.0f, 0.0f));
-        sceneBlock.testUniform = mCurrentFrame;
+    SceneBlock sceneBlock{};
+    sceneBlock.cameraPosition
+        = glm::vec3(firstCamera.position.x, firstCamera.position.y, firstCamera.position.z);
+    sceneBlock.projection = glm::perspective(
+        glm::radians(firstCamera.fov),
+        firstCamera.aspectRatio,
+        firstCamera.nearPlane,
+        firstCamera.farPlane);
+    sceneBlock.view = glm::lookAt(
+        glm::vec3(firstCamera.position.x, firstCamera.position.y, firstCamera.position.z),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, -1.0f, 0.0f));
+    sceneBlock.testUniform = mCurrentFrame;
 
-        struct TransformPushConstant
-        {
-            glm::mat4 model;
-        } tempModel;
+    struct TransformPushConstant
+    {
+        glm::mat4 model;
+    } tempModel;
 
-        VulkanBarrier::Builder()
-            .setCmdBuffer(&cmd)
-            .setImage(swapchainImage)
-            .setSrcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-            .setDstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-            .setAspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
-            .setOldLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-            .setNewLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-            .setSrcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-            .setDstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-            .build();
+    VulkanBarrier::Builder()
+        .setCmdBuffer(&cmd)
+        .setImage(swapchainImage)
+        .setSrcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+        .setDstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+        .setAspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
+        .setOldLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+        .setNewLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+        .setSrcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+        .setDstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+        .build();
 
-        VulkanBarrier::Builder()
-            .setCmdBuffer(&cmd)
-            .setBuffer(mGbufferPipeline.mDescriptors[0].mBuffers[0].getRawBuffer())
-            .setDstAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT)
-            .setSrcAccessMask(VK_ACCESS_UNIFORM_READ_BIT)
-            .setOldLayout(VK_IMAGE_LAYOUT_GENERAL)
-            .setNewLayout(VK_IMAGE_LAYOUT_GENERAL)
-            .setDstStageMask(VK_PIPELINE_STAGE_TRANSFER_BIT)
-            .setSrcStageMask(VK_PIPELINE_STAGE_VERTEX_SHADER_BIT)
-            .build();
+    VulkanBarrier::Builder()
+        .setCmdBuffer(&cmd)
+        .setBuffer(mGbufferPipeline.mDescriptors[0].mBuffers[0].getRawBuffer())
+        .setDstAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT)
+        .setSrcAccessMask(VK_ACCESS_UNIFORM_READ_BIT)
+        .setOldLayout(VK_IMAGE_LAYOUT_GENERAL)
+        .setNewLayout(VK_IMAGE_LAYOUT_GENERAL)
+        .setDstStageMask(VK_PIPELINE_STAGE_TRANSFER_BIT)
+        .setSrcStageMask(VK_PIPELINE_STAGE_VERTEX_SHADER_BIT)
+        .build();
 
-        // GBuffer pass
-        vkCmdUpdateBuffer(
+    // GBuffer pass
+    vkCmdUpdateBuffer(
+        cmd,
+        mGbufferPipeline.mDescriptors[0].mBuffers[0].getRawBuffer(),
+        0,
+        sizeof(SceneBlock),
+        &sceneBlock);
+
+    // Uniform buffer barrier
+    VulkanBarrier::Builder()
+        .setCmdBuffer(&cmd)
+        .setBuffer(mGbufferPipeline.mDescriptors[0].mBuffers[0].getRawBuffer())
+        .setSrcAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT)
+        .setDstAccessMask(VK_ACCESS_UNIFORM_READ_BIT)
+        .setOldLayout(VK_IMAGE_LAYOUT_GENERAL)
+        .setNewLayout(VK_IMAGE_LAYOUT_GENERAL)
+        .setSrcStageMask(VK_PIPELINE_STAGE_TRANSFER_BIT)
+        .setDstStageMask(VK_PIPELINE_STAGE_VERTEX_SHADER_BIT)
+        .build();
+
+    vkCmdBeginRendering(cmd, &gBufferRenderingInfo);
+
+    auto renderables = scene->getRenderableComponentDatabase();
+
+    for (size_t i = 0; i < renderables.size(); ++i) {
+        auto mesh = renderables[i];
+        VkDeviceSize offset = {0};
+        auto vbuffer = mesh.vbuffer.getRawBuffer();
+        auto ibuffer = mesh.ibuffer.getRawBuffer();
+        vkCmdBindVertexBuffers(cmd, 0, 1, &vbuffer, &offset);
+        vkCmdBindIndexBuffer(cmd, ibuffer, 0, VK_INDEX_TYPE_UINT16);
+
+        tempModel.model = glm::translate(
+            glm::mat4(1.0), {mesh.worldPosition.x, mesh.worldPosition.y, mesh.worldPosition.z});
+        tempModel.model = glm::rotate(tempModel.model, mesh.rotation.x, glm::vec3(1, 0, 0));
+        tempModel.model = glm::rotate(tempModel.model, mesh.rotation.y, glm::vec3(0, 1, 0));
+        tempModel.model = glm::rotate(tempModel.model, mesh.rotation.z, glm::vec3(0, 0, 1));
+
+        // Push model transform
+        vkCmdPushConstants(
             cmd,
-            mGbufferPipeline.mDescriptors[0].mBuffers[0].getRawBuffer(),
+            mGbufferPipeline.mPipelineLayout,
+            VK_SHADER_STAGE_VERTEX_BIT,
             0,
-            sizeof(SceneBlock),
-            &sceneBlock);
+            sizeof(TransformPushConstant),
+            &tempModel);
 
-        // Uniform buffer barrier
-        VulkanBarrier::Builder()
-            .setCmdBuffer(&cmd)
-            .setBuffer(mGbufferPipeline.mDescriptors[0].mBuffers[0].getRawBuffer())
-            .setSrcAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT)
-            .setDstAccessMask(VK_ACCESS_UNIFORM_READ_BIT)
-            .setOldLayout(VK_IMAGE_LAYOUT_GENERAL)
-            .setNewLayout(VK_IMAGE_LAYOUT_GENERAL)
-            .setSrcStageMask(VK_PIPELINE_STAGE_TRANSFER_BIT)
-            .setDstStageMask(VK_PIPELINE_STAGE_VERTEX_SHADER_BIT)
-            .build();
-
-        vkCmdBeginRendering(cmd, &gBufferRenderingInfo);
-
-        auto renderables = scene->getRenderableComponentDatabase();
-
-        for (size_t i = 0; i < renderables.size(); ++i) {
-            auto mesh = renderables[i];
-            VkDeviceSize offset = {0};
-            auto vbuffer = mesh.vbuffer.getRawBuffer();
-            auto ibuffer = mesh.ibuffer.getRawBuffer();
-            vkCmdBindVertexBuffers(cmd, 0, 1, &vbuffer, &offset);
-            vkCmdBindIndexBuffer(cmd, ibuffer, 0, VK_INDEX_TYPE_UINT16);
-
-            tempModel.model = glm::translate(
-                glm::mat4(1.0), {mesh.worldPosition.x, mesh.worldPosition.y, mesh.worldPosition.z});
-            tempModel.model = glm::rotate(tempModel.model, mesh.rotation.x, glm::vec3(1, 0, 0));
-            tempModel.model = glm::rotate(tempModel.model, mesh.rotation.y, glm::vec3(0, 1, 0));
-            tempModel.model = glm::rotate(tempModel.model, mesh.rotation.z, glm::vec3(0, 0, 1));
-
-            // Push model transform
-            vkCmdPushConstants(
-                cmd,
-                mGbufferPipeline.mPipelineLayout,
-                VK_SHADER_STAGE_VERTEX_BIT,
-                0,
-                sizeof(TransformPushConstant),
-                &tempModel);
-
-            vkCmdDrawIndexed(cmd, mesh.indices.size(), 1, 0, 0, 0);
-        }
-
-        vkCmdEndRendering(cmd);
-
-        // swapchain present
-        VulkanBarrier::Builder()
-            .setCmdBuffer(&cmd)
-            .setImage(swapchainImage)
-            .setSrcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-            .setDstAccessMask(0)
-            .setAspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
-            .setOldLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-            .setNewLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-            .setSrcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-            .setDstStageMask(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT)
-            .build();
-
-        vkEndCommandBuffer(cmd);
+        vkCmdDrawIndexed(cmd, mesh.indices.size(), 1, 0, 0, 0);
     }
+
+    vkCmdEndRendering(cmd);
+
+    // swapchain present
+    VulkanBarrier::Builder()
+        .setCmdBuffer(&cmd)
+        .setImage(swapchainImage)
+        .setSrcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+        .setDstAccessMask(0)
+        .setAspectMask(VK_IMAGE_ASPECT_COLOR_BIT)
+        .setOldLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+        .setNewLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+        .setSrcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+        .setDstStageMask(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT)
+        .build();
+
+    vkEndCommandBuffer(cmd);
 }
 
 void MiniEngine::Backend::VulkanDriver::loadShaderModule() {}
@@ -838,6 +837,9 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene *scene)
     uint32_t img;
 
     acquireNextImage(presentFrameIndex, &img);
+
+    recordCommandBuffers(scene, img);
+
     auto perFrameData = mActiveSwapchain.getPerFrameData();
 
     auto &cmd = perFrameData[img].imageCommandBuffer;

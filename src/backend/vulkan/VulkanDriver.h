@@ -70,7 +70,6 @@ public:
 
     void markTextureForUpload(VulkanImage image);
     void syncTextures(MiniEngine::Scene *scene);
-    void recordCommandBuffers(MiniEngine::Scene *scene);
 
     const std::vector<std::tuple<VulkanImage, bool>> &getImageCache() const
     {
@@ -113,6 +112,7 @@ private:
     void createGBufferPipeline();
     void createPresentSyncPrimitives();
     void initializeMemoryAllocator();
+    void recordCommandBuffers(MiniEngine::Scene *scene, uint32_t imgIndex);
 
     void loadShaderModule();
     void acquireNextImage(uint32_t frame, uint32_t *img);
