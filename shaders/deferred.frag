@@ -34,10 +34,10 @@ void main()
 
     // Example points
     vec3 camera = vec3(5,0,10);
-    vec3 light = vec3(2,2,1);
+    vec3 light = vec3(2,2,1) * sin(testUniform * 0.001);
     float lightDir = dot(light, in_norm);
     float fres = dot(normalize(camera - in_pos), normalize(in_norm));
-    fres = pow(fres, abs(sin(testUniform * 0.001)) * 0.1);
+    fres = pow(fres, 0.1);
 
     col = d * (lightDir + .3) * (fres * vec4(0.1, 0.15, 0.2, 1.)) ;
     // col = t_normal; 

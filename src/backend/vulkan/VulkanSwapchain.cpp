@@ -71,7 +71,9 @@ MiniEngine::Backend::VulkanSwapchain MiniEngine::Backend::VulkanSwapchain::Build
     if (iter == supportedFormatList.end()) {
         iter = supportedFormatList.begin();
         MiniEngine::Logger::wprint(
-            "{} not found as a supported format. Defaulting to {}", static_cast<int>(mColorFormat), static_cast<int>(iter->format));
+            "{} not found as a supported format. Defaulting to {}",
+            static_cast<int>(mColorFormat),
+            static_cast<int>(iter->format));
     }
 
     auto format = *iter;
@@ -144,15 +146,16 @@ void MiniEngine::Backend::VulkanSwapchain::createPerFrameData()
         mDriver->mActiveDevice, this->getSwapchain(), &mSwapchainCount, swapchainImages.data());
 
     mSwapchainPerFrameData = std::vector<PerFrameData>(mSwapchainCount, PerFrameData{});
+    mFrameInFlightData = std::vector<PerFrameInFlightData>(VulkanDriver::FRAMES_IN_FLIGHT, PerFrameInFlightData{});
 
-    // Initialize a command pool per swapchain image
-    for (uint32_t i = 0; i < mSwapchainCount; ++i) {
+    // Initialize a command pool per frame in flight image
+    for (int i = 0; i < VulkanDriver::FRAMES_IN_FLIGHT; ++i) {
         VkCommandPool commandPool;
         VkCommandBuffer commandBuffer;
-        VkImageView imageView;
 
         VkCommandPoolCreateInfo cmdPoolInfo{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
-        cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT
+                            | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         cmdPoolInfo.queueFamilyIndex = mDriver->mActiveQueue;
         vkCreateCommandPool(mDriver->mActiveDevice, &cmdPoolInfo, nullptr, &commandPool);
 
@@ -162,8 +165,13 @@ void MiniEngine::Backend::VulkanSwapchain::createPerFrameData()
         cmdBuffInfo.commandBufferCount = 1;
         vkAllocateCommandBuffers(mDriver->mActiveDevice, &cmdBuffInfo, &commandBuffer);
 
-        mSwapchainPerFrameData[i].imageCommandPool = commandPool;
-        mSwapchainPerFrameData[i].imageCommandBuffer = commandBuffer;
+        mFrameInFlightData[i].imageCommandPool = commandPool;
+        mFrameInFlightData[i].imageCommandBuffer = commandBuffer;
+    }
+
+    // Initialize image views for swapchain images
+    for (uint32_t i = 0; i < mSwapchainCount; ++i) {
+        VkImageView imageView;
 
         VkImageViewCreateInfo viewInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
         viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;

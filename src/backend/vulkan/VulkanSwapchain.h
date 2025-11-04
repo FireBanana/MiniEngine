@@ -12,10 +12,14 @@ class VulkanDriver;
 class VulkanSwapchain
 {
 public:
-    struct PerFrameData
+    struct PerFrameData // Swapchain frame
     {
         VkImage rawImage;
         VkImageView imageView;
+    };
+
+    struct PerFrameInFlightData
+    {
         VkCommandPool imageCommandPool;
         VkCommandBuffer imageCommandBuffer;
     };
@@ -52,6 +56,7 @@ public:
     VkFormat getDepthFormat() const { return mDepthFormat; }
     uint32_t getSwapchainSize() const { return mSwapchainCount; }
     std::vector<PerFrameData> getPerFrameData() const { return mSwapchainPerFrameData; }
+    std::vector<PerFrameInFlightData> getPerFrameInFlightData() const { return mFrameInFlightData; }
 
 private:
     VulkanDriver *mDriver;
@@ -60,6 +65,7 @@ private:
     VkFormat mDepthFormat;
     uint32_t mSwapchainCount;
     std::vector<PerFrameData> mSwapchainPerFrameData;
+    std::vector<PerFrameInFlightData> mFrameInFlightData;
 
     void createPerFrameData();
 

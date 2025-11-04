@@ -615,13 +615,15 @@ void MiniEngine::Backend::VulkanDriver::syncTextures(MiniEngine::Scene *scene)
 }
 
 void MiniEngine::Backend::VulkanDriver::recordCommandBuffers(
-    MiniEngine::Scene *scene, uint32_t imgIndex)
+    MiniEngine::Scene *scene, uint32_t imgIndex, int frameInFlightIndex)
 {
     VkCommandBufferBeginInfo beginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
     beginInfo = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-    auto perFrameData = mActiveSwapchain.getPerFrameData();
 
-    auto &cmd = perFrameData[imgIndex].imageCommandBuffer;
+    auto perFrameData = mActiveSwapchain.getPerFrameData();
+    auto perFrameInFlightData = mActiveSwapchain.getPerFrameInFlightData();
+
+    auto &cmd = perFrameInFlightData[frameInFlightIndex].imageCommandBuffer;
     vkResetCommandBuffer(cmd, 0);
 
     vkBeginCommandBuffer(cmd, &beginInfo);
@@ -838,11 +840,12 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene *scene)
 
     acquireNextImage(presentFrameIndex, &img);
 
-    recordCommandBuffers(scene, img);
+    recordCommandBuffers(scene, img, presentFrameIndex);
 
     auto perFrameData = mActiveSwapchain.getPerFrameData();
+    auto perFrameInFlightData = mActiveSwapchain.getPerFrameInFlightData();
 
-    auto &cmd = perFrameData[img].imageCommandBuffer;
+    auto &cmd = perFrameInFlightData[presentFrameIndex].imageCommandBuffer;
 
     VkPipelineStageFlags waitStageFlags{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 

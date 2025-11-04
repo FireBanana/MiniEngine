@@ -112,7 +112,7 @@ private:
     void createGBufferPipeline();
     void createPresentSyncPrimitives();
     void initializeMemoryAllocator();
-    void recordCommandBuffers(MiniEngine::Scene *scene, uint32_t imgIndex);
+    void recordCommandBuffers(MiniEngine::Scene *scene, uint32_t imgIndex, int frameInFlightIndex);
 
     void loadShaderModule();
     void acquireNextImage(uint32_t frame, uint32_t *img);
