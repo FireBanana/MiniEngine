@@ -1,5 +1,7 @@
 #include "VulkanDriver.h"
 #include "VulkanImage.h"
+#include <cstdint>
+#include <vulkan/vulkan_core.h>
 
 MiniEngine::Backend::VulkanImage::Builder::Builder(VulkanDriver *driver)
     : mDriver(driver)
@@ -132,22 +134,17 @@ MiniEngine::Backend::VulkanImage MiniEngine::Backend::VulkanImage::Builder::buil
     auto result = vkCreateImageView(
         mDriver->mActiveDevice, &colorImageViewInfo, nullptr, &attachmentImageView);
 
+    if (r != VK_SUCCESS)
+        MiniEngine::Logger::eprint("Image creation failed");
+
     if (result != VK_SUCCESS)
         MiniEngine::Logger::eprint("ImageView creation failed");
 
-#ifdef GRAPHICS_DEBUG
-
-    VkDebugUtilsObjectNameInfoEXT imageNameInfo{};
-    imageNameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-    imageNameInfo.pNext = NULL;
-    imageNameInfo.objectType = VK_OBJECT_TYPE_IMAGE_VIEW;
-    imageNameInfo.objectHandle = (uint64_t) attachmentImageView;
-    imageNameInfo.pObjectName = mDebugName.c_str();
-
-    if (vkSetDebugUtilsObjectNameEXT(mDriver->mActiveDevice, &imageNameInfo) != VK_SUCCESS)
-        MiniEngine::Logger::eprint("Debug name creationg failed for: {}", mDebugName);
-
-#endif
+    create_debug_name(
+        mDriver->mActiveDevice,
+        mDebugName,
+        VK_OBJECT_TYPE_IMAGE_VIEW,
+        (uint64_t) attachmentImageView);
 
     image.mImage = attachmentImage;
     image.mImageView = attachmentImageView;

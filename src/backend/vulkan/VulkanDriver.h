@@ -71,7 +71,7 @@ public:
     void markTextureForUpload(VulkanImage image);
     void syncTextures(MiniEngine::Scene *scene);
 
-    const std::vector<std::tuple<VulkanImage, bool>> &getImageCache() const
+    const std::vector<std::pair<VulkanImage, bool>> &getImageCache() const
     {
         return mVulkanImageCache;
     }
@@ -83,17 +83,21 @@ private:
     VkPhysicalDevice mActiveGpu;
     VkSurfaceKHR mSurface;
     VkDevice mActiveDevice;
-    VkQueue mActiveDeviceQueue;
+    VkQueue mActiveDevicePresentQueue;
+    VkQueue mActiveDeviceTransferQueue;
     VulkanSwapchain mActiveSwapchain;
     VulkanPipeline mGbufferPipeline;
     VmaAllocator mMemoryAllocator;
-    int32_t mActiveQueue{-1};
+    int32_t mActivePresentQueueFamilyIndex{-1};
+    int32_t mActiveTransferQueueFamilyIndex{-1};
+    uint8_t mActivePresentQueueIndex;
+    uint8_t mActiveTransferQueueIndex;
     VkPhysicalDeviceMemoryProperties mGpuMemoryProperties;
     VulkanImage mPlaceholderImage;
 
     uint64_t mCurrentFrame = 0;
 
-    std::vector<std::tuple<VulkanImage, bool>> mVulkanImageCache;
+    std::vector<std::pair<VulkanImage, bool>> mVulkanImageCache;
     std::array<VulkanImage, 2> mMainFrameBuffer;
     std::vector<VkSemaphore> mPresentSemaphores;
     std::vector<VkSemaphore> mAcquireSemaphores;

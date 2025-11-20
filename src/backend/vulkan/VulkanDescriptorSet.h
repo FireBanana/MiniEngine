@@ -39,7 +39,7 @@ public:
     };
 
     void loadData(VulkanBuffer &&buffer, int structureIndex);
-    void loadData(VulkanImage *images, int structureIndex);
+    void loadData(VulkanImage image, int structureIndex);
     void update();
 
     VkDescriptorSet *getDescriptorSet() { return &mDescriptorSet; }
@@ -47,7 +47,7 @@ public:
 
 private:
     std::vector<VulkanBuffer> mBuffers;
-    std::vector<VulkanImage*> mImages;
+    std::vector<VulkanImage> mImages;
     std::vector<VkDescriptorBufferInfo> mBufferInfos;
     std::vector<VkDescriptorImageInfo> mImageInfos;
     VkDescriptorSet mDescriptorSet;

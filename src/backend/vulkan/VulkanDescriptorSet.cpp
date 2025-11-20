@@ -1,5 +1,6 @@
 #include "VulkanDescriptorSet.h"
 #include "VulkanDriver.h"
+#include <vulkan/vulkan_core.h>
 
 MiniEngine::Backend::VulkanDescriptorSet::Builder::Builder(VulkanDriver *driver)
     : mDriver(driver)
@@ -132,14 +133,14 @@ void MiniEngine::Backend::VulkanDescriptorSet::loadData(VulkanBuffer &&buffer, i
     mTypeStructure[structureIndex].second = mBuffers.size() - 1;
 }
 
-void MiniEngine::Backend::VulkanDescriptorSet::loadData(VulkanImage *images, int structureIndex)
+void MiniEngine::Backend::VulkanDescriptorSet::loadData(VulkanImage image, int structureIndex)
 {
     if (mTypeStructure[structureIndex].first != VK_DESCRIPTOR_TYPE_STORAGE_IMAGE) {
         MiniEngine::Logger::eprint("Loading data into incorrect slot in descriptor set");
         return;
     }
 
-    mImages.push_back(images);
+    mImages.push_back(image);
     mTypeStructure[structureIndex].second = mImages.size() - 1;
 }
 
@@ -147,6 +148,11 @@ void MiniEngine::Backend::VulkanDescriptorSet::update()
 {
     mBufferInfos.clear();
     mImageInfos.clear();
+
+    // Reserving for worst case scenario to prevent reallocation. could be improved
+    mImageInfos.reserve(mTypeStructure.size());
+    mBufferInfos.reserve(mTypeStructure.size());
+
     std::vector<VkWriteDescriptorSet> writeSetList{};
 
     for (auto i = 0; i < mTypeStructure.size(); ++i) {
@@ -162,19 +168,19 @@ void MiniEngine::Backend::VulkanDescriptorSet::update()
         if (descriptorInfo.first
             == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) { // TODO mtype should be individual to each descriptor
             auto &buffer = mBuffers[descriptorInfo.second];
-            mBufferInfos.push_back({});
-            auto &last = mBufferInfos.back();
-            last.buffer = buffer.getRawBuffer();
-            last.offset = 0;
-            last.range = buffer.getSize();
-            writeSet.pBufferInfo = &last;
+            auto &bufferInfo = mBufferInfos[i];
+            bufferInfo = {};
+            bufferInfo.buffer = buffer.getRawBuffer();
+            bufferInfo.offset = 0;
+            bufferInfo.range = buffer.getSize();
+            writeSet.pBufferInfo = &bufferInfo;
         } else if (descriptorInfo.first == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE) {
             auto &image = mImages[descriptorInfo.second];
-            mImageInfos.push_back({});
-            auto &last = mImageInfos.back();
-            last.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-            last.imageView = image->getImageView();
-            writeSet.pImageInfo = &last;
+            auto &imageInfo = mImageInfos[i];
+            imageInfo = {};
+            imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            imageInfo.imageView = image.getImageView();
+            writeSet.pImageInfo = &imageInfo;
         } else {
             MiniEngine::Logger::eprint("Descriptor type error during update");
         }

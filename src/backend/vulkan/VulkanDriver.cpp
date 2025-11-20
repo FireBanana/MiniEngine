@@ -232,32 +232,53 @@ void MiniEngine::Backend::VulkanDriver::registerPhysicalDeviceQueueFamily()
 
     std::vector<VkQueueFamilyProperties> queuePropertyList(queueFamilyCount);
     vkGetPhysicalDeviceQueueFamilyProperties(mActiveGpu, &queueFamilyCount, queuePropertyList.data());
+    int queueIndex = 0;
 
     for (uint32_t i = 0; i < queueFamilyCount; ++i) {
         VkBool32 supportsPresent;
         vkGetPhysicalDeviceSurfaceSupportKHR(mActiveGpu, i, mSurface, &supportsPresent);
 
         if ((queuePropertyList[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) && supportsPresent) {
-            mActiveQueue = i;
-            break;
+            mActivePresentQueueFamilyIndex = i;
+            mActivePresentQueueIndex = queueIndex++ % queuePropertyList[i].queueCount;
         }
+
+        if ((queuePropertyList[i].queueFlags & VK_QUEUE_TRANSFER_BIT)) {
+            mActiveTransferQueueFamilyIndex = i;
+            mActiveTransferQueueIndex = queueIndex++ % queuePropertyList[i].queueCount;
+        }
+
+        if (mActivePresentQueueFamilyIndex != -1 && mActiveTransferQueueFamilyIndex != -1)
+            break;
     }
 
-    if (mActiveQueue < 0) {
+    if (mActivePresentQueueFamilyIndex < 0) {
         MiniEngine::Logger::eprint("VkError: No queue found on device that can present");
         throw;
     } else
-        MiniEngine::Logger::print("Presenting queue found at index {}", mActiveQueue);
+        MiniEngine::Logger::print(
+            "Presenting queue found at index {}", mActivePresentQueueFamilyIndex);
+
+    if (mActiveTransferQueueFamilyIndex < 0) {
+        MiniEngine::Logger::eprint("VkError: No queue found on device that can transfer");
+        throw;
+    } else
+        MiniEngine::Logger::print("Transfer queue found at index {}", mActiveTransferQueueFamilyIndex);
 }
 
 void MiniEngine::Backend::VulkanDriver::createDevice(
     const std::vector<const char *> &&requiredExtensions)
 {
+    auto queueSize = mActiveTransferQueueFamilyIndex == mActivePresentQueueFamilyIndex
+                             && mActiveTransferQueueIndex == mActivePresentQueueIndex
+                         ? 1
+                         : 2;
+
     const float qPriority[] = {1.0f};
 
     VkDeviceQueueCreateInfo queueInfo{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
-    queueInfo.queueFamilyIndex = mActiveQueue;
-    queueInfo.queueCount = 1;
+    queueInfo.queueFamilyIndex = mActivePresentQueueFamilyIndex;
+    queueInfo.queueCount = queueSize;
     queueInfo.pQueuePriorities = qPriority;
 
     VkPhysicalDeviceDynamicRenderingFeatures dynamicInfo{
@@ -294,8 +315,16 @@ void MiniEngine::Backend::VulkanDriver::createDevice(
     vkCreateDevice(mActiveGpu, &deviceInfo, nullptr, &mActiveDevice);
     volkLoadDevice(mActiveDevice);
 
-    // Getting first queue only
-    vkGetDeviceQueue(mActiveDevice, mActiveQueue, 0, &mActiveDeviceQueue);
+    vkGetDeviceQueue(
+        mActiveDevice,
+        mActivePresentQueueFamilyIndex,
+        mActivePresentQueueIndex,
+        &mActiveDevicePresentQueue);
+    vkGetDeviceQueue(
+        mActiveDevice,
+        mActiveTransferQueueFamilyIndex,
+        mActiveTransferQueueIndex,
+        &mActiveDeviceTransferQueue);
 
     VkPhysicalDeviceProperties deviceProps;
     vkGetPhysicalDeviceProperties(mActiveGpu, &deviceProps);
@@ -506,7 +535,7 @@ void MiniEngine::Backend::VulkanDriver::syncTextures(MiniEngine::Scene *scene)
 
     VkCommandPoolCreateInfo cmdPoolInfo{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
     cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-    cmdPoolInfo.queueFamilyIndex = mActiveQueue;
+    cmdPoolInfo.queueFamilyIndex = mActiveTransferQueueFamilyIndex;
     vkCreateCommandPool(mActiveDevice, &cmdPoolInfo, nullptr, &commandPool);
 
     VkCommandBufferAllocateInfo cmdBuffInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
@@ -594,8 +623,8 @@ void MiniEngine::Backend::VulkanDriver::syncTextures(MiniEngine::Scene *scene)
 
         if (diffuse.isValid()) {
             // TODO Check flag here instead of num
-            mGbufferPipeline.mDescriptors.at(1).loadData(&std::get<0>(mVulkanImageCache[0]), 0);
-            mGbufferPipeline.mDescriptors.at(1).loadData(&std::get<0>(mVulkanImageCache[1]), 1);
+            mGbufferPipeline.mDescriptors.at(1).loadData(mVulkanImageCache[0].first, 0);
+            mGbufferPipeline.mDescriptors.at(1).loadData(mVulkanImageCache[1].first, 1);
         }
     }
 
@@ -605,8 +634,8 @@ void MiniEngine::Backend::VulkanDriver::syncTextures(MiniEngine::Scene *scene)
     submitInfo.commandBufferCount = mVulkanImageCache.size();
     submitInfo.pCommandBuffers = commandBufferList.data();
 
-    vkQueueSubmit(mActiveDeviceQueue, 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(mActiveDeviceQueue);
+    vkQueueSubmit(mActiveDeviceTransferQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(mActiveDeviceTransferQueue);
 
     mGbufferPipeline.mDescriptors.at(1).update();
 
@@ -858,7 +887,7 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene *scene)
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = &mPresentSemaphores[img];
 
-    vkQueueSubmit(mActiveDeviceQueue, 1, &submitInfo, mPresentFences[presentFrameIndex]);
+    vkQueueSubmit(mActiveDevicePresentQueue, 1, &submitInfo, mPresentFences[presentFrameIndex]);
 
     auto swapChain = mActiveSwapchain.getSwapchain();
 
@@ -870,7 +899,7 @@ void MiniEngine::Backend::VulkanDriver::draw(MiniEngine::Scene *scene)
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = &mPresentSemaphores[img];
 
-    vkQueuePresentKHR(mActiveDeviceQueue, &presentInfo);
+    vkQueuePresentKHR(mActiveDevicePresentQueue, &presentInfo);
 
     mCurrentFrame++;
 }
