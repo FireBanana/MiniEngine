@@ -168,16 +168,16 @@ void MiniEngine::Backend::VulkanDescriptorSet::update()
         if (descriptorInfo.first
             == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) { // TODO mtype should be individual to each descriptor
             auto &buffer = mBuffers[descriptorInfo.second];
-            auto &bufferInfo = mBufferInfos[i];
-            bufferInfo = {};
+            mBufferInfos.push_back({});
+            auto &bufferInfo = mBufferInfos.back();
             bufferInfo.buffer = buffer.getRawBuffer();
             bufferInfo.offset = 0;
             bufferInfo.range = buffer.getSize();
             writeSet.pBufferInfo = &bufferInfo;
         } else if (descriptorInfo.first == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE) {
             auto &image = mImages[descriptorInfo.second];
-            auto &imageInfo = mImageInfos[i];
-            imageInfo = {};
+            mImageInfos.push_back({});
+            auto &imageInfo = mImageInfos.back();
             imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
             imageInfo.imageView = image.getImageView();
             writeSet.pImageInfo = &imageInfo;
