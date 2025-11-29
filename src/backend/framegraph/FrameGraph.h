@@ -5,8 +5,10 @@
 #include "Scene.h"
 #include "VulkanDriver.h"
 #include "pch.hpp"
+#include <cstdint>
 #include <iterator>
 #include <map>
+#include <vulkan/vulkan_core.h>
 #include <queue>
 
 namespace MiniEngine::Backend {
@@ -14,6 +16,12 @@ namespace MiniEngine::Backend {
 enum class TextureUsage {
     COLOR_ATTACHMENT,
     DEPTH_ATTACHMENT,
+};
+
+struct ResourceHandle
+{
+    uint32_t handle;
+    bool isValid() const { return handle != 1; }
 };
 
 struct ResourceBuffer
@@ -33,6 +41,16 @@ struct TextureResourceDesc
     VulkanImage image;
 
     bool operator==(const TextureResourceDesc &rhs) { return this->name == rhs.name; }
+};
+
+struct VirtualResource
+{
+    TextureResourceDesc desc;
+    uint32_t id;
+    int refCount = 0;
+    int firstPassId = -1;
+    int lastPassId = -1;
+    VkImageLayout currentLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 };
 
 struct BufferResourceDesc
@@ -71,32 +89,90 @@ struct RenderPass
     std::function<void()> execute;
 };
 
+struct RenderPassNode
+{
+    std::string name;
+    std::vector<uint32_t> reads;
+    std::vector<uint32_t> writes;
+
+    std::function<void(void *, VulkanDriver *)> execute;
+
+    void *passData;
+    bool isCulled = false;
+};
+
+//  Passed to setup lambda
+class FrameGraphBuilder
+{
+public:
+    uint32_t read(uint32_t input)
+    {
+        //add to current pass read list
+        // return for chaining
+        return input;
+    }
+
+    uint32_t write(uint32_t input)
+    {
+        // Writing creates a new version of the resource, or mark modified
+        return input;
+    }
+
+};
+
 class FrameGraph
 {
 public:
-    FrameGraph(VulkanDriver *d) : driver(d) {}
+    FrameGraph(VulkanDriver *d)
+        : driver(d)
+    {}
 
     // Execute contains vulkan code and drawing commands, called from execute()
-    void addPass(std::string name, RenderPassResource passRes, std::function<void()> execute)
+    template<typename Data, typename Setup, typename Execute>
+    void addPass(std::string name, Setup setup, Execute execute)
     {
-        // Set Attachments
-        // Set RenderTargets
+        RenderPassNode node;
+        node.name = name;
+        auto *data = new Data{};
+        node.passData = data;
 
-        auto pass = RenderPass{};
-        pass.name = name;
-        pass.textureReadResources = passRes.textureReadResources;
-        pass.textureWriteResources = passRes.textureWriteResources;
-        pass.bufferReadResources = passRes.bufferReadResources;
-        pass.bufferWriteResources = passRes.bufferWriteResources;
+        // Setup
+        FrameGraphBuilder builder{};
+        setup(builder, *data);
 
-        pass.execute = execute;
+        // Store Execute
+        node.execute = [=](void *ddata, VulkanDriver *driver) {
+            execute(*static_cast<Data *>(ddata), driver);
+        };
 
-        //Mark textures for upload
-        for (auto texture : pass.textureReadResources)
-            if (texture.type == TextureResourceDesc::Type::EXTERNAL)
-                driver->markTextureForUpload(texture.image);
+        passes.push_back(node);
+    }
 
-        passes.push_back(pass);
+    void execute(VulkanDriver *driver)
+    {
+        for (auto &pass : passes) {
+            if (pass.isCulled)
+                continue;
+
+            //Transition resources
+            for (auto handle : pass.reads) {
+                transitionResource(driver, handle, VK_IMAGE_LAYOUT_GENERAL);
+            }
+            for (auto handle : pass.writes) {
+                transitionResource(driver, handle, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL); //Handle depth
+            }
+
+            pass.execute(pass.passData, driver);
+        }
+    }
+
+    void transitionResource(VulkanDriver *driver, uint32_t resourceHandle, VkImageLayout target) 
+    {
+        VirtualResource &res = resources[resourceHandle];
+        if(res.currentLayout != target) {
+            //INSERT BARRIER
+            res.currentLayout = target;
+        }
     }
 
     int createTexture(TextureResourceDesc desc)
@@ -198,12 +274,18 @@ public:
         debugDrawGraph(order);
     }
 
+    void cull()
+    {
+
+    }
+
     // External?
     int addResource(RenderPass *pass, VulkanImage *image) { return 0; }
     int addResource(RenderPass *pass, VulkanBuffer *buffer) { return 0; }
 
     std::unique_ptr<VulkanDriver> driver;
-    std::vector<RenderPass> passes;
+    std::vector<VirtualResource> resources;
+    std::vector<RenderPassNode> passes;
 
     void debugDrawGraph(std::vector<int> indegree)
     {
