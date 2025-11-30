@@ -117,7 +117,6 @@ public:
         // Writing creates a new version of the resource, or mark modified
         return input;
     }
-
 };
 
 class FrameGraph
@@ -159,17 +158,18 @@ public:
                 transitionResource(driver, handle, VK_IMAGE_LAYOUT_GENERAL);
             }
             for (auto handle : pass.writes) {
-                transitionResource(driver, handle, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL); //Handle depth
+                transitionResource(
+                    driver, handle, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL); //Handle depth
             }
 
             pass.execute(pass.passData, driver);
         }
     }
 
-    void transitionResource(VulkanDriver *driver, uint32_t resourceHandle, VkImageLayout target) 
+    void transitionResource(VulkanDriver *driver, uint32_t resourceHandle, VkImageLayout target)
     {
         VirtualResource &res = resources[resourceHandle];
-        if(res.currentLayout != target) {
+        if (res.currentLayout != target) {
             //INSERT BARRIER
             res.currentLayout = target;
         }
@@ -268,7 +268,7 @@ public:
 
         //Execute setups
         for (auto o : order) {
-            passes[o].execute();
+            passes[o].execute(passes[o].passData, driver.get());
         }
 
         debugDrawGraph(order);
@@ -276,7 +276,65 @@ public:
 
     void cull()
     {
+        // Reset ref counts
+        for (auto &passNodes : passes)
+            pass.refCount = pass.isSideEffect ? 1 : 0;
+        for (auto &res : resources)
+            res.refCount = 0;
 
+        resources[backBufferHandle].refCount = 1;
+
+        // Iterate backwards
+        for (int i = passNodes.size() - 1; i >= 0; --i) {
+            auto &pass = passNodes[i];
+
+            bool isNeeded = (pass.refCount > 0);
+            for (auto outId : pass.writes) {
+                if (resources[outId].refCount > 0)
+                    isNeeded = true;
+            }
+
+            if (isNeeded) {
+                pass.isCulled = false;
+
+                for (auto inId : pass.reads) {
+                    resources[inId].refCount++;
+                }
+            } else {
+                pass.isCulled = true;
+            }
+        }
+    }
+
+    void calculateLifetimes()
+    {
+        for(auto i = 0; i < sortedPasses.size(); ++i) {
+            auto &pass = passNodes[sortedPasses[i]];
+            if(pass.isCulled) continue;
+
+            auto touchResource = [&](uint32_t handle) {
+                if(resources[handle].firstPassIndex == -1) resources[handle].firstPassIndex = i;
+                resources[handle].lastPassIndex = i;
+            }
+
+            for(auto h: pass.reads) touchResource(h);
+            for(auto h: pass.writes) touchResource(h);
+        }
+    }
+
+    void resolveMemory() {
+        std::vector<VulkanImage> freePool;
+
+        for(int i = 0; i < sortedPasses.size(); ++i){
+            // Free resources unused from previous step
+            for(auto &res : resources) {
+                if(res.lastPassIndex == i - 1) {
+                    freePool.push_back(res.physicalImage);
+                }
+            }
+        }
+
+        // Allocate resources that satisfy criteria
     }
 
     // External?
