@@ -99,6 +99,8 @@ struct RenderPassNode
 
     void *passData;
     bool isCulled = false;
+    bool forceRequire = false; //In cases like writing to buffer for read back
+    int refCount = 0;
 };
 
 //  Passed to setup lambda
@@ -175,100 +177,45 @@ public:
         }
     }
 
-    int createTexture(TextureResourceDesc desc)
-    {
-        auto texture = driver->createTexture(
-            desc.width, desc.height, desc.channels, nullptr, VulkanDriver::TextureType::Default);
-
-        switch (desc.type) {
-        case TextureResourceDesc::Type::RENDER_TARGET:
-            // driver->getCurrentRenderTarget();
-            break;
-        case TextureResourceDesc::Type::TEXTURE:
-            // driver->createTexture();
-            break;
-        case TextureResourceDesc::Type::EXTERNAL:
-            // driver->getTextureId();
-            break;
-        }
-        return 0;
-    }
-
     void bake(MiniEngine::Scene *scene)
     {
-        //Build edges
-        std::vector<std::vector<int>> edges(passes.size());
+        std::vector<std::vector<int>> edges{passes.size()};
+        std::vector<int> passDegrees(passes.size(), 0);
 
-        // Build dependencies
-        for (auto i = 0; i < passes.size(); ++i) {
-            for (auto j = i; j < passes.size(); ++j) {
-                if (i == j) //Check self dependency issues
-                    continue;
+        // ==== Build dependencies - map resourceId -> index of last pass that wrote to it
+        std::vector<int> resourceProducers(resources.size(), -1);
 
-                // Write checks
-                for (auto write : passes[i].textureWriteResources) {
-                    // Write -> Write
-                    if (std::find(
-                            passes[j].textureWriteResources.begin(),
-                            passes[j].textureWriteResources.end(),
-                            write)
-                        != passes[j].textureWriteResources.end()) {
-                        edges[i].push_back(j);
-                    }
-                    // Write -> Read
-                    if (std::find(
-                            passes[j].textureReadResources.begin(),
-                            passes[j].textureReadResources.end(),
-                            write)
-                        != passes[j].textureReadResources.end()) {
-                        edges[i].push_back(j);
-                    }
+        for (int i = 0; i < passes.size(); ++i) {
+            auto &pass = passes[i];
+
+            // Who produces input for this pass
+            for(auto inputHandle: pass.reads) {
+                auto producerId = resourceProducers[inputHandle];
+
+                if(producerId != -1 && producerId != i) {
+                    //Dependency found: producerId -> i
+                    edges[producerId].push_back(i);
+                    passDegrees[i]++;
                 }
+            }
 
-                // Read checks
-                for (auto read : passes[i].textureReadResources) {
-                    // Write -> Read
-                    if (std::find(
-                            passes[j].textureWriteResources.begin(),
-                            passes[j].textureWriteResources.end(),
-                            read)
-                        != passes[j].textureWriteResources.end()) {
-                        edges[j].push_back(i);
-                    }
-                }
+            // Register this pass as producer for its outputs
+            for(auto outputHandle: pass.writes) {
+                resourceProducers[outputHandle] = i;
             }
         }
 
-        // Kahn Sort
-        std::vector<int> indegree(passes.size(), 0);
+        // ==== Culling
+        cull();
 
-        for (int i = 0; i < edges.size(); ++i) {
-            for (int j : edges[i])
-                indegree[j]++;
-        }
+        // ==== Kahn Sort
+        std::queue<int> sortQueue;
+        std::vector<int> sortedPasses;
 
-        std::queue<int> q;
-        for (int i = 0; i < edges.size(); ++i)
-            if (indegree[i] == 0)
-                q.push(i);
-
-        std::vector<int> order;
-        while (!q.empty()) {
-            auto u = q.front();
-            q.pop();
-            order.push_back(u);
-
-            for (auto e : edges[u]) {
-                if (--indegree[e] == 0)
-                    q.push(e);
-            }
-        }
-
-        //Create resources
-
-        //Execute setups
-        for (auto o : order) {
-            passes[o].execute(passes[o].passData, driver.get());
+        // Find initial passes that are not culled
+        for(int i = 0; i < passes.size(); ++i) {
+            if(!passes[i].isCulled && passDegrees[i] == 0)
+                sortQueue.push(i);
         }
 
         debugDrawGraph(order);
@@ -277,16 +224,16 @@ public:
     void cull()
     {
         // Reset ref counts
-        for (auto &passNodes : passes)
-            pass.refCount = pass.isSideEffect ? 1 : 0;
+        for (auto &pass : passes)
+            pass.refCount = pass.forceRequire ? 1 : 0;
         for (auto &res : resources)
             res.refCount = 0;
 
         resources[backBufferHandle].refCount = 1;
 
         // Iterate backwards
-        for (int i = passNodes.size() - 1; i >= 0; --i) {
-            auto &pass = passNodes[i];
+        for (int i = passes.size() - 1; i >= 0; --i) {
+            auto &pass = passes[i];
 
             bool isNeeded = (pass.refCount > 0);
             for (auto outId : pass.writes) {
@@ -306,10 +253,10 @@ public:
         }
     }
 
-    void calculateLifetimes()
+    void calculateLifetimes(std::vector<int> sortedPasses)
     {
         for(auto i = 0; i < sortedPasses.size(); ++i) {
-            auto &pass = passNodes[sortedPasses[i]];
+            auto &pass = passes[sortedPasses[i]];
             if(pass.isCulled) continue;
 
             auto touchResource = [&](uint32_t handle) {
