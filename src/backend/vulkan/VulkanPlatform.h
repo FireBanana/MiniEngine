@@ -5,8 +5,6 @@
 #include "EngineTypes.h"
 #include "IImgui.h"
 #include "VulkanDriver.h"
-#include "VulkanHelper.h"
-#include "VulkanPlatform.h"
 #include <GLFW/glfw3.h>
 
 namespace MiniEngine {

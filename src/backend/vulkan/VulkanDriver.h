@@ -1,11 +1,9 @@
 #pragma once
 
-#include <unordered_set>
 #ifndef MINIENGINE_VULKAN_DRIVER
 #define MINIENGINE_VULKAN_DRIVER
 
 #include "VulkanBuffer.h"
-#include "VulkanHelper.h"
 #include "VulkanImage.h"
 #include "VulkanPipeline.h"
 #include "VulkanSwapchain.h"

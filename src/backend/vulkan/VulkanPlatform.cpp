@@ -1,7 +1,8 @@
 #include "FrameGraph.h"
-#include "VulkanPlatform.h"
 #include "Logger.h"
+#include "VulkanPlatform.h"
 #include "VulkanRenderDoc.h"
+#include <vulkan/vulkan_core.h>
 
 void MiniEngine::Backend::VulkanPlatform::initialize(
     MiniEngine::Types::EngineInitParams &params, Engine *engine)
@@ -72,24 +73,48 @@ void MiniEngine::Backend::VulkanPlatform::makeCurrent() {}
 
 void MiniEngine::Backend::VulkanPlatform::execute(Scene *scene)
 {
-    FrameGraph mDefaultFrameGraph{mDriver.get()};
+    RenderGraph graph{};
 
     auto imageCache = mDriver->getImageCache();
 
-    MiniEngine::Backend::TextureResourceDesc renderTexture{};
-    renderTexture.type = Backend::TextureResourceDesc::Type::RENDER_TARGET;
-    MiniEngine::Backend::TextureResourceDesc diffuse{}; //TODO FIX
-    diffuse.type = Backend::TextureResourceDesc::Type::EXTERNAL;
-    diffuse.image = std::get<0>(imageCache[0]);
+    TextureDescription color, normal, depth;
+    color.format = VK_FORMAT_R8G8B8A8_SRGB;
+    normal.format = VK_FORMAT_A2B10G10R10_SINT_PACK32;
+    //depth format...
 
-    mDriver->syncTextures(scene);
+    auto *gbuffer = graph.addPass("gbuffer");
+    auto lighting = graph.addPass("lighting");
 
-    mDefaultFrameGraph
-        .addPass("pass1", {"test", {diffuse}, {renderTexture}, {}, {}}, [this, scene]() {
-            // Main pass
-        });
+    // mDriver->syncTextures(scene);
 
-    mDefaultFrameGraph.bake(scene);
+    gbuffer->addColorOutput("color", color);
+    gbuffer->addColorOutput("normal", normal);
+    gbuffer->addDepthStencilOutput("depth", depth);
+
+    lighting->addAttachmentInput("color");
+    lighting->addAttachmentInput("normal");
+    lighting->addAttachmentInput("depth");
+    lighting->addDepthStencilInput("depth");
+    lighting->addTextureInput("shadow", {});
+
+    gbuffer->setBuildRenderPass([](VkCommandBuffer &cmd) {
+        // main render pass
+        // Use some kind of render api with abstractions?
+
+        // driver->setViewport()
+        // driver->setScissor()
+        // driver->setPushConstant()
+        // driver->updateBuffer()
+        // driver->draw()
+
+    });
+
+    gbuffer->setGetClearDepthStencil([](VkClearDepthStencilValue *val){
+        val->depth = 1.0f;
+        val->stencil = 0;
+    });
+
+    // mDefaultFrameGraph.bake(scene);
 
     while (!glfwWindowShouldClose(mWindow)) //run separate thread
     {

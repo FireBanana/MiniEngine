@@ -1,55 +1,142 @@
 #ifndef MINIENGINE_FRAMEGRAPH
 #define MINIENGINE_FRAMEGRAPH
 
-#include "Logger.h"
-#include "Scene.h"
-#include "VulkanDriver.h"
 #include "pch.hpp"
 #include <cstdint>
-#include <iterator>
-#include <map>
+#include <functional>
+#include <memory>
+#include <unordered_set>
 #include <vulkan/vulkan_core.h>
-#include <queue>
 
 namespace MiniEngine::Backend {
 
-struct Params {
-    std::vector<ResourceRef> ShaderResources;
-    std::vector<ResourceRef> RenderTargets;
+struct TextureDescription
+{
+    float x;
+    float y;
+    VkFormat format = VK_FORMAT_UNDEFINED;
+    uint8_t samples = 1;
+    bool persistent = true;
 };
 
-class FrameGraphBuilder {
+struct BufferDescription
+{
+    VkDeviceSize size = 0;
+    VkBufferUsageFlags useFlags = 0;
+    bool persistent = true;
+};
 
-    // Can be further organized into render features (shadow passs/deferred...)
-    void addPass(std::string name, Flags f, Params p, std::function<void()> execute){
+struct RenderResource
+{
+    std::string name;
+    std::unordered_set<uint32_t> writtenPasses;
+    std::unordered_set<uint32_t> readInPasses;
+};
+
+struct RenderTextureResource : RenderResource
+{
+    void addImageUsage(VkImageUsageFlags f) { flags |= f; }
+
+    VkImageUsageFlags flags = 0;
+};
+
+class RenderGraph;
+class RenderPass
+{
+public:
+    RenderTextureResource &addColorOutput(std::string name, TextureDescription desc);
+    RenderTextureResource &addAttachmentInput(std::string name);
+    RenderTextureResource &addTextureInput(std::string name,
+                                           VkPipelineStageFlags2 stages); //External texture
+    RenderTextureResource &addDepthStencilInput(std::string name);
+    RenderTextureResource &addDepthStencilOutput(std::string name, TextureDescription desc);
+
+    // Callbacks called every frame to do work
+    void setBuildRenderPass(std::function<void(VkCommandBuffer &)> fn)
+    {
+        build_render_pass_fn = std::move(fn);
     }
 
-    // Setup phase
-    // Go through all defined passes and check resources.
-    // Communicate allocation of resources to graph
-    TextureRef createTexture(TextureDesc& desc, std::string name, TextureFlags f){}
-
-    BufferRef registerExternalBuffer(Buffer pooledBuffer, BufferFlags f){}
-
-    // Exclude unreferenced ressources/passes
-    // Compute/handle resource lifetimes
-    // Fencing
-    // Resource Allocation
-    // Build graph
-    void compile() {
+    void setGetClearDepthStencil(std::function<void(VkClearDepthStencilValue *)> fn)
+    {
+        clear_depth_stencil_fn = std::move(fn);
     }
 
-    // Execute the surviving passes-draw and dispatch
-    // Access real API resources and set them in pipeline
-    void execute(){}
+    void setGetClearColor(std::function<void(VkClearColorValue *)> fn)
+    {
+        clear_value_fn = std::move(fn);
+    }
 
-    //submit multiple commands in vkqueuesubmit for each "dependency layer"
-    // vkbingimagememory or whatever to place resources
-    // alias memory using barriers and whatnot: https://gpuopen-librariesandsdks.github.io/VulkanMemoryAllocator/html/resource_aliasing.html
+private:
+    RenderGraph *graph;
+    uint32_t index;
+    std::function<void(VkCommandBuffer &)> build_render_pass_fn;
+    std::function<void(VkClearDepthStencilValue *)> clear_depth_stencil_fn;
+    std::function<void(VkClearColorValue *)> clear_value_fn;
 };
 
-class FrameGraph {
+class RenderGraph
+{
+public:
+    RenderPass *addPass(std::string name)
+    {
+        passes.emplace_back(new RenderPass{});
+        return passes.back().get();
+    }
+
+    RenderTextureResource &resolveTextureResource(std::string name)
+    {
+        auto it = std::find_if(textureResources.begin(),
+                               textureResources.end(),
+                               [&name](std::unique_ptr<RenderTextureResource> pred) {
+                                   if (pred->name == name)
+                                       return true;
+                                   else
+                                       return false;
+                               });
+
+        if (it != textureResources.end()) { // Texture found
+            return **(it);
+        } else {
+            textureResources.emplace_back(new RenderTextureResource);
+            return *textureResources.back();
+        }
+    }
+
+    void setBackBufferSource(std::string name);
+
+    // Validate
+    // Traverse
+    void bake() {}
+
+private:
+    std::vector<std::unique_ptr<RenderPass>> passes;
+    std::vector<std::unique_ptr<RenderTextureResource>> textureResources;
 };
+
+RenderTextureResource &RenderPass::addColorOutput(std::string name, TextureDescription desc)
+{
+    auto res = graph->resolveTextureResource(name);
+    res.writtenPasses.insert(index);
+    res.addImageUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+    return res;
+}
+
+RenderTextureResource &RenderPass::addDepthStencilOutput(std::string name, TextureDescription desc)
+{
+    auto res = graph->resolveTextureResource(name);
+    res.writtenPasses.insert(index);
+    res.addImageUsage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+    return res;
+}
+
+RenderTextureResource &RenderPass::addAttachmentInput(std::string name)
+{
+    auto res = graph->resolveTextureResource(name);
+    res.readInPasses.insert(index);
+    res.addImageUsage(VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
+    return res;
+}
 
 } // namespace MiniEngine::Backend
 
