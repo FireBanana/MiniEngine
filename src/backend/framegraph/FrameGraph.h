@@ -1,6 +1,7 @@
 #ifndef MINIENGINE_FRAMEGRAPH
 #define MINIENGINE_FRAMEGRAPH
 
+#include "Logger.h"
 #include "pch.hpp"
 #include <cstdint>
 #include <functional>
@@ -40,6 +41,14 @@ struct RenderTextureResource : RenderResource
     VkImageUsageFlags flags = 0;
 };
 
+struct AccessedTextureResource
+{
+    RenderTextureResource *texture = nullptr;
+    VkPipelineStageFlags2 stages = 0;
+    VkAccessFlags2 access = 0;
+    VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
+};
+
 class RenderGraph;
 class RenderPass
 {
@@ -67,12 +76,18 @@ public:
         clear_value_fn = std::move(fn);
     }
 
-private:
     RenderGraph *graph;
     uint32_t index;
     std::function<void(VkCommandBuffer &)> build_render_pass_fn;
     std::function<void(VkClearDepthStencilValue *)> clear_depth_stencil_fn;
     std::function<void(VkClearColorValue *)> clear_value_fn;
+
+    std::vector<RenderTextureResource *> colorOutputs;
+    std::vector<RenderTextureResource *> attachmentInputs;
+    std::vector<RenderTextureResource *> colorInputs;
+    std::vector<AccessedTextureResource> externalTextures;
+    RenderTextureResource *depthStencilInput = nullptr;
+    RenderTextureResource *depthStencilOutput = nullptr;
 };
 
 class RenderGraph
@@ -103,15 +118,45 @@ public:
         }
     }
 
-    void setBackBufferSource(std::string name);
+    void setBackBufferSource(std::string name)
+    {
+        // Check if it exists
+        framebufferName = name;
+    }
 
-    // Validate
-    // Traverse
-    void bake() {}
+    void validatePasses()
+    {
+        for (auto &pass : passes) {
+            if (pass->colorInputs.size() != pass->colorOutputs.size())
+                ELOG("Size of inputs must match size of outputs"); // Why?
+
+            // for (auto i = 0; i < pass->colorInputs.size(); ++i) {
+
+            // }
+        }
+    }
+
+    void bake()
+    {
+        validatePasses();
+
+        auto framebuffer_itr = std::find_if(textureResources.begin(),
+                                            textureResources.end(),
+                                            [this](RenderTextureResource *res) {
+                                                if (res->name == framebufferName)
+                                                    return true;
+                                                else
+                                                    return false;
+                                            });
+
+        if (framebuffer_itr == textureResources.end())
+            ELOG("Framebuffer not found during render graph baking.");
+    }
 
 private:
     std::vector<std::unique_ptr<RenderPass>> passes;
     std::vector<std::unique_ptr<RenderTextureResource>> textureResources;
+    std::string framebufferName;
 };
 
 RenderTextureResource &RenderPass::addColorOutput(std::string name, TextureDescription desc)
@@ -119,6 +164,7 @@ RenderTextureResource &RenderPass::addColorOutput(std::string name, TextureDescr
     auto res = graph->resolveTextureResource(name);
     res.writtenPasses.insert(index);
     res.addImageUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+    colorOutputs.push_back(&res);
     return res;
 }
 
@@ -127,6 +173,7 @@ RenderTextureResource &RenderPass::addDepthStencilOutput(std::string name, Textu
     auto res = graph->resolveTextureResource(name);
     res.writtenPasses.insert(index);
     res.addImageUsage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+    depthStencilOutput = &res;
     return res;
 }
 
@@ -135,6 +182,37 @@ RenderTextureResource &RenderPass::addAttachmentInput(std::string name)
     auto res = graph->resolveTextureResource(name);
     res.readInPasses.insert(index);
     res.addImageUsage(VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
+    attachmentInputs.push_back(&res);
+    return res;
+}
+
+RenderTextureResource &RenderPass::addDepthStencilInput(std::string name)
+{
+    auto res = graph->resolveTextureResource(name);
+    res.readInPasses.insert(index);
+    res.addImageUsage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+    depthStencilInput = &res;
+    return res;
+}
+
+RenderTextureResource &RenderPass::addTextureInput(std::string name, VkPipelineStageFlags2 stages)
+{
+    auto res = graph->resolveTextureResource(name);
+    res.readInPasses.insert(index);
+    res.addImageUsage(VK_IMAGE_USAGE_STORAGE_BIT);
+    return res;
+
+    AccessedTextureResource acc;
+    acc.texture = &res;
+    acc.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    acc.access = VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+
+    if (stages != 0)
+        acc.stages = stages;
+    else
+        acc.stages = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+
+    externalTextures.push_back(acc);
     return res;
 }
 

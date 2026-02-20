@@ -77,9 +77,10 @@ void MiniEngine::Backend::VulkanPlatform::execute(Scene *scene)
 
     auto imageCache = mDriver->getImageCache();
 
-    TextureDescription color, normal, depth;
+    TextureDescription color, normal, depth, framebuffer;
     color.format = VK_FORMAT_R8G8B8A8_SRGB;
     normal.format = VK_FORMAT_A2B10G10R10_SINT_PACK32;
+    framebuffer.format = VK_FORMAT_R8G8B8A8_SRGB;
     //depth format...
 
     auto *gbuffer = graph.addPass("gbuffer");
@@ -96,6 +97,7 @@ void MiniEngine::Backend::VulkanPlatform::execute(Scene *scene)
     lighting->addAttachmentInput("depth");
     lighting->addDepthStencilInput("depth");
     lighting->addTextureInput("shadow", {});
+    lighting->addColorOutput("framebuffer", framebuffer);
 
     gbuffer->setBuildRenderPass([](VkCommandBuffer &cmd) {
         // main render pass
@@ -114,6 +116,7 @@ void MiniEngine::Backend::VulkanPlatform::execute(Scene *scene)
         val->stencil = 0;
     });
 
+    graph.setBackBufferSource("framebuffer");
     // mDefaultFrameGraph.bake(scene);
 
     while (!glfwWindowShouldClose(mWindow)) //run separate thread

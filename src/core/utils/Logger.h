@@ -6,6 +6,7 @@
 #include <spdlog/spdlog.h>
 
 #define MLOG(...) MiniEngine::Logger::print(__VA_ARGS__);
+#define ELOG(...) MiniEngine::Logger::eprint(__VA_ARGS__);
 
 namespace MiniEngine
 {
