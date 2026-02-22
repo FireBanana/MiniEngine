@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <stack>
 #include <unordered_set>
 #include <vulkan/vulkan_core.h>
 
@@ -136,6 +137,11 @@ public:
         }
     }
 
+    void traverseDependencies(const RenderPass &pass, uint32_t stackSize)
+    {
+
+    }
+
     void bake()
     {
         validatePasses();
@@ -151,17 +157,35 @@ public:
 
         if (framebuffer_itr == textureResources.end())
             ELOG("Framebuffer not found during render graph baking.");
+
+        passStack.clear();
+
+        const auto *framebuffer = framebuffer_itr->get();
+
+        if(framebuffer->writtenPasses.empty())
+            ELOG("No pass exists which write to resource");
+
+        for(auto &pass : framebuffer->writtenPasses)
+            passStack.push_back(pass);
+
+        auto tempStack = passStack;
+
+        for(auto &pushedPass : tempStack) {
+            auto &pass = *passes[pushedPass];
+            traverseDependencies(pass, 0);
+        }
     }
 
 private:
     std::vector<std::unique_ptr<RenderPass>> passes;
     std::vector<std::unique_ptr<RenderTextureResource>> textureResources;
     std::string framebufferName;
+    std::vector<uint32_t> passStack;
 };
 
 RenderTextureResource &RenderPass::addColorOutput(std::string name, TextureDescription desc)
 {
-    auto res = graph->resolveTextureResource(name);
+    auto &res = graph->resolveTextureResource(name);
     res.writtenPasses.insert(index);
     res.addImageUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
     colorOutputs.push_back(&res);
@@ -170,7 +194,7 @@ RenderTextureResource &RenderPass::addColorOutput(std::string name, TextureDescr
 
 RenderTextureResource &RenderPass::addDepthStencilOutput(std::string name, TextureDescription desc)
 {
-    auto res = graph->resolveTextureResource(name);
+    auto &res = graph->resolveTextureResource(name);
     res.writtenPasses.insert(index);
     res.addImageUsage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
     depthStencilOutput = &res;
@@ -179,7 +203,7 @@ RenderTextureResource &RenderPass::addDepthStencilOutput(std::string name, Textu
 
 RenderTextureResource &RenderPass::addAttachmentInput(std::string name)
 {
-    auto res = graph->resolveTextureResource(name);
+    auto &res = graph->resolveTextureResource(name);
     res.readInPasses.insert(index);
     res.addImageUsage(VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
     attachmentInputs.push_back(&res);
@@ -188,7 +212,7 @@ RenderTextureResource &RenderPass::addAttachmentInput(std::string name)
 
 RenderTextureResource &RenderPass::addDepthStencilInput(std::string name)
 {
-    auto res = graph->resolveTextureResource(name);
+    auto &res = graph->resolveTextureResource(name);
     res.readInPasses.insert(index);
     res.addImageUsage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
     depthStencilInput = &res;
@@ -197,10 +221,9 @@ RenderTextureResource &RenderPass::addDepthStencilInput(std::string name)
 
 RenderTextureResource &RenderPass::addTextureInput(std::string name, VkPipelineStageFlags2 stages)
 {
-    auto res = graph->resolveTextureResource(name);
+    auto &res = graph->resolveTextureResource(name);
     res.readInPasses.insert(index);
     res.addImageUsage(VK_IMAGE_USAGE_STORAGE_BIT);
-    return res;
 
     AccessedTextureResource acc;
     acc.texture = &res;
