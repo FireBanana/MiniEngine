@@ -394,9 +394,84 @@ public:
                 auto &pass = passes[passIndex];
 
                 for (auto i = 0; i < pass->colorOutputs.size(); ++i) {
+                    auto *output = pass->colorOutputs[i];
                 }
             }
         }
+    }
+
+    void buildBarriers()
+    {
+        passBarriers.clear();
+        passBarriers.reserve(passStack.size());
+
+        for (auto index : passStack) {
+            auto &pass = *passes[index];
+            Barriers barriers;
+
+            for (auto &input : pass.storageInputs) {
+                auto barrier = Barrier{};
+                barrier.access = VK_ACCESS_2_SHADER_STORAGE_READ_BIT
+                                 | VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT;
+                barrier.stages = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+
+                if (barrier.layout != VK_IMAGE_LAYOUT_UNDEFINED)
+                    throw; // Layout mismatch
+
+                barrier.layout = VK_IMAGE_LAYOUT_GENERAL;
+            }
+
+            auto *output = pass.depthStencilOutput;
+            auto *input = pass.depthStencilInput;
+
+            if (output && input) {
+                auto dstBarrier = Barrier{};
+                auto srcBarrier = Barrier{};
+
+                if (dstBarrier.layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                    dstBarrier.layout = VK_IMAGE_LAYOUT_GENERAL;
+                else if (dstBarrier.layout != VK_IMAGE_LAYOUT_UNDEFINED)
+                    throw; // Layout mismatch
+                else
+                    dstBarrier.layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+
+                dstBarrier.access |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT
+                                     | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                dstBarrier.stages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT
+                                     | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+
+                srcBarrier.layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+                srcBarrier.access |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                srcBarrier.stages |= VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+            } else if (input) {
+                auto dstBarrier = Barrier{};
+                if (dstBarrier.layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                    dstBarrier.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+                else if (dstBarrier.layout != VK_IMAGE_LAYOUT_UNDEFINED)
+                    throw; // Layout mismatch
+
+                dstBarrier.access |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+                dstBarrier.stages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+            } else if (output) {
+                auto srcBarrier = Barrier{};
+
+                if (srcBarrier.layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                    srcBarrier.layout = VK_IMAGE_LAYOUT_GENERAL;
+                else if (srcBarrier.layout != VK_IMAGE_LAYOUT_UNDEFINED)
+                    throw; //Layout mismatch
+                else
+                    srcBarrier.layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+
+                srcBarrier.access |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                srcBarrier.stages |= VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+            }
+
+            passBarriers.push_back(barriers);
+        }
+    }
+
+    void buildPhysicalBarriers()
+    {
     }
 
     void bake()
@@ -438,9 +513,26 @@ public:
         buildPhysicalResources();
         // buildPhysicalPasses();
         buildRenderPassInfo();
+        buildBarriers();
+        buildPhysicalBarriers();
     }
 
 private:
+    struct Barrier
+    {
+        uint32_t resourceIndex;
+        VkImageLayout layout;
+        VkAccessFlags2 access;
+        VkPipelineStageFlags2 stages;
+        bool history;
+    };
+
+    struct Barriers
+    {
+        std::vector<Barrier> invalidate;
+        std::vector<Barrier> flush;
+    };
+
     std::vector<std::unique_ptr<RenderPass>> passes;
     std::vector<std::unique_ptr<RenderTextureResource>> textureResources;
     std::vector<std::unordered_set<uint32_t>> passDependencies;
@@ -449,6 +541,7 @@ private:
     std::string framebufferName;
     std::vector<uint32_t> passStack;
     std::vector<PhysicalPass> physicalPasses;
+    std::vector<Barriers> passBarriers;
 };
 
 RenderTextureResource &RenderPass::addColorOutput(
